@@ -3,6 +3,7 @@ package com.movie.booking.seat_service.entity;
 import com.movie.booking.seat_service.SeatStatus;
 import com.movie.booking.seat_service.SeatType;
 import com.movie.booking.seat_service.ShowSeatId;
+import com.movie.booking.seat_service.exception.SeatNotAvailableException;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -28,7 +29,14 @@ public class ShowSeat {
     @Column(name = "updated_at")  private Instant updatedAt;
 
     protected ShowSeat() {}
-    // getters only for now
 
+    public void book(UUID bookingId, Instant now){
+        if(status!= SeatStatus.AVAILABLE){
+            throw new SeatNotAvailableException(id);
+        }
+        this.status = SeatStatus.BOOKED;
+        this.bookingId = bookingId;
+        this.updatedAt = now;
+    }
 
 }

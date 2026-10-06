@@ -3,6 +3,7 @@ package com.movie.booking.seat_service;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 @Embeddable
 @Getter
+@ToString
 public class ShowSeatId implements Serializable {
 
     @Column(name = "show_id")  private UUID showId;
