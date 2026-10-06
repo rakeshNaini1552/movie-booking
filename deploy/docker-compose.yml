@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${SEAT_DB_NAME}
+      POSTGRES_USER: ${SEAT_DB_USER}
+      POSTGRES_PASSWORD: ${SEAT_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

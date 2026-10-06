@@ -1,0 +1,7 @@
+# secrets and local config
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
