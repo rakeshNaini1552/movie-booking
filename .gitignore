@@ -4,4 +4,4 @@
 !.env.example
 
 # OS
-.DS_Store
+.DS_Store.idea/
