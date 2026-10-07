@@ -23,7 +23,7 @@ public class SeatApiExceptionHandler {
     public ProblemDetail handleSeatNotAvailable(SeatNotAvailableException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Seat not available");
-        problem.setProperty("seatId", ex.getId());
+        problem.setProperty("seatId", ex.getSeatIds());
         return problem;
     }
 

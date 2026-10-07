@@ -3,13 +3,18 @@ package com.movie.booking.seat_service.exception;
 import com.movie.booking.seat_service.ShowSeatId;
 import lombok.Getter;
 
+import java.util.List;
+import java.util.UUID;
+
 @Getter
 public class SeatNotAvailableException extends RuntimeException {
 
-    private final ShowSeatId id;
+    private final UUID showId;
+    private final List<String> seatIds;
 
-    public SeatNotAvailableException(ShowSeatId id) {
+    public SeatNotAvailableException(UUID id, List<String> seatIds) {
         super("Seat " + id + " no longer available");
-        this.id = id;
+        this.showId = id;
+        this.seatIds = seatIds;
     }
 }

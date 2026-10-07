@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -32,7 +33,7 @@ public class ShowSeat {
 
     public void book(UUID bookingId, Instant now){
         if(status!= SeatStatus.AVAILABLE){
-            throw new SeatNotAvailableException(id);
+            throw new SeatNotAvailableException(id.getShowId(), List.of(id.getSeatId()));
         }
         this.status = SeatStatus.BOOKED;
         this.bookingId = bookingId;
