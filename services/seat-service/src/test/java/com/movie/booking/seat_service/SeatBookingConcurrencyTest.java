@@ -1,6 +1,7 @@
 package com.movie.booking.seat_service;
 
 import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.service.SeatBookingService;
 import com.movie.booking.seat_service.service.SeatMapService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class SeatBookingConcurrencyTest {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private SeatMapService service;
+    private SeatBookingService service;
 
     private UUID insertSeat(String seatId) {
         UUID showId = UUID.randomUUID();
