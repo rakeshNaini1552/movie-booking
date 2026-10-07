@@ -4,6 +4,7 @@ import com.movie.booking.seat_service.exception.SeatNotAvailableException;
 import com.movie.booking.seat_service.exception.ShowNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -23,6 +24,14 @@ public class SeatApiExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Seat not available");
         problem.setProperty("seatId", ex.getId());
+        return problem;
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    ProblemDetail handleConcurrentUpdate() {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "The seat was just booked by someone else. Please pick another.");
+        problem.setTitle("Concurrent update");
         return problem;
     }
 }
