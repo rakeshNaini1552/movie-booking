@@ -1,6 +1,7 @@
 package com.movie.booking.seat_service.repository;
 
 
+import com.movie.booking.seat_service.SeatStatus;
 import com.movie.booking.seat_service.ShowSeatId;
 import com.movie.booking.seat_service.entity.ShowSeat;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,8 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, ShowSeatId> 
     List<ShowSeat> findByIdShowId(UUID showId);
 
     List<ShowSeat> findByIdShowIdAndIdSeatIdIn(UUID showId, List<String> seatIds);
+
+    long countByIdShowIdAndIdSeatIdInAndStatus(UUID showId, Collection<String> seatIds, SeatStatus status);
 
     // ShowSeatRepository
     @Modifying
