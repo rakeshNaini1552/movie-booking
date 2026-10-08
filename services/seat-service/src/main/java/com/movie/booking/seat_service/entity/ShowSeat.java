@@ -2,7 +2,6 @@ package com.movie.booking.seat_service.entity;
 
 import com.movie.booking.seat_service.SeatStatus;
 import com.movie.booking.seat_service.SeatType;
-import com.movie.booking.seat_service.ShowSeatId;
 import com.movie.booking.seat_service.exception.SeatNotAvailableException;
 import jakarta.persistence.*;
 import lombok.Getter;

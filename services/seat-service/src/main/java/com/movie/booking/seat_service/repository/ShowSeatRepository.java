@@ -2,7 +2,7 @@ package com.movie.booking.seat_service.repository;
 
 
 import com.movie.booking.seat_service.SeatStatus;
-import com.movie.booking.seat_service.ShowSeatId;
+import com.movie.booking.seat_service.entity.ShowSeatId;
 import com.movie.booking.seat_service.entity.ShowSeat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

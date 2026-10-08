@@ -1,4 +1,4 @@
-package com.movie.booking.seat_service;
+package com.movie.booking.seat_service.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

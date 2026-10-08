@@ -1,6 +1,5 @@
 package com.movie.booking.seat_service.exception;
 
-import com.movie.booking.seat_service.ShowSeatId;
 import lombok.Getter;
 
 import java.util.List;
