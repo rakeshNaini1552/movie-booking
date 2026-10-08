@@ -1,5 +1,8 @@
-package com.movie.booking.seat_service;
+package com.movie.booking.seat_service.DTO;
 
+import com.movie.booking.seat_service.SeatStatus;
+import com.movie.booking.seat_service.SeatType;
+import com.movie.booking.seat_service.ShowSeatId;
 import com.movie.booking.seat_service.entity.ShowSeat;
 
 public record SeatResponse(String seatId, String row, int number, SeatType type, SeatStatus status) {

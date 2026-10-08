@@ -1,6 +1,6 @@
 package com.movie.booking.seat_service.service;
 
-import com.movie.booking.seat_service.SeatResponse;
+import com.movie.booking.seat_service.DTO.SeatResponse;
 import com.movie.booking.seat_service.entity.ShowSeat;
 import com.movie.booking.seat_service.exception.ShowNotFoundException;
 import com.movie.booking.seat_service.repository.ShowSeatRepository;
