@@ -14,4 +14,7 @@ public interface HoldStore {
 
     /** Free the seats early, but only if this holdId owns them. */
     void release(UUID showId, List<String> seatIds, UUID holdId);
+
+    /** Reset the TTL of all these seats, but only if this holdId still owns every one. */
+    boolean extend(UUID showId, List<String> seatIds, UUID holdId, Duration ttl);
 }

@@ -1,10 +1,14 @@
-package com.movie.booking.seat_service;
+package com.movie.booking.seat_service.seat;
 
+import com.movie.booking.seat_service.SeatStatus;
+import com.movie.booking.seat_service.SeatType;
+import com.movie.booking.seat_service.TestContainersConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,17 +24,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@Testcontainers
 @AutoConfigureMockMvc
+@Import(TestContainersConfig.class)
 public class SeatHolderControllerTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
-
-    @Container
-    @ServiceConnection(name = "redis")
-    static GenericContainer redis = new GenericContainer("redis:7-alpine").withExposedPorts(6379);
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

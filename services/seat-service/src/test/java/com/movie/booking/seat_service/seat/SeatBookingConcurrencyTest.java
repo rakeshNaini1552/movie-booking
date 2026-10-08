@@ -1,12 +1,14 @@
-package com.movie.booking.seat_service;
+package com.movie.booking.seat_service.seat;
 
+import com.movie.booking.seat_service.SeatType;
+import com.movie.booking.seat_service.TestContainersConfig;
 import com.movie.booking.seat_service.exception.SeatNotAvailableException;
 import com.movie.booking.seat_service.service.SeatBookingService;
-import com.movie.booking.seat_service.service.SeatMapService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.testcontainers.junit.jupiter.Container;
@@ -27,12 +29,9 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@Testcontainers
+@Import(TestContainersConfig.class)
 public class SeatBookingConcurrencyTest {
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

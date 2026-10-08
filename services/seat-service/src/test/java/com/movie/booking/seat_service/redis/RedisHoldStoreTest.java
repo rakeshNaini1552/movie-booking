@@ -1,17 +1,19 @@
-package com.movie.booking.seat_service;
+package com.movie.booking.seat_service.redis;
 
+import com.movie.booking.seat_service.TestContainersConfig;
 import com.movie.booking.seat_service.exception.SeatNotAvailableException;
 import com.movie.booking.seat_service.service.HoldStore;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.time.Duration;
 import java.util.List;
@@ -21,16 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@Testcontainers
+@Import(TestContainersConfig.class)
 class RedisHoldStoreTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
-
-    @Container @ServiceConnection(name = "redis")
-    static GenericContainer redis =
-            new GenericContainer("redis:7-alpine").withExposedPorts(6379);
 
     @Autowired
     HoldStore holdStore;
@@ -48,7 +42,7 @@ class RedisHoldStoreTest {
 
         // the point of the test: A1 and A3 must NOT be held
         assertThat(redisTemplate.hasKey("hold:" + showId + ":A1")).isFalse();
-        assertThat(redisTemplate.hasKey("hold:" + showId + ":____")).isFalse();
+        assertThat(redisTemplate.hasKey("hold:" + showId + ":A3")).isFalse();
     }
 
     @Test
@@ -78,5 +72,60 @@ class RedisHoldStoreTest {
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
                 .until(() -> !holdStore.isHeldBy(showId, List.of("A1"), holdId));
+    }
+
+    @Test
+    void extend_resets_ttl_when_owner(){
+
+        UUID showId = UUID.randomUUID();
+        UUID holdId = UUID.randomUUID();
+        String key = "hold:" + showId + ":A1";
+
+        holdStore.hold(showId, List.of("A1"), holdId, Duration.ofSeconds(10));
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), holdId)).isTrue();
+
+        boolean extended = holdStore.extend(showId, List.of("A1"), holdId, Duration.ofSeconds(100));
+
+        assertThat(extended).isTrue();
+        assertThat(redisTemplate.getExpire(key)).isGreaterThan(10L);
+
+    }
+
+    @Test
+    void extend_fails_when_not_owner(){
+
+        UUID showId = UUID.randomUUID();
+        UUID holdId = UUID.randomUUID();
+        String key = "hold:" + showId + ":A1";
+
+        holdStore.hold(showId, List.of("A1"), holdId, Duration.ofSeconds(10));
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), holdId)).isTrue();
+
+        boolean extended = holdStore.extend(showId, List.of("A1"), UUID.randomUUID(), Duration.ofSeconds(100));
+
+        assertThat(extended).isFalse();
+        assertThat(redisTemplate.getExpire(key)).isLessThanOrEqualTo(10L);
+
+    }
+
+    @Test
+    void extend_fails_when_ttl_is_expired(){
+
+        UUID showId = UUID.randomUUID();
+        UUID holdId = UUID.randomUUID();
+        String key = "hold:" + showId + ":A1";
+
+        holdStore.hold(showId, List.of("A1"), holdId, Duration.ofSeconds(2));
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), holdId)).isTrue();
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(3))
+                .until(() -> !holdStore.isHeldBy(showId, List.of("A1"), holdId));
+
+        boolean extended = holdStore.extend(showId, List.of("A1"), holdId, Duration.ofSeconds(100));
+
+        assertThat(extended).isFalse();
+        assertThat(redisTemplate.getExpire(key)).isEqualTo(-2L);
+
     }
 }
