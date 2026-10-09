@@ -17,4 +17,6 @@ public interface HoldStore {
 
     /** Reset the TTL of all these seats, but only if this holdId still owns every one. */
     boolean extend(UUID showId, List<String> seatIds, UUID holdId, Duration ttl);
+
+    List<String> getHeldSeats(UUID showId, List<String> seatIds);
 }

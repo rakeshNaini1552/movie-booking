@@ -87,4 +87,16 @@ public class SeatHoldServiceTest {
         assertThatThrownBy(() -> seatHoldService.holdSeats(showId, List.of("A3")))
                 .isInstanceOf(SeatNotAvailableException.class);
     }
+
+
+    @Test
+    void get_held_seats_returns_only_held() {
+        UUID showId = UUID.randomUUID();
+        insertSeat(showId, "A1", SeatStatus.AVAILABLE);
+        insertSeat(showId, "A2", SeatStatus.AVAILABLE);
+
+        seatHoldService.holdSeats(showId, List.of("A1"));
+
+        assertThat(holdStore.getHeldSeats(showId, List.of("A1", "A2")))
+                .containsExactly("A1");    }
 }

@@ -1,22 +1,25 @@
 package com.movie.booking.seat_service.service;
 
 import com.movie.booking.seat_service.DTO.SeatResponse;
+import com.movie.booking.seat_service.SeatStatus;
 import com.movie.booking.seat_service.entity.ShowSeat;
 import com.movie.booking.seat_service.exception.ShowNotFoundException;
 import com.movie.booking.seat_service.repository.ShowSeatRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class SeatMapService {
     private final ShowSeatRepository showSeatRepository;
+    private final HoldStore holdStore;
 
-    public SeatMapService(ShowSeatRepository repository) {
-        this.showSeatRepository = repository;
-    }
 
     @Transactional(readOnly = true)
     public List<SeatResponse> getSeatMap(UUID showId) {
@@ -24,6 +27,14 @@ public class SeatMapService {
         if (seats.isEmpty()) {
             throw new ShowNotFoundException(showId);
         }
-        return seats.stream().map(SeatResponse::from).toList();
-    }
+        List<String> availableIds = seats.stream()
+                .filter(s -> s.getStatus() == SeatStatus.AVAILABLE)
+                .map(s -> s.getId().getSeatId())
+                .toList();
+
+        Set<String> held = new HashSet<>(holdStore.getHeldSeats(showId, availableIds));
+
+        return seats.stream()
+                .map(s -> SeatResponse.from(s, held.contains(s.getId().getSeatId())))
+                .toList();    }
 }

@@ -1,5 +1,5 @@
 package com.movie.booking.seat_service;
 
 public enum SeatStatus {
-    AVAILABLE, BOOKED, BLOCKED
+    AVAILABLE, BOOKED, BLOCKED, HELD
 }

@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,7 +67,21 @@ public class RedisHoldStore implements HoldStore {
         return Long.valueOf(1).equals(result);
     }
 
+    @Override
+    public List<String> getHeldSeats(UUID showId, List<String> seatIds) {
+        List<String> keys = getKeys(showId, seatIds);
+        List<String> values = redis.opsForValue().multiGet(keys);   // one round trip, values in the same order
+        // true only if every value equals holdId.toString()
+        List<String> held = new ArrayList<>();
+        for (int i = 0; i < seatIds.size(); i++) {
+            if (values.get(i) !=null ) {      // what check means "someone holds this seat"?
+                held.add(seatIds.get(i));
+            }
+        }
+        return held;
+    }
+
     private @NonNull List<String> getKeys(UUID showId, List<String> seatIds) {
-        return seatIds.stream().map(id -> key(showId, id)).toList();
+        return seatIds.stream().map(seatId -> key(showId, seatId)).toList();
     }
 }
