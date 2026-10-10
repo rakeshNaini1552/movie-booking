@@ -12,7 +12,6 @@ import java.util.UUID;
 public class SeatConfirmService {
 
     private final HoldStore holdStore;
-
     private final SeatBookingService seatBookingService;
 
     public void confirm(UUID showId, List<String> seatIds, UUID holdId, UUID bookingId){

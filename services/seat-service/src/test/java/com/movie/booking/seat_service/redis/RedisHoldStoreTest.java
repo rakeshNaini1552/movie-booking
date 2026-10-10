@@ -15,8 +15,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @Import(TestContainersConfig.class)
@@ -123,5 +122,28 @@ class RedisHoldStoreTest {
         assertThat(extended).isFalse();
         assertThat(redisTemplate.getExpire(key)).isEqualTo(-2L);
 
+    }
+
+    @Test
+    void hold_with_same_booking_id_succeeds_again() {
+        UUID showId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
+
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofSeconds(60));
+
+        assertThatCode(() ->
+                holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofSeconds(60)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void hold_with_different_booking_id_is_rejected() {
+        UUID showId = UUID.randomUUID();
+
+        holdStore.hold(showId, List.of("A1"), UUID.randomUUID(), Duration.ofSeconds(60));
+
+        assertThatThrownBy(() ->
+                holdStore.hold(showId, List.of("A1"), UUID.randomUUID(), Duration.ofSeconds(60)))
+                .isInstanceOf(SeatNotAvailableException.class);
     }
 }

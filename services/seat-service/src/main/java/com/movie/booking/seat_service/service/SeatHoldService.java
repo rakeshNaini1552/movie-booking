@@ -28,4 +28,11 @@ public class SeatHoldService {
         holdStore.hold(showId, seatIds, holdId, holdTtl);
         return holdId;
     }
+
+    public void extendHold(UUID showId, List<String> seatIds, UUID holdId) {
+        boolean extended = holdStore.extend(showId, seatIds, holdId, holdTtl);   // new TTL
+        if (!extended) {
+            throw new SeatNotAvailableException(showId, seatIds);  // which exception?
+        }
+    }
 }

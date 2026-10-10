@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,5 +24,11 @@ public class SeatHoldController {
                              @RequestBody @Valid HoldRequest request) {
         UUID holdId = seatHoldService.holdSeats(showId, request.seatIds());
         return new HoldResponse(holdId);
+    }
+
+    @PostMapping("/{showId}/holds/{holdId}/extend")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void extendHold(@PathVariable UUID showId, @PathVariable UUID holdId, @RequestBody @Valid HoldRequest request) {
+        seatHoldService.extendHold(showId, request.seatIds(), holdId);
     }
 }

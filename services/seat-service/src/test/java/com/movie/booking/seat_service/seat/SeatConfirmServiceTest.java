@@ -7,6 +7,7 @@ import com.movie.booking.seat_service.exception.SeatNotAvailableException;
 import com.movie.booking.seat_service.service.HoldStore;
 import com.movie.booking.seat_service.service.SeatConfirmService;
 import com.movie.booking.seat_service.service.SeatHoldService;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,7 +73,7 @@ public class SeatConfirmServiceTest {
     }
 
     @Test
-    void confirm_fails_when_hold_belongs_to_someone_else() {
+    void confirm_failure_with_hold_that_doesnt_exist() {
         UUID showId = UUID.randomUUID();
 
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
@@ -79,10 +81,16 @@ public class SeatConfirmServiceTest {
 
         List<String> seatIds = List.of("A1", "A2");
 
-        UUID userA = seatHoldService.holdSeats(showId, seatIds);
+        UUID holdId = seatHoldService.holdSeats(showId, seatIds);
 
-        assertThatThrownBy(() -> seatConfirmService.confirm(showId, seatIds, UUID.randomUUID(), UUID.randomUUID()))
-                .isInstanceOf(SeatNotAvailableException.class);
-        assertThat(holdStore.isHeldBy(showId, seatIds, userA)).isTrue();
+        seatConfirmService.confirm(showId, seatIds,holdId, UUID.randomUUID());
+
+        Integer booked = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM show_seat WHERE show_id = ? AND seat_id IN('A1', 'A2')AND status = 'BOOKED'",
+                Integer.class, showId);
+
+        assertThat(booked).isEqualTo(2);
+
+        assertThat(holdStore.isHeldBy(showId, seatIds, holdId)).isFalse();
     }
 }

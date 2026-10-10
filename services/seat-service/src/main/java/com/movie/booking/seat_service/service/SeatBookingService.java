@@ -22,11 +22,6 @@ public class SeatBookingService {
 
     @Transactional
     public void bookSeats(UUID showId, List<String> seatIds, UUID bookingId) {
-//        List<ShowSeat> seats = showSeatRepository.findByIdShowIdAndIdSeatIdIn(showId, seatIds);
-//        for (ShowSeat seat : seats) {
-//            seat.book(bookingId, clock.instant());   // may throw
-//        }
-        // bookSeats
         int updated = showSeatRepository.bookIfAvailable(showId, seatIds, bookingId, clock.instant());
         if (updated != seatIds.size()) {
             throw new SeatNotAvailableException(showId, seatIds);

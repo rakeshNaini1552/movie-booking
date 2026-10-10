@@ -11,9 +11,9 @@ public class SeatNotAvailableException extends RuntimeException {
     private final UUID showId;
     private final List<String> seatIds;
 
-    public SeatNotAvailableException(UUID id, List<String> seatIds) {
-        super("Seat " + id + " no longer available");
-        this.showId = id;
+    public SeatNotAvailableException(UUID showId, List<String> seatIds) {
+        super("Seat " + showId + " no longer available");
+        this.showId = showId;
         this.seatIds = seatIds;
     }
 }
