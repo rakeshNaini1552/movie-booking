@@ -4,4 +4,8 @@
 !.env.example
 
 # OS
-.DS_Store.idea/
+.DS_Store
+
+# IDE
+.idea/
+*.iml
