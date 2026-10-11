@@ -2,6 +2,7 @@ package com.movie.booking.seat_service.redis;
 
 import com.movie.booking.seat_service.TestContainersConfig;
 import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.service.ExpiredHold;
 import com.movie.booking.seat_service.service.HoldStore;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -145,5 +147,66 @@ class RedisHoldStoreTest {
         assertThatThrownBy(() ->
                 holdStore.hold(showId, List.of("A1"), UUID.randomUUID(), Duration.ofSeconds(60)))
                 .isInstanceOf(SeatNotAvailableException.class);
+    }
+
+    private List<ExpiredHold> claimFor(UUID bookingId, Instant now) {
+        return holdStore.claimExpired(now, 1000).stream()
+                .filter(h -> h.bookingId().equals(bookingId))
+                .toList();
+    }
+
+    @Test
+    void claim_expired_returns_a_hold_only_once_it_is_due() {
+        UUID showId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
+        holdStore.hold(showId, List.of("A2", "A1"), bookingId, Duration.ofMinutes(5));
+
+        assertThat(claimFor(bookingId, Instant.now())).isEmpty();
+
+        assertThat(claimFor(bookingId, Instant.now().plus(Duration.ofMinutes(6))))
+                .containsExactly(new ExpiredHold(showId, List.of("A1", "A2"), bookingId));
+    }
+
+    @Test
+    void claim_expired_hands_each_hold_to_one_caller() {
+        UUID bookingId = UUID.randomUUID();
+        holdStore.hold(UUID.randomUUID(), List.of("A1"), bookingId, Duration.ofMinutes(5));
+        Instant later = Instant.now().plus(Duration.ofMinutes(6));
+
+        assertThat(claimFor(bookingId, later)).hasSize(1);
+        assertThat(claimFor(bookingId, later)).isEmpty();
+    }
+
+    @Test
+    void retrying_the_hold_does_not_create_a_second_expiry_entry() {
+        UUID bookingId = UUID.randomUUID();
+        UUID showId = UUID.randomUUID();
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofMinutes(5));
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofMinutes(5));
+
+        assertThat(claimFor(bookingId, Instant.now().plus(Duration.ofMinutes(6)))).hasSize(1);
+    }
+
+    @Test
+    void release_removes_the_hold_from_expiry_tracking() {
+        UUID showId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofMinutes(5));
+
+        holdStore.release(showId, List.of("A1"), bookingId);
+
+        assertThat(claimFor(bookingId, Instant.now().plus(Duration.ofMinutes(6)))).isEmpty();
+    }
+
+    @Test
+    void extend_pushes_the_expiry_time_out() {
+        UUID showId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofMinutes(5));
+
+        holdStore.extend(showId, List.of("A1"), bookingId, Duration.ofMinutes(30));
+
+        assertThat(claimFor(bookingId, Instant.now().plus(Duration.ofMinutes(6)))).isEmpty();
+        assertThat(claimFor(bookingId, Instant.now().plus(Duration.ofMinutes(31)))).hasSize(1);
     }
 }

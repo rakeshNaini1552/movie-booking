@@ -29,6 +29,12 @@ spring:
 seat:
   hold:
     ttl: ${SEAT_HOLD_TTL:5m}
+    expiry:
+      enabled: ${SEAT_HOLD_EXPIRY_ENABLED:true}
+      poll-interval: ${SEAT_HOLD_EXPIRY_POLL_INTERVAL:PT5S}
+      batch-size: ${SEAT_HOLD_EXPIRY_BATCH_SIZE:100}
+      lock-at-most-for: ${SEAT_HOLD_EXPIRY_LOCK_AT_MOST_FOR:PT1M}
+      lock-at-least-for: ${SEAT_HOLD_EXPIRY_LOCK_AT_LEAST_FOR:PT1S}
 
 server:
   port: ${SERVER_PORT:8081}

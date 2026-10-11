@@ -1,6 +1,7 @@
 package com.movie.booking.seat_service.service;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,6 +18,12 @@ public interface HoldStore {
 
     /** Reset the TTL of all these seats, but only if this bookingId still owns every one. */
     boolean extend(UUID showId, List<String> seatIds, UUID bookingId, Duration ttl);
+
+    /**
+     * Take up to {@code limit} holds whose expiry time is at or before {@code now}. Each hold is
+     * returned to one caller only, and is no longer tracked for expiry afterwards.
+     */
+    List<ExpiredHold> claimExpired(Instant now, int limit);
 
     List<String> getHeldSeats(UUID showId, List<String> seatIds);
 }
