@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-@Repository
 public interface ShowSeatRepository extends JpaRepository<ShowSeat, ShowSeatId> {
     List<ShowSeat> findByIdShowId(UUID showId);
 

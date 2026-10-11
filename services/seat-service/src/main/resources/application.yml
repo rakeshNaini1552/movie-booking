@@ -7,11 +7,11 @@ spring:
       enabled: true
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:seat_db}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://${SEAT_DB_HOST:localhost}:${SEAT_DB_PORT:5432}/${SEAT_DB_NAME:seat_db}
+    username: ${SEAT_DB_USER}
+    password: ${SEAT_DB_PASSWORD}
     hikari:
-      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:2000}
+      connection-timeout: ${SEAT_DB_CONNECTION_TIMEOUT_MS:2000}
 
   jpa:
     hibernate:
