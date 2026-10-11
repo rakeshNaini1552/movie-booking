@@ -1,7 +1,7 @@
 package com.movie.booking.seat_service.controller;
 
-import com.movie.booking.seat_service.DTO.BookingResponse;
-import com.movie.booking.seat_service.DTO.ConfirmRequest;
+import com.movie.booking.seat_service.dto.BookingResponse;
+import com.movie.booking.seat_service.dto.ConfirmRequest;
 import com.movie.booking.seat_service.service.SeatConfirmService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class SeatBookingController {
     @ResponseStatus(HttpStatus.CREATED)
     public BookingResponse confirm(@PathVariable UUID showId,
                                    @RequestBody @Valid ConfirmRequest request) {
-        seatConfirmService.confirm(showId, request.seatIds(), request.holdId(), request.bookingId());
+        seatConfirmService.confirm(showId, request.seatIds(), request.bookingId());
         return new BookingResponse(request.bookingId());
     }
 }

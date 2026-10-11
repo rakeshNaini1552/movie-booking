@@ -18,21 +18,23 @@ public class SeatHoldService {
     private final HoldStore holdStore;
     private final Duration holdTtl;          // comes from config, see step 3
 
-    public UUID holdSeats(UUID showId, List<String> seatIds) {
+    public void holdSeats(UUID showId, List<String> seatIds, UUID bookingId) {
         long available = showSeatRepository.countByIdShowIdAndIdSeatIdInAndStatus(showId, seatIds, SeatStatus.AVAILABLE);
         if (available != seatIds.size()) {
             throw new SeatNotAvailableException(showId, seatIds);
         }
 
-        UUID holdId = UUID.randomUUID();
-        holdStore.hold(showId, seatIds, holdId, holdTtl);
-        return holdId;
+        holdStore.hold(showId, seatIds, bookingId, holdTtl);
     }
 
-    public void extendHold(UUID showId, List<String> seatIds, UUID holdId) {
-        boolean extended = holdStore.extend(showId, seatIds, holdId, holdTtl);   // new TTL
+    public void extendHold(UUID showId, List<String> seatIds, UUID bookingId) {
+        boolean extended = holdStore.extend(showId, seatIds, bookingId, holdTtl);   // new TTL
         if (!extended) {
             throw new SeatNotAvailableException(showId, seatIds);  // which exception?
         }
+    }
+
+    public void releaseHold(UUID showId, List<String> seatIds, UUID bookingId) {
+        holdStore.release(showId, seatIds, bookingId);
     }
 }

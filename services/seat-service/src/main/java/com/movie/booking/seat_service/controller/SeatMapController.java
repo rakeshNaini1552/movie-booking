@@ -1,7 +1,7 @@
 package com.movie.booking.seat_service.controller;
 
 
-import com.movie.booking.seat_service.DTO.SeatResponse;
+import com.movie.booking.seat_service.dto.SeatResponse;
 import com.movie.booking.seat_service.service.SeatMapService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

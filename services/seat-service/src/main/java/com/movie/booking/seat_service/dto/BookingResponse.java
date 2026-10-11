@@ -1,4 +1,4 @@
-package com.movie.booking.seat_service.DTO;
+package com.movie.booking.seat_service.dto;
 
 import java.util.UUID;
 
