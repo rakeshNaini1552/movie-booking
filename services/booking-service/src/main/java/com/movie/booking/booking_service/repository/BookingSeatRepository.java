@@ -1,4 +1,4 @@
-package com.movie.booking.booking_service.repsitory;
+package com.movie.booking.booking_service.repository;
 
 import com.movie.booking.booking_service.entity.BookingSeat;
 import com.movie.booking.booking_service.entity.BookingSeatId;
