@@ -100,4 +100,29 @@ public class SeatHoldServiceTest {
 
         assertThat(holdStore.getHeldSeats(showId, List.of("A1", "A2")))
                 .containsExactly("A1");    }
+
+    @Test
+    void release_hold_frees_the_seats_for_another_booking() {
+        UUID showId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
+        insertSeat(showId, "A1", SeatStatus.AVAILABLE);
+        seatHoldService.holdSeats(showId, List.of("A1"), bookingId);
+
+        seatHoldService.releaseHold(showId, List.of("A1"), bookingId);
+
+        assertThat(holdStore.getHeldSeats(showId, List.of("A1"))).isEmpty();
+        seatHoldService.holdSeats(showId, List.of("A1"), UUID.randomUUID());
+    }
+
+    @Test
+    void release_hold_by_another_booking_leaves_the_hold() {
+        UUID showId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
+        insertSeat(showId, "A1", SeatStatus.AVAILABLE);
+        seatHoldService.holdSeats(showId, List.of("A1"), bookingId);
+
+        seatHoldService.releaseHold(showId, List.of("A1"), UUID.randomUUID());
+
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), bookingId)).isTrue();
+    }
 }

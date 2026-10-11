@@ -33,4 +33,8 @@ public class SeatHoldService {
             throw new SeatNotAvailableException(showId, seatIds);  // which exception?
         }
     }
+
+    public void releaseHold(UUID showId, List<String> seatIds, UUID bookingId) {
+        holdStore.release(showId, seatIds, bookingId);
+    }
 }
