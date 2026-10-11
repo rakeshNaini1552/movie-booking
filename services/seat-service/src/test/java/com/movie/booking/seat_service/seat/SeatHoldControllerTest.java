@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -153,5 +155,18 @@ public class SeatHoldControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(holdBody(seatId, bookingId)))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void seat_map_shows_a_held_seat_as_HELD() throws Exception {
+        UUID showId = UUID.randomUUID();
+        insertSeat(showId, "A1", SeatStatus.AVAILABLE);
+        insertSeat(showId, "A2", SeatStatus.AVAILABLE);
+        holdSeat(showId, "A1", UUID.randomUUID());
+
+        mockMvc.perform(get("/api/v1/shows/{showId}/seats", showId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.seatId=='A1')].status").value("HELD"))
+                .andExpect(jsonPath("$[?(@.seatId=='A2')].status").value("AVAILABLE"));
     }
 }

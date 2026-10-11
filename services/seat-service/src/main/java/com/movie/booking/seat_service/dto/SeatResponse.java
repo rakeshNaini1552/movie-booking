@@ -9,6 +9,7 @@ public record SeatResponse(String seatId, String row, int number, SeatType type,
 
     public static SeatResponse from(ShowSeat s, boolean held) {
         ShowSeatId showSeatId = s.getId();
-        return new SeatResponse(showSeatId.getSeatId(), s.getRow(), s.getNumber(), s.getType(), s.getStatus());
+        SeatStatus status = held ? SeatStatus.HELD : s.getStatus();
+        return new SeatResponse(showSeatId.getSeatId(), s.getRow(), s.getNumber(), s.getType(), status);
     }
 }
