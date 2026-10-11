@@ -19,7 +19,7 @@ spring:
 
 booking:
   pricing:
-    seat-price: ${BOOKING_SEAT_PRICE:250:00}
+    seat-price: ${BOOKING_SEAT_PRICE:250.00}
 
 server:
   port: ${SERVER_PORT:8082}

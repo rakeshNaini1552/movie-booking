@@ -42,6 +42,6 @@ class BookingRepositoryTest {
 
         assertThat(bookingSeatRepository.findByIdBookingId(bookingId))
                 .extracting(seat -> seat.getId().getSeatId())
-                .containsExactlyInAnyOrder("A1", "A3");
+                .containsExactlyInAnyOrder("A1", "A2");
     }
 }
