@@ -34,10 +34,10 @@ public class RedisHoldStore implements HoldStore {
     }
 
     @Override
-    public void hold(UUID showId, List<String> seatIds, UUID holdId, Duration ttl) {
+    public void hold(UUID showId, List<String> seatIds, UUID bookingId, Duration ttl) {
         List<String> keys = getKeys(showId, seatIds);
 
-        Long result = redis.execute(HOLD_SCRIPT, keys, holdId.toString(), String.valueOf(ttl.toSeconds()));
+        Long result = redis.execute(HOLD_SCRIPT, keys, bookingId.toString(), String.valueOf(ttl.toSeconds()));
 
         if (result == null || result == 0L) {
             throw new SeatNotAvailableException(showId, seatIds);
@@ -45,25 +45,25 @@ public class RedisHoldStore implements HoldStore {
     }
 
     @Override
-    public boolean isHeldBy(UUID showId, List<String> seatIds, UUID holdId) {
+    public boolean isHeldBy(UUID showId, List<String> seatIds, UUID bookingId) {
         List<String> keys = getKeys(showId, seatIds);
         List<String> values = redis.opsForValue().multiGet(keys);   // one round trip, values in the same order
-        // true only if every value equals holdId.toString()
-        return values != null && values.stream().allMatch(holdId.toString()::equals);
+        // true only if every value equals bookingId.toString()
+        return values != null && values.stream().allMatch(bookingId.toString()::equals);
     }
 
 
     @Override
-    public void release(UUID showId, List<String> seatIds, UUID holdId) {
+    public void release(UUID showId, List<String> seatIds, UUID bookingId) {
         List<String> keys = getKeys(showId, seatIds);
-        redis.execute(RELEASE_SCRIPT, keys, holdId.toString());
+        redis.execute(RELEASE_SCRIPT, keys, bookingId.toString());
     }
 
     @Override
-    public boolean extend(UUID showId, List<String> seatIds, UUID holdId, Duration ttl) {
+    public boolean extend(UUID showId, List<String> seatIds, UUID bookingId, Duration ttl) {
         List<String> keys = getKeys(showId, seatIds);
         Long result
-                = redis.execute(EXTEND_SCRIPT, keys, holdId.toString(), String.valueOf(ttl.toSeconds()));
+                = redis.execute(EXTEND_SCRIPT, keys, bookingId.toString(), String.valueOf(ttl.toSeconds()));
         return Long.valueOf(1).equals(result);
     }
 
@@ -71,7 +71,7 @@ public class RedisHoldStore implements HoldStore {
     public List<String> getHeldSeats(UUID showId, List<String> seatIds) {
         List<String> keys = getKeys(showId, seatIds);
         List<String> values = redis.opsForValue().multiGet(keys);   // one round trip, values in the same order
-        // true only if every value equals holdId.toString()
+        // true only if every value equals bookingId.toString()
         List<String> held = new ArrayList<>();
         for (int i = 0; i < seatIds.size(); i++) {
             if (values.get(i) !=null ) {      // what check means "someone holds this seat"?

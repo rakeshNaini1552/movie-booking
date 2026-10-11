@@ -56,9 +56,10 @@ public class SeatHoldServiceTest {
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
         insertSeat(showId, "A2", SeatStatus.AVAILABLE);
 
-        UUID holdId = seatHoldService.holdSeats(showId, List.of("A1", "A2"));
+        UUID bookingId = UUID.randomUUID();
+        seatHoldService.holdSeats(showId, List.of("A1", "A2"), bookingId);
 
-        assertThat(holdStore.isHeldBy(showId, List.of("A1", "A2"), holdId)).isTrue();
+        assertThat(holdStore.isHeldBy(showId, List.of("A1", "A2"), bookingId)).isTrue();
     }
 
     @Test
@@ -70,7 +71,7 @@ public class SeatHoldServiceTest {
         insertSeat(showId, "A1", SeatStatus.BOOKED);
         insertSeat(showId, "A2", SeatStatus.AVAILABLE);
 
-        assertThatThrownBy(() -> seatHoldService.holdSeats(showId, List.of("A1", "A2")))
+        assertThatThrownBy(() -> seatHoldService.holdSeats(showId, List.of("A1", "A2"), UUID.randomUUID()))
                 .isInstanceOf(SeatNotAvailableException.class);
 
         // A2 must NOT be held. How do you check that? (hint: which HoldStore method?)
@@ -82,9 +83,9 @@ public class SeatHoldServiceTest {
         UUID showId = UUID.randomUUID();
         insertSeat(showId, "A3", SeatStatus.AVAILABLE);
 
-        seatHoldService.holdSeats(showId, List.of("A3"));
+        seatHoldService.holdSeats(showId, List.of("A3"), UUID.randomUUID());
 
-        assertThatThrownBy(() -> seatHoldService.holdSeats(showId, List.of("A3")))
+        assertThatThrownBy(() -> seatHoldService.holdSeats(showId, List.of("A3"), UUID.randomUUID()))
                 .isInstanceOf(SeatNotAvailableException.class);
     }
 
@@ -95,7 +96,7 @@ public class SeatHoldServiceTest {
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
         insertSeat(showId, "A2", SeatStatus.AVAILABLE);
 
-        seatHoldService.holdSeats(showId, List.of("A1"));
+        seatHoldService.holdSeats(showId, List.of("A1"), UUID.randomUUID());
 
         assertThat(holdStore.getHeldSeats(showId, List.of("A1", "A2")))
                 .containsExactly("A1");    }

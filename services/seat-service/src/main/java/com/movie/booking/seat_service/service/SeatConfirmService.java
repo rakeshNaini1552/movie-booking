@@ -14,13 +14,13 @@ public class SeatConfirmService {
     private final HoldStore holdStore;
     private final SeatBookingService seatBookingService;
 
-    public void confirm(UUID showId, List<String> seatIds, UUID holdId, UUID bookingId){
-        if(!holdStore.isHeldBy(showId, seatIds, holdId)) {
+    public void confirm(UUID showId, List<String> seatIds, UUID bookingId) {
+        if(!holdStore.isHeldBy(showId, seatIds, bookingId)) {
             throw new SeatNotAvailableException(showId, seatIds);
         }
 
         seatBookingService.bookSeats(showId, seatIds, bookingId);
 
-        holdStore.release(showId, seatIds, holdId);
+        holdStore.release(showId, seatIds, bookingId);
     }
 }

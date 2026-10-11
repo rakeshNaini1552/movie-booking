@@ -59,9 +59,10 @@ public class SeatConfirmServiceTest {
 
         List<String> seatIds = List.of("A1", "A2");
 
-        UUID holdId = seatHoldService.holdSeats(showId, seatIds);
+        UUID bookingId = UUID.randomUUID();
+        seatHoldService.holdSeats(showId, seatIds, bookingId);
 
-        seatConfirmService.confirm(showId, seatIds,holdId, UUID.randomUUID());
+        seatConfirmService.confirm(showId, seatIds, bookingId);
 
         Integer booked = jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM show_seat WHERE show_id = ? AND seat_id IN('A1', 'A2')AND status = 'BOOKED'",
@@ -69,7 +70,7 @@ public class SeatConfirmServiceTest {
 
         assertThat(booked).isEqualTo(2);
 
-        assertThat(holdStore.isHeldBy(showId, seatIds, holdId)).isFalse();
+        assertThat(holdStore.isHeldBy(showId, seatIds, bookingId)).isFalse();
     }
 
     @Test
@@ -81,16 +82,15 @@ public class SeatConfirmServiceTest {
 
         List<String> seatIds = List.of("A1", "A2");
 
-        UUID holdId = seatHoldService.holdSeats(showId, seatIds);
+        seatHoldService.holdSeats(showId, seatIds, UUID.randomUUID());
 
-        seatConfirmService.confirm(showId, seatIds,holdId, UUID.randomUUID());
+        assertThatThrownBy(() -> seatConfirmService.confirm(showId, seatIds, UUID.randomUUID()))
+                .isInstanceOf(SeatNotAvailableException.class);
 
         Integer booked = jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM show_seat WHERE show_id = ? AND seat_id IN('A1', 'A2')AND status = 'BOOKED'",
                 Integer.class, showId);
 
-        assertThat(booked).isEqualTo(2);
-
-        assertThat(holdStore.isHeldBy(showId, seatIds, holdId)).isFalse();
+        assertThat(booked).isEqualTo(0);
     }
 }

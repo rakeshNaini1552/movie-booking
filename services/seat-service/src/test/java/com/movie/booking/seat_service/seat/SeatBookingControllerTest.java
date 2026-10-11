@@ -1,6 +1,5 @@
 package com.movie.booking.seat_service.seat;
 
-import com.jayway.jsonpath.JsonPath;
 import com.movie.booking.seat_service.SeatStatus;
 import com.movie.booking.seat_service.SeatType;
 import com.movie.booking.seat_service.TestContainersConfig;
@@ -42,19 +41,17 @@ class SeatBookingControllerTest {
                 status.name());
     }
 
-    private String holdSeats(UUID showId, String seatId) throws Exception {
-        String json = mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+    private void holdSeats(UUID showId, String seatId, UUID bookingId) throws Exception {
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"seatIds\": [\"%s\"]}".formatted(seatId)))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        return JsonPath.read(json, "$.holdId");
+                        .content("{\"seatIds\": [\"%s\"], \"bookingId\": \"%s\"}".formatted(seatId, bookingId)))
+                .andExpect(status().isCreated());
     }
 
-    private String confirmBody(String seatId, Object holdId, UUID bookingId) {
+    private String confirmBody(String seatId, UUID bookingId) {
         return """
-                {"seatIds": ["%s"], "holdId": "%s", "bookingId": "%s"}
-                """.formatted(seatId, holdId, bookingId);
+                {"seatIds": ["%s"], "bookingId": "%s"}
+                """.formatted(seatId, bookingId);
     }
 
     @Test
@@ -62,11 +59,11 @@ class SeatBookingControllerTest {
         UUID showId = UUID.randomUUID();
         UUID bookingId = UUID.randomUUID();
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
-        String holdId = holdSeats(showId, "A1");
+        holdSeats(showId, "A1", bookingId);
 
         mockMvc.perform(post("/api/v1/shows/{showId}/bookings", showId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(confirmBody("A1", holdId, bookingId)))
+                        .content(confirmBody("A1", bookingId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.bookingId").value(bookingId.toString()));
 
@@ -83,7 +80,7 @@ class SeatBookingControllerTest {
 
         mockMvc.perform(post("/api/v1/shows/{showId}/bookings", showId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(confirmBody("A1", UUID.randomUUID(), UUID.randomUUID())))
+                        .content(confirmBody("A1", UUID.randomUUID())))
                 .andExpect(status().isConflict());
 
         String seatStatus = jdbcTemplate.queryForObject(

@@ -43,43 +43,43 @@ class RedisHoldStoreTest {
     @Test
     void release_frees_only_own_hold() {
         UUID showId = UUID.randomUUID();
-        UUID holdOfY = UUID.randomUUID();
-        UUID holdOfX = UUID.randomUUID();
+        UUID bookingOfY = UUID.randomUUID();
+        UUID bookingOfX = UUID.randomUUID();
         String key = "hold:" + showId + ":A1";
 
-        holdStore.hold(showId, List.of("A1"), holdOfY, Duration.ofMinutes(5));
+        holdStore.hold(showId, List.of("A1"), bookingOfY, Duration.ofMinutes(5));
 
-        holdStore.release(showId, List.of("A1"), holdOfX);          // X is not the owner
+        holdStore.release(showId, List.of("A1"), bookingOfX);          // X is not the owner
         assertThat(redisTemplate.hasKey(key)).isTrue();             // Y's hold is untouched
 
-        holdStore.release(showId, List.of("A1"), holdOfY);          // the owner releases
+        holdStore.release(showId, List.of("A1"), bookingOfY);          // the owner releases
         assertThat(redisTemplate.hasKey(key)).isFalse();            // now it is free
     }
 
     @Test
     void is_held_by_is_false_after_expiry() {
         UUID showId = UUID.randomUUID();
-        UUID holdId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
 
-        holdStore.hold(showId, List.of("A1"), holdId, Duration.ofSeconds(1));
-        assertThat(holdStore.isHeldBy(showId, List.of("A1"), holdId)).isTrue();
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofSeconds(1));
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), bookingId)).isTrue();
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
-                .until(() -> !holdStore.isHeldBy(showId, List.of("A1"), holdId));
+                .until(() -> !holdStore.isHeldBy(showId, List.of("A1"), bookingId));
     }
 
     @Test
     void extend_resets_ttl_when_owner(){
 
         UUID showId = UUID.randomUUID();
-        UUID holdId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
         String key = "hold:" + showId + ":A1";
 
-        holdStore.hold(showId, List.of("A1"), holdId, Duration.ofSeconds(10));
-        assertThat(holdStore.isHeldBy(showId, List.of("A1"), holdId)).isTrue();
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofSeconds(10));
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), bookingId)).isTrue();
 
-        boolean extended = holdStore.extend(showId, List.of("A1"), holdId, Duration.ofSeconds(100));
+        boolean extended = holdStore.extend(showId, List.of("A1"), bookingId, Duration.ofSeconds(100));
 
         assertThat(extended).isTrue();
         assertThat(redisTemplate.getExpire(key)).isGreaterThan(10L);
@@ -90,11 +90,11 @@ class RedisHoldStoreTest {
     void extend_fails_when_not_owner(){
 
         UUID showId = UUID.randomUUID();
-        UUID holdId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
         String key = "hold:" + showId + ":A1";
 
-        holdStore.hold(showId, List.of("A1"), holdId, Duration.ofSeconds(10));
-        assertThat(holdStore.isHeldBy(showId, List.of("A1"), holdId)).isTrue();
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofSeconds(10));
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), bookingId)).isTrue();
 
         boolean extended = holdStore.extend(showId, List.of("A1"), UUID.randomUUID(), Duration.ofSeconds(100));
 
@@ -107,17 +107,17 @@ class RedisHoldStoreTest {
     void extend_fails_when_ttl_is_expired(){
 
         UUID showId = UUID.randomUUID();
-        UUID holdId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
         String key = "hold:" + showId + ":A1";
 
-        holdStore.hold(showId, List.of("A1"), holdId, Duration.ofSeconds(2));
-        assertThat(holdStore.isHeldBy(showId, List.of("A1"), holdId)).isTrue();
+        holdStore.hold(showId, List.of("A1"), bookingId, Duration.ofSeconds(2));
+        assertThat(holdStore.isHeldBy(showId, List.of("A1"), bookingId)).isTrue();
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(3))
-                .until(() -> !holdStore.isHeldBy(showId, List.of("A1"), holdId));
+                .until(() -> !holdStore.isHeldBy(showId, List.of("A1"), bookingId));
 
-        boolean extended = holdStore.extend(showId, List.of("A1"), holdId, Duration.ofSeconds(100));
+        boolean extended = holdStore.extend(showId, List.of("A1"), bookingId, Duration.ofSeconds(100));
 
         assertThat(extended).isFalse();
         assertThat(redisTemplate.getExpire(key)).isEqualTo(-2L);
