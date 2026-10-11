@@ -1,4 +1,4 @@
-package com.movie.booking.booking_service.repsitory;
+package com.movie.booking.booking_service.repository;
 
 import com.movie.booking.booking_service.entity.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
