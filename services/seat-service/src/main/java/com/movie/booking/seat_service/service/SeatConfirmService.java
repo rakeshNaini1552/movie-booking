@@ -1,6 +1,6 @@
 package com.movie.booking.seat_service.service;
 
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ public class SeatConfirmService {
 
     public void confirm(UUID showId, List<String> seatIds, UUID bookingId) {
         if(!holdStore.isHeldBy(showId, seatIds, bookingId)) {
-            throw new SeatNotAvailableException(showId, seatIds);
+            throw new SeatUnAvailableException(showId, seatIds);
         }
 
         seatBookingService.bookSeats(showId, seatIds, bookingId);

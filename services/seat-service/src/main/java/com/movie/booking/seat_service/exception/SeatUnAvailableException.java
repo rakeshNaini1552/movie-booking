@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class SeatNotAvailableException extends RuntimeException {
+public class SeatUnAvailableException extends RuntimeException {
 
     private final UUID showId;
     private final List<String> seatIds;
 
-    public SeatNotAvailableException(UUID showId, List<String> seatIds) {
+    public SeatUnAvailableException(UUID showId, List<String> seatIds) {
         super("Seat " + showId + " no longer available");
         this.showId = showId;
         this.seatIds = seatIds;

@@ -2,18 +2,14 @@ package com.movie.booking.seat_service.seat;
 
 import com.movie.booking.seat_service.SeatType;
 import com.movie.booking.seat_service.TestContainersConfig;
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import com.movie.booking.seat_service.service.SeatBookingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.List;
 import java.util.Map;
@@ -92,7 +88,7 @@ public class SeatBookingConcurrencyTest {
         assertThat(successes.get()).isEqualTo(1);
         assertThat(failures).hasSize(threads - 1);
         assertThat(failures).allSatisfy(t -> assertThat(t).isInstanceOfAny(
-                SeatNotAvailableException.class, ObjectOptimisticLockingFailureException.class));
+                SeatUnAvailableException.class, ObjectOptimisticLockingFailureException.class));
 
         String status = jdbcTemplate.queryForObject(
                 "SELECT status FROM show_seat WHERE show_id = ? AND seat_id = 'A1'", String.class, showId);

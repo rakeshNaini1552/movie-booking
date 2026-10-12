@@ -29,3 +29,6 @@ management:
     web:
       exposure:
         include: health,info
+
+seat-service:
+  base-url: ${SEAT_SERVICE_URL:http://localhost:8081}

@@ -1,6 +1,6 @@
 package com.movie.booking.seat_service.redis;
 
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import com.movie.booking.seat_service.service.ExpiredHold;
 import com.movie.booking.seat_service.service.HoldStore;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -55,7 +54,7 @@ public class RedisHoldStore implements HoldStore {
                 EXPIRY_KEY, member(showId, seatIds, bookingId), expiresAt(ttl));
 
         if (result == null || result == 0L) {
-            throw new SeatNotAvailableException(showId, seatIds);
+            throw new SeatUnAvailableException(showId, seatIds);
         }
     }
 
