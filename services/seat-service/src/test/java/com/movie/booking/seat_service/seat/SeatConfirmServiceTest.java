@@ -3,11 +3,10 @@ package com.movie.booking.seat_service.seat;
 import com.movie.booking.seat_service.SeatStatus;
 import com.movie.booking.seat_service.SeatType;
 import com.movie.booking.seat_service.TestContainersConfig;
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import com.movie.booking.seat_service.service.HoldStore;
 import com.movie.booking.seat_service.service.SeatConfirmService;
 import com.movie.booking.seat_service.service.SeatHoldService;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +14,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -85,7 +83,7 @@ public class SeatConfirmServiceTest {
         seatHoldService.holdSeats(showId, seatIds, UUID.randomUUID());
 
         assertThatThrownBy(() -> seatConfirmService.confirm(showId, seatIds, UUID.randomUUID()))
-                .isInstanceOf(SeatNotAvailableException.class);
+                .isInstanceOf(SeatUnAvailableException.class);
 
         Integer booked = jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM show_seat WHERE show_id = ? AND seat_id IN('A1', 'A2')AND status = 'BOOKED'",

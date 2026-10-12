@@ -2,7 +2,7 @@ package com.movie.booking.seat_service.entity;
 
 import com.movie.booking.seat_service.SeatStatus;
 import com.movie.booking.seat_service.SeatType;
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -32,7 +32,7 @@ public class ShowSeat {
 
     public void book(UUID bookingId, Instant now){
         if(status!= SeatStatus.AVAILABLE){
-            throw new SeatNotAvailableException(id.getShowId(), List.of(id.getSeatId()));
+            throw new SeatUnAvailableException(id.getShowId(), List.of(id.getSeatId()));
         }
         this.status = SeatStatus.BOOKED;
         this.bookingId = bookingId;

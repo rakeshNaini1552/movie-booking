@@ -1,7 +1,7 @@
 package com.movie.booking.seat_service.service;
 
 import com.movie.booking.seat_service.SeatStatus;
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import com.movie.booking.seat_service.repository.ShowSeatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class SeatHoldService {
     public void holdSeats(UUID showId, List<String> seatIds, UUID bookingId) {
         long available = showSeatRepository.countByIdShowIdAndIdSeatIdInAndStatus(showId, seatIds, SeatStatus.AVAILABLE);
         if (available != seatIds.size()) {
-            throw new SeatNotAvailableException(showId, seatIds);
+            throw new SeatUnAvailableException(showId, seatIds);
         }
 
         holdStore.hold(showId, seatIds, bookingId, holdTtl);
@@ -30,7 +30,7 @@ public class SeatHoldService {
     public void extendHold(UUID showId, List<String> seatIds, UUID bookingId) {
         boolean extended = holdStore.extend(showId, seatIds, bookingId, holdTtl);   // new TTL
         if (!extended) {
-            throw new SeatNotAvailableException(showId, seatIds);  // which exception?
+            throw new SeatUnAvailableException(showId, seatIds);  // which exception?
         }
     }
 

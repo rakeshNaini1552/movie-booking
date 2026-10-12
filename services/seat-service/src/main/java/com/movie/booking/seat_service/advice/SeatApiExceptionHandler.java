@@ -1,6 +1,6 @@
 package com.movie.booking.seat_service.advice;
 
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import com.movie.booking.seat_service.exception.ShowNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -19,8 +19,8 @@ public class SeatApiExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler(SeatNotAvailableException.class)
-    public ProblemDetail handleSeatNotAvailable(SeatNotAvailableException ex) {
+    @ExceptionHandler(SeatUnAvailableException.class)
+    public ProblemDetail handleSeatNotAvailable(SeatUnAvailableException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Seat not available");
         problem.setProperty("seatId", ex.getSeatIds());

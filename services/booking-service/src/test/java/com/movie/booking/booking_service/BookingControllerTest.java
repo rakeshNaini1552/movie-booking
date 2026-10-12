@@ -1,6 +1,7 @@
 package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.controller.BookingController;
+import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
 import com.movie.booking.booking_service.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,5 +57,21 @@ class BookingControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(bookingService);
+    }
+
+    @Test
+    void seats_unavailable_returns_409_with_message() throws Exception {
+        when(bookingService.createBooking(any(CreateBookingCommand.class)))
+                .thenThrow(new SeatsUnavailableException("Seats [A1] unavailable for booking 123"));
+
+        String body = """
+            {"userId":"%s","showId":"%s","seatIds":["A1"]}
+            """.formatted(UUID.randomUUID(), UUID.randomUUID());
+
+        mockMvc.perform(post("/api/v1/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Seats [A1] unavailable for booking 123"));
     }
 }

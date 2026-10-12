@@ -1,47 +1,32 @@
 package com.movie.booking.booking_service.service;
 
 import com.movie.booking.booking_service.CreateBookingCommand;
-import com.movie.booking.booking_service.entity.Booking;
-import com.movie.booking.booking_service.entity.BookingSeat;
-import com.movie.booking.booking_service.entity.BookingSeatId;
-import com.movie.booking.booking_service.repository.BookingRepository;
-import com.movie.booking.booking_service.repository.BookingSeatRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.movie.booking.booking_service.client.SeatClient;
 
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.List;
+import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class BookingService {
 
-    private final BookingRepository bookingRepository;
-    private final BookingSeatRepository bookingSeatRepository;
-    private final Clock clock;
+    private final BookingStateService bookingStateService;
+    private final SeatClient seatClient;
 
-    @Value("${booking.pricing.seat-price}")
-    private BigDecimal seatPrice;
-
-    @Transactional
     public UUID createBooking(CreateBookingCommand command) {
-        UUID bookingId = UUID.randomUUID();
-        Instant now = clock.instant();
-        BigDecimal total = seatPrice.multiply( BigDecimal.valueOf(command.seatIds().size()));
+        UUID bookingId = bookingStateService.createPending(command);
 
-        Booking booking = new Booking(bookingId, command.userId(), command.showId(), total, now);
-        bookingRepository.save(booking);
-
-        List<BookingSeat> seats = command.seatIds().stream()
-                .map(seatId -> new BookingSeat(new BookingSeatId(booking.getBookingId(), seatId)))
-                .toList();
-        bookingSeatRepository.saveAll(seats);
-
+        try{
+            seatClient.holdSeats(command.showId(), command.seatIds(), bookingId);
+        }catch(SeatsUnavailableException e)
+        {
+            bookingStateService.markFailed(bookingId);
+            System.out.println("Seats not available to hold" + e.getMessage());
+            throw e;
+        }
         return bookingId;
     }
 }

@@ -1,7 +1,7 @@
 package com.movie.booking.seat_service.redis;
 
 import com.movie.booking.seat_service.TestContainersConfig;
-import com.movie.booking.seat_service.exception.SeatNotAvailableException;
+import com.movie.booking.seat_service.exception.SeatUnAvailableException;
 import com.movie.booking.seat_service.service.ExpiredHold;
 import com.movie.booking.seat_service.service.HoldStore;
 import org.awaitility.Awaitility;
@@ -35,7 +35,7 @@ class RedisHoldStoreTest {
 
         assertThatThrownBy(() ->
                 holdStore.hold(showId, List.of("A1", "A2", "A3"), UUID.randomUUID(), Duration.ofMinutes(5)))
-                .isInstanceOf(SeatNotAvailableException.class);
+                .isInstanceOf(SeatUnAvailableException.class);
 
         // the point of the test: A1 and A3 must NOT be held
         assertThat(redisTemplate.hasKey("hold:" + showId + ":A1")).isFalse();
@@ -146,7 +146,7 @@ class RedisHoldStoreTest {
 
         assertThatThrownBy(() ->
                 holdStore.hold(showId, List.of("A1"), UUID.randomUUID(), Duration.ofSeconds(60)))
-                .isInstanceOf(SeatNotAvailableException.class);
+                .isInstanceOf(SeatUnAvailableException.class);
     }
 
     private List<ExpiredHold> claimFor(UUID bookingId, Instant now) {

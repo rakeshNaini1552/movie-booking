@@ -48,4 +48,13 @@ public class Booking {
         this.updatedAt = now;
     }
 
+    public void markFailed(Instant now) {
+        if (this.status != BookingStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Booking " + bookingId + " cannot be marked FAILED from status " + status);
+        }
+        this.status = BookingStatus.FAILED;
+        this.updatedAt = now;
+    }
+
 }
