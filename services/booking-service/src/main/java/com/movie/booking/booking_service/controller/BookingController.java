@@ -1,6 +1,6 @@
 package com.movie.booking.booking_service.controller;
 
-import com.movie.booking.booking_service.CreateBookingCommand;
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.dto.CreateBookingRequest;
 import com.movie.booking.booking_service.dto.CreateBookingResponse;
 import com.movie.booking.booking_service.service.BookingService;

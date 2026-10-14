@@ -1,5 +1,6 @@
 package com.movie.booking.booking_service;
 
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.entity.Booking;
 import com.movie.booking.booking_service.repository.BookingRepository;
 import com.movie.booking.booking_service.service.BookingStateService;

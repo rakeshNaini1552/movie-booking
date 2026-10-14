@@ -1,6 +1,6 @@
 package com.movie.booking.booking_service.service;
 
-import com.movie.booking.booking_service.CreateBookingCommand;
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.entity.Booking;
 import com.movie.booking.booking_service.entity.BookingSeat;
 import com.movie.booking.booking_service.entity.BookingSeatId;
@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service

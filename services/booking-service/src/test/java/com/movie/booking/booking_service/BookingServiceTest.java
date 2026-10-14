@@ -1,7 +1,9 @@
 package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.client.SeatClient;
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.entity.Booking;
+import com.movie.booking.booking_service.excepiton.SeatServiceUnavailableException;
 import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
 import com.movie.booking.booking_service.repository.BookingRepository;
 import com.movie.booking.booking_service.repository.BookingSeatRepository;
@@ -77,6 +79,24 @@ public class BookingServiceTest {
 
         assertThatThrownBy(() -> bookingService.createBooking(command))
                 .isInstanceOf(SeatsUnavailableException.class);
+
+        Booking booking = bookingRepository.findAll().stream()
+                .filter(b -> b.getShowId().equals(showId))
+                .findFirst()
+                .orElseThrow();
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.FAILED);
+    }
+
+    @Test
+    void seat_service_unreachable_booking_is_marked_failed_and_exception_propagates() {
+        UUID showId = UUID.randomUUID();
+        CreateBookingCommand command =
+                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1"));
+        doThrow(new SeatServiceUnavailableException("down", new RuntimeException("timeout")))
+                .when(seatClient).holdSeats(any(), any(), any());
+
+        assertThatThrownBy(() -> bookingService.createBooking(command))
+                .isInstanceOf(SeatServiceUnavailableException.class);
 
         Booking booking = bookingRepository.findAll().stream()
                 .filter(b -> b.getShowId().equals(showId))

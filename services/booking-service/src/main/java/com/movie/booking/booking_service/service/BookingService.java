@@ -1,14 +1,17 @@
 package com.movie.booking.booking_service.service;
 
-import com.movie.booking.booking_service.CreateBookingCommand;
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.client.SeatClient;
 
+import com.movie.booking.booking_service.excepiton.SeatServiceUnavailableException;
 import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -21,10 +24,9 @@ public class BookingService {
 
         try{
             seatClient.holdSeats(command.showId(), command.seatIds(), bookingId);
-        }catch(SeatsUnavailableException e)
-        {
+        }catch (SeatsUnavailableException | SeatServiceUnavailableException e) {
+            log.warn("Seat hold failed for booking {}: {}", bookingId, e.getMessage());
             bookingStateService.markFailed(bookingId);
-            System.out.println("Seats not available to hold" + e.getMessage());
             throw e;
         }
         return bookingId;

@@ -32,3 +32,5 @@ management:
 
 seat-service:
   base-url: ${SEAT_SERVICE_URL:http://localhost:8081}
+  connect-timeout-ms: ${SEAT_SERVICE_CONNECT_TIMEOUT_MS:500}
+  read-timeout-ms: ${SEAT_SERVICE_READ_TIMEOUT_MS:2000}
