@@ -40,7 +40,7 @@ class BookingControllerTest {
                 {"userId":"%s","showId":"%s","seatIds":["A1","A2"]}
                 """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())
@@ -53,7 +53,7 @@ class BookingControllerTest {
                 {"userId":"%s","showId":"%s","seatIds":[]}
                 """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest());
@@ -70,7 +70,7 @@ class BookingControllerTest {
             {"userId":"%s","showId":"%s","seatIds":["A1"]}
             """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isConflict())
@@ -86,7 +86,7 @@ class BookingControllerTest {
             {"userId":"%s","showId":"%s","seatIds":["A1"]}
             """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isServiceUnavailable())

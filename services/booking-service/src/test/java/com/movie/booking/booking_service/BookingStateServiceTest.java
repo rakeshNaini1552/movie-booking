@@ -28,7 +28,7 @@ class BookingStateServiceTest {
     @Test
     void markFailed_sets_status_to_FAILED() {
         UUID bookingId = bookingStateService.createPending(
-                new CreateBookingCommand(UUID.randomUUID(), UUID.randomUUID(), List.of("A1", "A2")));
+                new CreateBookingCommand(UUID.randomUUID(), UUID.randomUUID(), List.of("A1", "A2"), UUID.randomUUID()));
 
         bookingStateService.markFailed(bookingId);
 

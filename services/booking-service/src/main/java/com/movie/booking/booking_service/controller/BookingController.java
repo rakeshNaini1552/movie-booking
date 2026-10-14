@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
@@ -18,10 +20,10 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CreateBookingResponse createBooking(@Valid @RequestBody CreateBookingRequest createBookingRequest){
+    public CreateBookingResponse createBooking(@Valid @RequestBody CreateBookingRequest createBookingRequest, @RequestHeader("idempotency-key")UUID idempotencyKey){
         return new CreateBookingResponse(
                 bookingService.createBooking(
-                    new CreateBookingCommand(createBookingRequest.userId(), createBookingRequest.showId(), createBookingRequest.seatIds())
+                    new CreateBookingCommand(createBookingRequest.userId(), createBookingRequest.showId(), createBookingRequest.seatIds(), idempotencyKey)
             ));
     }
 

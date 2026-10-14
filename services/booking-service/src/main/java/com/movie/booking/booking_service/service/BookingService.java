@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -20,6 +21,10 @@ public class BookingService {
     private final SeatClient seatClient;
 
     public UUID createBooking(CreateBookingCommand command) {
+        Optional<UUID> existing = bookingStateService.findBookingIdByKey(command.idempotencyKey());
+        if (existing.isPresent()) {
+            return existing.get();
+        }
         UUID bookingId = bookingStateService.createPending(command);
 
         try{

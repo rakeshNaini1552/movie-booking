@@ -21,8 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(properties = "booking.pricing.seat-price=100.00")
 @Import(TestcontainersConfiguration.class)
@@ -44,8 +43,7 @@ public class BookingServiceTest {
         UUID showId = UUID.randomUUID();
 
         UUID bookingId = bookingService.createBooking(
-                new CreateBookingCommand(userId, showId, List.of("A1", "A2")));
-
+                new CreateBookingCommand(userId, showId, List.of("A1", "A2"), UUID.randomUUID()));
         Booking booking = bookingRepository.findById(bookingId).orElseThrow();
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING);
         assertThat(booking.getUserId()).isEqualTo(userId);
@@ -62,7 +60,7 @@ public class BookingServiceTest {
         UUID showId = UUID.randomUUID();
 
         UUID bookingId = bookingService.createBooking(
-                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1")));
+                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1"), UUID.randomUUID()));
 
         Booking booking = bookingRepository.findById(bookingId).orElseThrow();
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING);
@@ -73,7 +71,7 @@ public class BookingServiceTest {
     void hold_fails_booking_is_marked_failed_and_exception_propagates() {
         UUID showId = UUID.randomUUID();
         CreateBookingCommand command =
-                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1"));
+                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1"), UUID.randomUUID());
         doThrow(new SeatsUnavailableException("taken"))
                 .when(seatClient).holdSeats(any(), any(), any());
 
@@ -91,7 +89,7 @@ public class BookingServiceTest {
     void seat_service_unreachable_booking_is_marked_failed_and_exception_propagates() {
         UUID showId = UUID.randomUUID();
         CreateBookingCommand command =
-                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1"));
+                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1"), UUID.randomUUID());
         doThrow(new SeatServiceUnavailableException("down", new RuntimeException("timeout")))
                 .when(seatClient).holdSeats(any(), any(), any());
 
@@ -103,5 +101,43 @@ public class BookingServiceTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.FAILED);
+    }
+
+    @Test
+    void same_key_twice_returns_same_booking_and_holds_seats_once() {
+        UUID showId = UUID.randomUUID();
+        UUID key = UUID.randomUUID();
+        CreateBookingCommand command =
+                new CreateBookingCommand(UUID.randomUUID(), showId, List.of("A1"), key);
+
+        UUID first = bookingService.createBooking(command);
+        UUID second = bookingService.createBooking(command);
+
+        assertThat(second).isEqualTo(first);
+
+        long bookingsForShow = bookingRepository.findAll().stream()
+                .filter(b -> b.getShowId().equals(showId))
+                .count();
+        assertThat(bookingsForShow).isEqualTo(1);
+
+        verify(seatClient, times(1)).holdSeats(any(), any(), any());
+    }
+
+    @Test
+    void different_keys_create_different_bookings() {
+        UUID showId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        UUID first = bookingService.createBooking(
+                new CreateBookingCommand(userId, showId, List.of("A1"), UUID.randomUUID()));
+        UUID second = bookingService.createBooking(
+                new CreateBookingCommand(userId, showId, List.of("A2"), UUID.randomUUID()));
+
+        assertThat(second).isNotEqualTo(first);
+
+        long bookingsForShow = bookingRepository.findAll().stream()
+                .filter(b -> b.getShowId().equals(showId))
+                .count();
+        assertThat(bookingsForShow).isEqualTo(2);
     }
 }
