@@ -3,10 +3,11 @@ package com.movie.booking.booking_service.service;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.client.SeatClient;
 
-import com.movie.booking.booking_service.excepiton.SeatServiceUnavailableException;
-import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
+import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
+import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -25,11 +26,18 @@ public class BookingService {
         if (existing.isPresent()) {
             return existing.get();
         }
-        UUID bookingId = bookingStateService.createPending(command);
 
-        try{
+        UUID bookingId;
+        try {
+            bookingId = bookingStateService.createPending(command);
+        } catch (DataIntegrityViolationException e) {
+            return bookingStateService.findBookingIdByKey(command.idempotencyKey())
+                    .orElseThrow(() -> e);
+        }
+
+        try {
             seatClient.holdSeats(command.showId(), command.seatIds(), bookingId);
-        }catch (SeatsUnavailableException | SeatServiceUnavailableException e) {
+        } catch (SeatsUnavailableException | SeatServiceUnavailableException e) {
             log.warn("Seat hold failed for booking {}: {}", bookingId, e.getMessage());
             bookingStateService.markFailed(bookingId);
             throw e;

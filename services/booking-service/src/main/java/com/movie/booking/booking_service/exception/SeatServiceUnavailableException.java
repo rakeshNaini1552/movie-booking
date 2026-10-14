@@ -1,6 +1,4 @@
-package com.movie.booking.booking_service.excepiton;
-
-import org.springframework.web.client.ResourceAccessException;
+package com.movie.booking.booking_service.exception;
 
 public class SeatServiceUnavailableException extends RuntimeException {
     public SeatServiceUnavailableException(String s, Throwable e) {

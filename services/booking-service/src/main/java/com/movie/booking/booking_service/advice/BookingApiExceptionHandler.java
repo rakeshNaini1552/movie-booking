@@ -1,8 +1,8 @@
 package com.movie.booking.booking_service.advice;
 
 import com.movie.booking.booking_service.dto.ApiError;
-import com.movie.booking.booking_service.excepiton.SeatServiceUnavailableException;
-import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
+import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
+import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;

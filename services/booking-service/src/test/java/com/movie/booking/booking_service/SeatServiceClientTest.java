@@ -1,7 +1,7 @@
 package com.movie.booking.booking_service;
 
-import com.movie.booking.booking_service.excepiton.SeatServiceUnavailableException;
-import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
+import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
+import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import com.movie.booking.booking_service.service.SeatServiceClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
@@ -76,5 +77,18 @@ class SeatServiceClientTest {
         assertThatThrownBy(() -> client.holdSeats(showId, List.of("A1"), bookingId))
                 .isInstanceOf(SeatServiceUnavailableException.class)
                 .hasCauseInstanceOf(ResourceAccessException.class);
+    }
+
+    @Test
+    void server_error_from_seat_service_becomes_SeatServiceUnavailableException() {
+        UUID showId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
+
+        server.expect(requestTo(BASE_URL + "/api/v1/shows/" + showId + "/holds"))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThatThrownBy(() -> client.holdSeats(showId, List.of("A1"), bookingId))
+                .isInstanceOf(SeatServiceUnavailableException.class)
+                .hasCauseInstanceOf(HttpServerErrorException.class);
     }
 }

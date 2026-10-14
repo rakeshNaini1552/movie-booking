@@ -2,8 +2,8 @@ package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.controller.BookingController;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
-import com.movie.booking.booking_service.excepiton.SeatServiceUnavailableException;
-import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
+import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
+import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import com.movie.booking.booking_service.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
