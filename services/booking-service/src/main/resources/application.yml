@@ -30,5 +30,26 @@ management:
       exposure:
         include: health,info
 
+resilience4j:
+  retry:
+    instances:
+      seatService:
+        max-attempts: ${SEAT_RETRY_MAX_ATTEMPTS:3}
+        wait-duration: ${SEAT_RETRY_WAIT:200ms}
+        retry-exceptions:
+          - com.movie.booking.booking_service.exception.SeatServiceUnavailableException
+  circuitbreaker:
+    instances:
+      seatService:
+        sliding-window-size: ${SEAT_CB_WINDOW:10}
+        minimum-number-of-calls: ${SEAT_CB_MIN_CALLS:5}
+        failure-rate-threshold: ${SEAT_CB_FAILURE_RATE:50}
+        wait-duration-in-open-state: ${SEAT_CB_OPEN_WAIT:10s}
+        permitted-number-of-calls-in-half-open-state: ${SEAT_CB_HALF_OPEN_CALLS:3}
+        record-exceptions:
+          - com.movie.booking.booking_service.exception.SeatServiceUnavailableException
+
 seat-service:
   base-url: ${SEAT_SERVICE_URL:http://localhost:8081}
+  connect-timeout-ms: ${SEAT_SERVICE_CONNECT_TIMEOUT_MS:500}
+  read-timeout-ms: ${SEAT_SERVICE_READ_TIMEOUT_MS:2000}

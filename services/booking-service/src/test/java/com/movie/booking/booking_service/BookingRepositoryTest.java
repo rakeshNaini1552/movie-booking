@@ -29,7 +29,7 @@ class BookingRepositoryTest {
     void saves_a_booking_with_its_seats_and_reads_them_back() {
         UUID bookingId = UUID.randomUUID();
         Booking booking = new Booking(bookingId, UUID.randomUUID(), UUID.randomUUID(),
-                new BigDecimal("500.00"), Instant.parse("2026-10-11T10:00:00Z"));
+                new BigDecimal("500.00"), Instant.parse("2026-10-11T10:00:00Z"), UUID.randomUUID());
 
         bookingRepository.save(booking);                       // booking first: the seats point to it
         bookingSeatRepository.saveAll(List.of(

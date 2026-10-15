@@ -2,7 +2,6 @@ package com.movie.booking.booking_service.entity;
 
 import com.movie.booking.booking_service.BookingStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -36,9 +35,12 @@ public class Booking {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "idempotency_key")
+    private UUID idempotencyKey;
+
     protected Booking() {}
 
-    public Booking(UUID bookingId, UUID userId, UUID showId, BigDecimal totalAmount, Instant now) {
+    public Booking(UUID bookingId, UUID userId, UUID showId, BigDecimal totalAmount, Instant now, UUID idempotencyKey) {
         this.bookingId = bookingId;
         this.userId = userId;
         this.showId = showId;
@@ -46,6 +48,7 @@ public class Booking {
         this.status = BookingStatus.PENDING;
         this.createdAt = now;
         this.updatedAt = now;
+        this.idempotencyKey = idempotencyKey;
     }
 
     public void markFailed(Instant now) {

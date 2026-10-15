@@ -1,6 +1,6 @@
 package com.movie.booking.booking_service.service;
 
-import com.movie.booking.booking_service.CreateBookingCommand;
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.entity.Booking;
 import com.movie.booking.booking_service.entity.BookingSeat;
 import com.movie.booking.booking_service.entity.BookingSeatId;
@@ -28,13 +28,18 @@ public class BookingStateService {
     @Value("${booking.pricing.seat-price}")
     private BigDecimal seatPrice;
 
+    public Optional<UUID> findBookingIdByKey(UUID idempotencyKey) {
+        return bookingRepository.findByIdempotencyKey(idempotencyKey)
+                .map(Booking::getBookingId);
+    }
+
     @Transactional
     public UUID createPending(CreateBookingCommand command){
         UUID bookingId = UUID.randomUUID();
         Instant now = clock.instant();
         BigDecimal total = seatPrice.multiply( BigDecimal.valueOf(command.seatIds().size()));
 
-        Booking booking = new Booking(bookingId, command.userId(), command.showId(), total, now);
+        Booking booking = new Booking(bookingId, command.userId(), command.showId(), total, now, command.idempotencyKey());
         bookingRepository.save(booking);
 
         List<BookingSeat> seats = command.seatIds().stream()

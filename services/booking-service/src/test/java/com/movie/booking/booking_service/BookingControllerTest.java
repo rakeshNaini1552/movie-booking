@@ -1,7 +1,9 @@
 package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.controller.BookingController;
-import com.movie.booking.booking_service.excepiton.SeatsUnavailableException;
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
+import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
+import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import com.movie.booking.booking_service.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +40,7 @@ class BookingControllerTest {
                 {"userId":"%s","showId":"%s","seatIds":["A1","A2"]}
                 """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())
@@ -51,7 +53,7 @@ class BookingControllerTest {
                 {"userId":"%s","showId":"%s","seatIds":[]}
                 """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest());
@@ -68,10 +70,27 @@ class BookingControllerTest {
             {"userId":"%s","showId":"%s","seatIds":["A1"]}
             """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Seats [A1] unavailable for booking 123"));
+    }
+
+    @Test
+    void seat_service_unreachable_returns_503_with_message() throws Exception {
+        when(bookingService.createBooking(any(CreateBookingCommand.class)))
+                .thenThrow(new SeatServiceUnavailableException("down", new RuntimeException("timeout")));
+
+        String body = """
+            {"userId":"%s","showId":"%s","seatIds":["A1"]}
+            """.formatted(UUID.randomUUID(), UUID.randomUUID());
+
+        mockMvc.perform(post("/api/v1/bookings").header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message")
+                        .value("Seat service is temporarily unavailable, please try again"));
     }
 }

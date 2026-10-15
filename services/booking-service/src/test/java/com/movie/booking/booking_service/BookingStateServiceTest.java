@@ -1,5 +1,6 @@
 package com.movie.booking.booking_service;
 
+import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.entity.Booking;
 import com.movie.booking.booking_service.repository.BookingRepository;
 import com.movie.booking.booking_service.service.BookingStateService;
@@ -27,7 +28,7 @@ class BookingStateServiceTest {
     @Test
     void markFailed_sets_status_to_FAILED() {
         UUID bookingId = bookingStateService.createPending(
-                new CreateBookingCommand(UUID.randomUUID(), UUID.randomUUID(), List.of("A1", "A2")));
+                new CreateBookingCommand(UUID.randomUUID(), UUID.randomUUID(), List.of("A1", "A2"), UUID.randomUUID()));
 
         bookingStateService.markFailed(bookingId);
 

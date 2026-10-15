@@ -15,7 +15,7 @@ public class BookingTest {
 
     private Booking pendingBooking() {
         return new Booking(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
-                new BigDecimal("500.00"), Instant.parse("2026-01-01T10:00:00Z"));
+                new BigDecimal("500.00"), Instant.parse("2026-01-01T10:00:00Z"), UUID.randomUUID());
     }
 
     @Test
