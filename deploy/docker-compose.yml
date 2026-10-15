@@ -27,7 +27,18 @@ services:
       - "${BOOKING_DB_PORT:-5433}:5432"
     volumes:
       - booking-pgdata:/var/lib/postgresql/data
+  payment-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${PAYMENT_DB_NAME}
+      POSTGRES_USER: ${PAYMENT_DB_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
+    ports:
+      - "${PAYMENT_DB_PORT:-5434}:5432"
+    volumes:
+      - payment-pgdata:/var/lib/postgresql/data
 
 volumes:
   pgdata:
   booking-pgdata:
+  payment-pgdata:
