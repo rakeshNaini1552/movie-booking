@@ -1,6 +1,5 @@
 package com.movie.booking.booking_service.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,14 +11,19 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BookingExpiryService {
 
     private final BookingStateService bookingStateService;
     private final Clock clock;
+    private final Duration pendingTimeout;
 
-    @Value("${booking.expiry.pending-timeout}")
-    private Duration pendingTimeout;
+    public BookingExpiryService(BookingStateService bookingStateService,
+                                Clock clock,
+                                @Value("${booking.expiry.pending-timeout}") Duration pendingTimeout) {
+        this.bookingStateService = bookingStateService;
+        this.clock = clock;
+        this.pendingTimeout = pendingTimeout;
+    }
 
     public int expireStaleBookings() {
         Instant cutoff = clock.instant().minus(pendingTimeout);
