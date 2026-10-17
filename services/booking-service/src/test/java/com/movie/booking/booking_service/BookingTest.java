@@ -2,7 +2,6 @@ package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.entity.Booking;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -35,6 +34,26 @@ public class BookingTest {
         booking.markFailed(Instant.now());
 
         assertThatThrownBy(() -> booking.markFailed(Instant.now()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void pending_booking_can_be_marked_confirmed() {
+        Booking booking = pendingBooking();
+        Instant later = Instant.parse("2026-01-01T10:05:00Z");
+
+        booking.markConfirmed(later);
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        assertThat(booking.getUpdatedAt()).isEqualTo(later);
+    }
+
+    @Test
+    void failed_booking_cannot_be_marked_confirmed_again() {
+        Booking booking = pendingBooking();
+        booking.markConfirmed(Instant.now());
+
+        assertThatThrownBy(() -> booking.markConfirmed(Instant.now()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

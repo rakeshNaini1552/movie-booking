@@ -2,7 +2,7 @@ package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
 import com.movie.booking.booking_service.exception.SeatsUnavailableException;
-import com.movie.booking.booking_service.service.SeatServiceClient;
+import com.movie.booking.booking_service.client.SeatServiceClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;

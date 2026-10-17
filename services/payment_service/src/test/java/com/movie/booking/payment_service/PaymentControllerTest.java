@@ -1,5 +1,6 @@
-package com.movie.booking.payment_service.controller;
+package com.movie.booking.payment_service;
 
+import com.movie.booking.payment_service.controller.PaymentController;
 import com.movie.booking.payment_service.entity.Payment;
 import com.movie.booking.payment_service.entity.PaymentStatus;
 import com.movie.booking.payment_service.exception.InvalidPaymentTokenException;

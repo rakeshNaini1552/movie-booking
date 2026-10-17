@@ -1,7 +1,8 @@
-package com.movie.booking.booking_service.service;
+package com.movie.booking.booking_service.client;
 
-import com.movie.booking.booking_service.client.SeatClient;
+import com.movie.booking.booking_service.dto.ConfirmSeatsRequest;
 import com.movie.booking.booking_service.dto.SeatHoldRequest;
+import com.movie.booking.booking_service.exception.SeatConfirmationFailedException;
 import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class SeatServiceClient implements SeatClient {
-    private final RestClient restClient;
+    private final RestClient seatServiceRestClient;
 
 
     @Retry(name = "seatService")
@@ -29,7 +30,7 @@ public class SeatServiceClient implements SeatClient {
     @Override
     public void holdSeats(UUID showId, List<String> seatIds, UUID bookingId) {
         try {
-            restClient.post()
+            seatServiceRestClient.post()
                     .uri("/api/v1/shows/{showId}/holds", showId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new SeatHoldRequest(seatIds, bookingId))
@@ -39,6 +40,23 @@ public class SeatServiceClient implements SeatClient {
             throw new SeatsUnavailableException("Seats " + seatIds + " unavailable for booking " + bookingId);
         } catch (ResourceAccessException | HttpServerErrorException e) {
             throw new SeatServiceUnavailableException("Seat service failed for booking " + bookingId, e);
+        }
+    }
+
+    // SeatServiceClient
+    @Override
+    public void confirmSeats(UUID showId, List<String> seatIds, UUID bookingId) {
+        try {
+            seatServiceRestClient.post()
+                    .uri("/api/v1/shows/{showId}/bookings", showId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ConfirmSeatsRequest(seatIds, bookingId))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (HttpClientErrorException.Conflict e) {
+            throw new SeatConfirmationFailedException("Seats could not be confirmed for booking " + bookingId);
+        } catch (ResourceAccessException | HttpServerErrorException e) {
+            throw new SeatServiceUnavailableException("Seat confirm failed for booking " + bookingId, e);
         }
     }
 
