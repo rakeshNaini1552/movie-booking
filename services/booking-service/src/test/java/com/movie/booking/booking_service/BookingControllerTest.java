@@ -2,10 +2,12 @@ package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.controller.BookingController;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
-import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
-import com.movie.booking.booking_service.exception.SeatsUnavailableException;
+import com.movie.booking.booking_service.dto.PayBookingCommand;
+import com.movie.booking.booking_service.dto.PayOutcome;
+import com.movie.booking.booking_service.exception.*;
 import com.movie.booking.booking_service.service.BookingService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -14,12 +16,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BookingController.class)
 class BookingControllerTest {
@@ -29,6 +32,9 @@ class BookingControllerTest {
 
     @MockitoBean
     private BookingService bookingService;
+
+    private static final String PAY_URL = "/api/v1/bookings/{id}/payments";
+    private static final String PAY_BODY = "{\"paymentToken\":\"tok_success\"}";
 
     @Test
     void valid_request_returns_201_with_booking_id() throws Exception {
@@ -92,5 +98,124 @@ class BookingControllerTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.message")
                         .value("Seat service is temporarily unavailable, please try again"));
+    }
+
+    @Test
+    void pay_success_returns_200_with_confirmed_and_passes_path_id_key_and_token() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        UUID key = UUID.randomUUID();
+        when(bookingService.pay(any()))
+                .thenReturn(new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS));
+
+        mockMvc.perform(post(PAY_URL, bookingId)
+                        .header("Idempotency-Key", key.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bookingId").value(bookingId.toString()))
+                .andExpect(jsonPath("$.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.paymentStatus").value("SUCCESS"));
+
+        ArgumentCaptor<PayBookingCommand> captor = ArgumentCaptor.forClass(PayBookingCommand.class);
+        verify(bookingService).pay(captor.capture());
+        assertThat(captor.getValue().bookingId()).isEqualTo(bookingId);
+        assertThat(captor.getValue().idempotencyKey()).isEqualTo(key);
+        assertThat(captor.getValue().paymentToken()).isEqualTo("tok_success");
+    }
+
+    @Test
+    void pay_declined_returns_200_with_pending_booking_and_failed_payment() throws Exception {
+        when(bookingService.pay(any()))
+                .thenReturn(new PayOutcome(BookingStatus.PENDING, PaymentStatus.FAILED));
+
+        mockMvc.perform(post(PAY_URL, UUID.randomUUID())
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.paymentStatus").value("FAILED"));
+    }
+
+    @Test
+    void pay_without_idempotency_key_returns_400() throws Exception {
+        mockMvc.perform(post(PAY_URL, UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(bookingService);
+    }
+
+    @Test
+    void pay_with_blank_token_returns_400() throws Exception {
+        mockMvc.perform(post(PAY_URL, UUID.randomUUID())
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentToken\":\"\"}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(bookingService);
+    }
+
+    @Test
+    void pay_unknown_booking_returns_404() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        when(bookingService.pay(any())).thenThrow(new BookingNotFoundException(bookingId));
+
+        mockMvc.perform(post(PAY_URL, bookingId)
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void pay_booking_not_pending_returns_409() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        when(bookingService.pay(any()))
+                .thenThrow(new BookingNotPayableException(bookingId, BookingStatus.CONFIRMED));
+
+        mockMvc.perform(post(PAY_URL, bookingId)
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void pay_invalid_token_returns_400_without_echoing_the_token() throws Exception {
+        when(bookingService.pay(any())).thenThrow(new InvalidPaymentTokenException("rejected"));
+
+        mockMvc.perform(post(PAY_URL, UUID.randomUUID())
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(not(containsString("tok_success"))));
+    }
+
+    @Test
+    void pay_payment_service_down_returns_503() throws Exception {
+        when(bookingService.pay(any()))
+                .thenThrow(new PaymentServiceUnavailableException("down", new RuntimeException()));
+
+        mockMvc.perform(post(PAY_URL, UUID.randomUUID())
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void pay_seats_not_confirmed_after_payment_returns_409() throws Exception {
+        when(bookingService.pay(any()))
+                .thenThrow(new SeatConfirmationFailedException("hold expired"));
+
+        mockMvc.perform(post(PAY_URL, UUID.randomUUID())
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(PAY_BODY))
+                .andExpect(status().isConflict());
     }
 }

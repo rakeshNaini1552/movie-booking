@@ -1,10 +1,11 @@
 package com.movie.booking.booking_service.service;
 
-import com.movie.booking.booking_service.dto.CreateBookingCommand;
+import com.movie.booking.booking_service.BookingStatus;
+import com.movie.booking.booking_service.PaymentStatus;
+import com.movie.booking.booking_service.client.PaymentClient;
 import com.movie.booking.booking_service.client.SeatClient;
-
-import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
-import com.movie.booking.booking_service.exception.SeatsUnavailableException;
+import com.movie.booking.booking_service.dto.*;
+import com.movie.booking.booking_service.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class BookingService {
 
     private final BookingStateService bookingStateService;
+    private final PaymentClient paymentClient;
     private final SeatClient seatClient;
 
     public UUID createBooking(CreateBookingCommand command) {
@@ -44,4 +46,32 @@ public class BookingService {
         }
         return bookingId;
     }
-}
+    public PayOutcome pay(PayBookingCommand command) {
+        PayableBooking booking = bookingStateService.findPayable(command.bookingId())
+                .orElseThrow(() -> new BookingNotFoundException(command.bookingId()));
+
+        if (booking.status() != BookingStatus.PENDING) {
+            throw new BookingNotPayableException(booking.bookingId(), booking.status());
+        }
+
+        PaymentResult result = paymentClient.pay(
+                booking.bookingId(),
+                booking.totalAmount(),
+                command.paymentToken(),
+                command.idempotencyKey());
+
+        if (result.status() == PaymentStatus.FAILED) {
+            return new PayOutcome(BookingStatus.PENDING, PaymentStatus.FAILED);
+        }
+
+        try {
+            seatClient.confirmSeats(booking.showId(), booking.seatIds(), booking.bookingId());
+        } catch (SeatConfirmationFailedException | SeatServiceUnavailableException e) {
+            log.error("PAID but seats not confirmed for booking {} (payment {}): {}",
+                    booking.bookingId(), result.paymentId(), e.getMessage());
+            throw e;
+        }
+
+        bookingStateService.markConfirmed(booking.bookingId());
+        return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
+    }}

@@ -35,4 +35,22 @@ public class AppConfig {
                 .requestFactory(requestFactory)
                 .build();
     }
+
+    @Bean
+    public RestClient paymentServiceRestClient(
+            @Value("${payment-service.base-url}") String baseUrl,
+            @Value("${payment-service.connect-timeout-ms}") long connectTimeoutMs,
+            @Value("${payment-service.read-timeout-ms}") long readTimeoutMs) {
+
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(connectTimeoutMs))
+                .build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
+
+        return RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestFactory(requestFactory)
+                .build();
+    }
 }

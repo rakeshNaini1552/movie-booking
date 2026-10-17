@@ -1,8 +1,6 @@
 package com.movie.booking.booking_service.controller;
 
-import com.movie.booking.booking_service.dto.CreateBookingCommand;
-import com.movie.booking.booking_service.dto.CreateBookingRequest;
-import com.movie.booking.booking_service.dto.CreateBookingResponse;
+import com.movie.booking.booking_service.dto.*;
 import com.movie.booking.booking_service.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +23,15 @@ public class BookingController {
                 bookingService.createBooking(
                     new CreateBookingCommand(createBookingRequest.userId(), createBookingRequest.showId(), createBookingRequest.seatIds(), idempotencyKey)
             ));
+    }
+
+    @PostMapping("/{bookingId}/payments")
+    public PayBookingResponse pay(@PathVariable UUID bookingId,
+                                  @RequestHeader("Idempotency-Key") UUID idempotencyKey,
+                                  @Valid @RequestBody PayBookingRequest request) {
+        PayOutcome outcome = bookingService.pay(
+                new PayBookingCommand(bookingId, request.paymentToken(), idempotencyKey));
+        return new PayBookingResponse(bookingId, outcome.bookingStatus(), outcome.paymentStatus());
     }
 
 }

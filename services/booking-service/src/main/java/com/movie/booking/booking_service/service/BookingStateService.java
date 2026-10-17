@@ -1,6 +1,7 @@
 package com.movie.booking.booking_service.service;
 
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
+import com.movie.booking.booking_service.dto.PayableBooking;
 import com.movie.booking.booking_service.entity.Booking;
 import com.movie.booking.booking_service.entity.BookingSeat;
 import com.movie.booking.booking_service.entity.BookingSeatId;
@@ -55,5 +56,25 @@ public class BookingStateService {
                 .orElseThrow(() -> new IllegalStateException("Booking not found" + bookingId));
         booking.markFailed(clock.instant());
         bookingRepository.save(booking);
+    }
+
+    @Transactional
+    public void markConfirmed(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalStateException("Booking not found " + bookingId));
+        booking.markConfirmed(clock.instant());
+        bookingRepository.save(booking);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PayableBooking> findPayable(UUID bookingId) {
+        return bookingRepository.findById(bookingId)
+                .map(booking -> {
+                    List<String> seatIds = bookingSeatRepository.findByIdBookingId(bookingId).stream()
+                            .map(seat -> seat.getId().getSeatId())
+                            .toList();
+                    return new PayableBooking(booking.getBookingId(), booking.getShowId(),
+                            booking.getTotalAmount(), booking.getStatus(), seatIds);
+                });
     }
 }

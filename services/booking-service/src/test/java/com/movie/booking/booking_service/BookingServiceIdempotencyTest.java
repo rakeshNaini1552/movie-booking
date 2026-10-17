@@ -1,5 +1,6 @@
 package com.movie.booking.booking_service;
 
+import com.movie.booking.booking_service.client.PaymentClient;
 import com.movie.booking.booking_service.client.SeatClient;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.service.BookingService;
@@ -20,13 +21,14 @@ class BookingServiceIdempotencyTest {
 
     private BookingStateService stateService;
     private SeatClient seatClient;
+    private PaymentClient paymentClient;
     private BookingService bookingService;
 
     @BeforeEach
     void setUp() {
         stateService = mock(BookingStateService.class);
         seatClient = mock(SeatClient.class);
-        bookingService = new BookingService(stateService, seatClient);
+        bookingService = new BookingService(stateService, paymentClient, seatClient);
     }
 
     @Test

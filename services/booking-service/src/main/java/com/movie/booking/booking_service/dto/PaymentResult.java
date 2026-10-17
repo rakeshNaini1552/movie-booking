@@ -1,0 +1,8 @@
+package com.movie.booking.booking_service.dto;
+
+import com.movie.booking.booking_service.PaymentStatus;
+
+import java.util.UUID;
+
+public record PaymentResult(UUID paymentId, PaymentStatus status) {
+}
