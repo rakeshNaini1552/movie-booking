@@ -1,10 +1,11 @@
 package com.movie.booking.booking_service.client;
 
 import com.movie.booking.booking_service.dto.ConfirmSeatsRequest;
+import com.movie.booking.booking_service.dto.ReleaseSeatsRequest;
 import com.movie.booking.booking_service.dto.SeatHoldRequest;
 import com.movie.booking.booking_service.exception.SeatConfirmationFailedException;
-import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
+import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -57,6 +58,20 @@ public class SeatServiceClient implements SeatClient {
             throw new SeatConfirmationFailedException("Seats could not be confirmed for booking " + bookingId);
         } catch (ResourceAccessException | HttpServerErrorException e) {
             throw new SeatServiceUnavailableException("Seat confirm failed for booking " + bookingId, e);
+        }
+    }
+
+    @Override
+    public void releaseSeats(UUID showId, List<String> seatIds, UUID bookingId) {
+        try {
+            seatServiceRestClient.post()
+                    .uri("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, bookingId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ReleaseSeatsRequest(seatIds))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (ResourceAccessException | HttpServerErrorException e) {
+            throw new SeatServiceUnavailableException("Seat release failed for booking " + bookingId, e);
         }
     }
 
