@@ -1,5 +1,6 @@
 package com.movie.booking.booking_service.service;
 
+import com.movie.booking.booking_service.BookingStatus;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.dto.PayableBooking;
 import com.movie.booking.booking_service.entity.Booking;
@@ -76,5 +77,19 @@ public class BookingStateService {
                     return new PayableBooking(booking.getBookingId(), booking.getShowId(),
                             booking.getTotalAmount(), booking.getStatus(), seatIds);
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public List<UUID> findStalePendingIds(Instant cutoff) {
+        return bookingRepository.findTop100ByStatusAndCreatedAtBefore(BookingStatus.PENDING, cutoff)
+                .stream()
+                .map(Booking::getBookingId)
+                .toList();
+    }
+
+    @Transactional
+    public boolean markExpired(UUID bookingId) {
+        return bookingRepository.transition(
+                bookingId, BookingStatus.PENDING, BookingStatus.EXPIRED, clock.instant()) == 1;
     }
 }
