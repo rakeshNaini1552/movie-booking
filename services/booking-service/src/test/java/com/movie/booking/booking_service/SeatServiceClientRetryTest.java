@@ -1,6 +1,6 @@
-package com.movie.booking.booking_service.client;
+package com.movie.booking.booking_service;
 
-import com.movie.booking.booking_service.TestcontainersConfiguration;
+import com.movie.booking.booking_service.client.SeatClient;
 import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
 import com.movie.booking.booking_service.exception.SeatsUnavailableException;
 import com.sun.net.httpserver.HttpServer;
