@@ -34,4 +34,11 @@ public class BookingController {
         return new PayBookingResponse(bookingId, outcome.bookingStatus(), outcome.paymentStatus());
     }
 
+    @GetMapping("/{bookingId}")
+    public BookingResponse getBooking(@PathVariable UUID bookingId) {
+        PayableBooking booking = bookingService.getBooking(bookingId);
+        return new BookingResponse(booking.bookingId(), booking.showId(), booking.status(),
+                booking.totalAmount(), booking.seatIds());
+    }
+
 }

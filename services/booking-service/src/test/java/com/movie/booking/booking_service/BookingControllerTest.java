@@ -4,6 +4,7 @@ import com.movie.booking.booking_service.controller.BookingController;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.dto.PayBookingCommand;
 import com.movie.booking.booking_service.dto.PayOutcome;
+import com.movie.booking.booking_service.dto.PayableBooking;
 import com.movie.booking.booking_service.exception.*;
 import com.movie.booking.booking_service.service.BookingService;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +24,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -217,5 +221,40 @@ class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(PAY_BODY))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void get_booking_returns_200_with_booking_details() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        UUID showId = UUID.randomUUID();
+        when(bookingService.getBooking(bookingId)).thenReturn(new PayableBooking(
+                bookingId, showId, new BigDecimal("500.00"), BookingStatus.CONFIRMED, List.of("A1", "A2")));
+
+        mockMvc.perform(get("/api/v1/bookings/{id}", bookingId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bookingId").value(bookingId.toString()))
+                .andExpect(jsonPath("$.showId").value(showId.toString()))
+                .andExpect(jsonPath("$.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.totalAmount").value(500.0))
+                .andExpect(jsonPath("$.seatIds[0]").value("A1"))
+                .andExpect(jsonPath("$.seatIds[1]").value("A2"))
+                .andExpect(jsonPath("$.userId").doesNotExist());
+    }
+
+    @Test
+    void get_unknown_booking_returns_404() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        when(bookingService.getBooking(bookingId)).thenThrow(new BookingNotFoundException(bookingId));
+
+        mockMvc.perform(get("/api/v1/bookings/{id}", bookingId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void get_booking_with_a_malformed_id_returns_400() throws Exception {
+        mockMvc.perform(get("/api/v1/bookings/{id}", "not-a-uuid"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(bookingService);
     }
 }

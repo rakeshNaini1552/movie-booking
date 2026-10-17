@@ -80,4 +80,9 @@ public class BookingService {
         }
         return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
     }
+
+    public PayableBooking getBooking(UUID bookingId) {
+        return bookingStateService.findPayable(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId));
+    }
 }
