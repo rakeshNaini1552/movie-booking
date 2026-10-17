@@ -2,6 +2,7 @@ package com.movie.booking.seat_service.controller;
 
 import com.movie.booking.seat_service.dto.ExtendRequest;
 import com.movie.booking.seat_service.dto.HoldRequest;
+import com.movie.booking.seat_service.dto.ReleaseRequest;
 import com.movie.booking.seat_service.service.SeatHoldService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,13 @@ public class SeatHoldController {
                            @PathVariable UUID bookingId,
                            @RequestBody @Valid ExtendRequest request) {
         seatHoldService.extendHold(showId, request.seatIds(), bookingId);
+    }
+
+    @PostMapping("/{showId}/holds/{bookingId}/release")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void releaseHold(@PathVariable UUID showId,
+                            @PathVariable UUID bookingId,
+                            @RequestBody @Valid ReleaseRequest request) {
+        seatHoldService.releaseHold(showId, request.seatIds(), bookingId);
     }
 }
