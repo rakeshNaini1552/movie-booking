@@ -49,6 +49,7 @@ class BookingServicePayTest {
     @Test
     void successful_payment_confirms_seats_then_marks_confirmed() {
         givenBooking(BookingStatus.PENDING);
+        when(bookingStateService.markConfirmed(bookingId)).thenReturn(true);
         when(paymentClient.pay(bookingId, amount, "tok_success", key))
                 .thenReturn(new PaymentResult(paymentId, PaymentStatus.SUCCESS));
 
@@ -80,6 +81,7 @@ class BookingServicePayTest {
     @Test
     void retry_after_decline_with_a_new_key_and_token_can_succeed() {
         givenBooking(BookingStatus.PENDING);
+        when(bookingStateService.markConfirmed(bookingId)).thenReturn(true);
         UUID secondKey = UUID.randomUUID();
         when(paymentClient.pay(bookingId, amount, "tok_decline", key))
                 .thenReturn(new PaymentResult(UUID.randomUUID(), PaymentStatus.FAILED));
@@ -92,6 +94,19 @@ class BookingServicePayTest {
         assertThat(first.paymentStatus()).isEqualTo(PaymentStatus.FAILED);
         assertThat(second.bookingStatus()).isEqualTo(BookingStatus.CONFIRMED);
         verify(seatClient, times(1)).confirmSeats(showId, seats, bookingId);
+    }
+
+    @Test
+    void booking_expired_during_payment_is_reported_and_not_confirmed() {
+        givenBooking(BookingStatus.PENDING);
+        when(paymentClient.pay(any(), any(), any(), any()))
+                .thenReturn(new PaymentResult(paymentId, PaymentStatus.SUCCESS));
+        when(bookingStateService.markConfirmed(bookingId)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.pay(command))
+                .isInstanceOf(BookingNotPayableException.class);
+
+        verify(seatClient).confirmSeats(showId, seats, bookingId);
     }
 
     @Test

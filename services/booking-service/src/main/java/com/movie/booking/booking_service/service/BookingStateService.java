@@ -60,11 +60,9 @@ public class BookingStateService {
     }
 
     @Transactional
-    public void markConfirmed(UUID bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalStateException("Booking not found " + bookingId));
-        booking.markConfirmed(clock.instant());
-        bookingRepository.save(booking);
+    public boolean markConfirmed(UUID bookingId) {
+        return bookingRepository.transition(
+                bookingId, BookingStatus.PENDING, BookingStatus.CONFIRMED, clock.instant()) == 1;
     }
 
     @Transactional(readOnly = true)
