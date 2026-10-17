@@ -17,11 +17,9 @@ import java.time.Duration;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -169,4 +167,70 @@ public class SeatHoldControllerTest {
                 .andExpect(jsonPath("$[?(@.seatId=='A1')].status").value("HELD"))
                 .andExpect(jsonPath("$[?(@.seatId=='A2')].status").value("AVAILABLE"));
     }
+    @Test
+    void release_returns_204_and_frees_the_seat_for_another_booking() throws Exception {
+        UUID showId = UUID.randomUUID();
+        insertSeat(showId, "A1", SeatStatus.AVAILABLE);
+        UUID bookingId = UUID.randomUUID();
+        holdSeat(showId, "A1", bookingId);
+
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, bookingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"seatIds\": [\"A1\"]}"))
+                .andExpect(status().isNoContent());
+
+        assertThat(redis.hasKey("hold:" + showId + ":A1")).isFalse();
+        holdSeat(showId, "A1", UUID.randomUUID());
+    }
+
+    @Test
+    void release_with_a_different_booking_id_returns_204_but_keeps_the_hold() throws Exception {
+        UUID showId = UUID.randomUUID();
+        insertSeat(showId, "A1", SeatStatus.AVAILABLE);
+        holdSeat(showId, "A1", UUID.randomUUID());
+
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"seatIds\": [\"A1\"]}"))
+                .andExpect(status().isNoContent());
+
+        assertThat(redis.hasKey("hold:" + showId + ":A1")).isTrue();
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(holdBody("A1", UUID.randomUUID())))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void releasing_twice_returns_204_both_times() throws Exception {
+        UUID showId = UUID.randomUUID();
+        insertSeat(showId, "A1", SeatStatus.AVAILABLE);
+        UUID bookingId = UUID.randomUUID();
+        holdSeat(showId, "A1", bookingId);
+
+        for (int i = 0; i < 2; i++) {
+            mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, bookingId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"seatIds\": [\"A1\"]}"))
+                    .andExpect(status().isNoContent());
+        }
+    }
+
+    @Test
+    void release_with_empty_seat_list_returns_400() throws Exception {
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release",
+                        UUID.randomUUID(), UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"seatIds\": []}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void release_without_body_returns_400() throws Exception {
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release",
+                        UUID.randomUUID(), UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
 }
