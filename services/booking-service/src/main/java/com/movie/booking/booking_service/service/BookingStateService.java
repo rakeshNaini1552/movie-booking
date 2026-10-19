@@ -6,6 +6,7 @@ import com.movie.booking.booking_service.dto.PayableBooking;
 import com.movie.booking.booking_service.entity.Booking;
 import com.movie.booking.booking_service.entity.BookingSeat;
 import com.movie.booking.booking_service.entity.BookingSeatId;
+import com.movie.booking.booking_service.event.BookingConfirmedEvent;
 import com.movie.booking.booking_service.repository.BookingRepository;
 import com.movie.booking.booking_service.repository.BookingSeatRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class BookingStateService {
     private final BookingSeatRepository bookingSeatRepository;
     private final BookingRepository bookingRepository;
     private final Clock clock;
+    private final OutboxService outboxService;
 
     @Value("${booking.pricing.seat-price}")
     private BigDecimal seatPrice;
@@ -61,8 +63,22 @@ public class BookingStateService {
 
     @Transactional
     public boolean markConfirmed(UUID bookingId) {
-        return bookingRepository.transition(
+        boolean confirmed = bookingRepository.transition(
                 bookingId, BookingStatus.PENDING, BookingStatus.CONFIRMED, clock.instant()) == 1;
+        if (!confirmed) {
+            return false;
+        }
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow();
+        List<String> seatIds = bookingSeatRepository.findByIdBookingId(bookingId)
+                .stream()
+                .map(seat->seat.getId().getSeatId())
+                .toList();
+
+        UUID eventId = UUID.randomUUID();
+        BookingConfirmedEvent event = new BookingConfirmedEvent(
+                eventId, clock.instant(), bookingId, booking.getUserId(), booking.getShowId(), seatIds);
+        outboxService.enqueue(bookingId, eventId, "BookingConfirmed", event);
+        return true;
     }
 
     @Transactional(readOnly = true)
