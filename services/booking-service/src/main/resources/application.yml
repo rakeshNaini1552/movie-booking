@@ -24,6 +24,8 @@ booking:
     enabled: ${BOOKING_EXPIRY_ENABLED:true}
     poll-interval-ms: ${BOOKING_EXPIRY_POLL_MS:60000}
     pending-timeout: ${BOOKING_EXPIRY_PENDING_TIMEOUT:10m}
+  outbox:
+    topic: ${BOOKING_EVENTS_TOPIC:booking-events}
 
 server:
   port: ${SERVER_PORT:8082}
