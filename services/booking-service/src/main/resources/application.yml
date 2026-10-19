@@ -9,6 +9,13 @@ spring:
     hikari:
       connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:2000}
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -26,6 +33,9 @@ booking:
     pending-timeout: ${BOOKING_EXPIRY_PENDING_TIMEOUT:10m}
   outbox:
     topic: ${BOOKING_EVENTS_TOPIC:booking-events}
+    poll-interval-ms: ${BOOKING_OUTBOX_POLL_MS:1000}
+    publisher:
+      enabled: ${BOOKING_OUTBOX_PUBLISHER_ENABLED:true}
 
 server:
   port: ${SERVER_PORT:8082}

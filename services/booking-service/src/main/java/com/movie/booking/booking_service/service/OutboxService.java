@@ -5,9 +5,11 @@ import com.movie.booking.booking_service.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -31,5 +33,10 @@ public class OutboxService {
     public void enqueue(UUID aggregateId, UUID eventId, String eventType, Object event) {
         String payload = jsonMapper.writeValueAsString(event);
         outboxRepository.save(new OutboxEvent(eventId, aggregateId, eventType, topic, payload, clock.instant()));
+    }
+
+    @Transactional
+    public void markSent(UUID id) {
+        outboxRepository.findById(id).ifPresent(row -> row.markSent(Instant.now()));
     }
 }
