@@ -16,4 +16,9 @@ public class TestcontainersConfiguration {
 		return new PostgreSQLContainer(DockerImageName.parse("postgres:16"));
 	}
 
+	@Bean
+	@ServiceConnection
+	KafkaContainer kafkaContainer() {
+		return new KafkaContainer(DockerImageName.parse("apache/kafka:4.3.1"));
+	}
 }
