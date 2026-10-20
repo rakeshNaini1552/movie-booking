@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: ticket-service
+
+  datasource:
+    url: jdbc:postgresql://${TICKET_DB_HOST:localhost}:${TICKET_DB_PORT:5432}/${TICKET_DB_NAME:ticket_db}
+    username: ${TICKET_DB_USER}
+    password: ${TICKET_DB_PASSWORD}
+    hikari:
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:2000}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+server:
+  port: 8084
