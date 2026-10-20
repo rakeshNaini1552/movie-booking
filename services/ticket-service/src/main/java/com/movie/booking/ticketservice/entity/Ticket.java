@@ -1,7 +1,10 @@
 package com.movie.booking.ticketservice.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -9,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Entity
 @Table(name = "ticket")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Ticket {
 
     @Id
@@ -33,6 +37,7 @@ public class Ticket {
     @Column(name = "used_at")
     private Instant usedAt;
 
+    @Builder
     public Ticket(UUID ticketId, UUID bookingId, UUID eventId, String qrPayload, Instant issuedAt) {
         this.ticketId = ticketId;
         this.bookingId = bookingId;
@@ -42,6 +47,5 @@ public class Ticket {
         this.status = TicketStatus.ISSUED;
     }
 
-    protected Ticket(){}
 }
 

@@ -1,0 +1,3 @@
+ticket:
+  qr:
+    secret: test-secret-for-tests
