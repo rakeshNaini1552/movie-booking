@@ -1,6 +1,10 @@
 package com.movie.booking.ticketservice.service;
 
 import com.movie.booking.ticketservice.entity.Ticket;
+import com.movie.booking.ticketservice.entity.TicketStatus;
+import com.movie.booking.ticketservice.exception.InvalidQrException;
+import com.movie.booking.ticketservice.exception.TicketNotFoundException;
+import com.movie.booking.ticketservice.exception.TicketNotScannableException;
 import com.movie.booking.ticketservice.event.BookingConfirmedEvent;
 import com.movie.booking.ticketservice.event.TicketIssuedEvent;
 import com.movie.booking.ticketservice.repository.TicketRepository;
@@ -48,5 +52,32 @@ public class TicketService {
                 event.userId());
 
         outboxService.enqueue(saved.getBookingId(), issued.eventId(), TICKET_ISSUED, issued);
-        return saved;    }
+        return saved;
+    }
+
+    public Ticket getByBookingId(UUID bookingId) {
+        return ticketRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> TicketNotFoundException.forBooking(bookingId));
+    }
+
+    public Ticket getTicket(UUID ticketId) {
+        return ticketRepository.findById(ticketId)
+                .orElseThrow(() -> TicketNotFoundException.forTicket(ticketId));
+    }
+
+    @Transactional
+    public Ticket scan(UUID ticketId, String payload) {
+        UUID payloadTicketId = qrSigner.verify(payload)
+                .orElseThrow(() -> new InvalidQrException("Invalid QR payload"));
+        if (!payloadTicketId.equals(ticketId)) {
+            throw new InvalidQrException("QR payload does not belong to this ticket");
+        }
+
+        int updated = ticketRepository.markUsed(ticketId, TicketStatus.ISSUED, TicketStatus.USED, clock.instant());
+        Ticket ticket = getTicket(ticketId);
+        if (updated == 0) {
+            throw new TicketNotScannableException(ticket);
+        }
+        return ticket;
+    }
 }
