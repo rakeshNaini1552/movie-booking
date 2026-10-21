@@ -24,6 +24,13 @@ spring:
 ticket:
   consumer:
     topic: booking-events
+    dlt-topic: booking-events-dlt
+    retry:
+      max-retries: 4
+      initial-interval-ms: 1000
+      multiplier: 2.0
+      max-interval-ms: 10000
+
   qr:
     secret: ${TICKET_QR_SECRET}
 
