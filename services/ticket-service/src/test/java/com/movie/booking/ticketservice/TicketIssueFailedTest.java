@@ -7,6 +7,7 @@ import com.movie.booking.ticketservice.repository.OutboxRepository;
 import com.movie.booking.ticketservice.repository.TicketRepository;
 import com.movie.booking.ticketservice.service.TicketService;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.kafka.KafkaContainer;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -105,7 +107,7 @@ class TicketIssueFailedTest {
     void malformedMessageIsDeadLetteredWithoutTicketIssueFailed() {
         String junk = "not-json-" + UUID.randomUUID();
 
-        kafkaTemplate.send(topic, UUID.randomUUID().toString(), junk);
+        sendEvent("BookingConfirmed", UUID.randomUUID().toString(), junk);
 
         try (KafkaConsumer<String, String> dltConsumer = dltConsumer()) {
             dltConsumer.subscribe(List.of(dltTopic));
@@ -150,7 +152,7 @@ class TicketIssueFailedTest {
                 UUID.randomUUID(), Instant.now(), bookingId,
                 userId, UUID.randomUUID(), List.of("A1"));
         String message = jsonMapper.writeValueAsString(event);
-        kafkaTemplate.send(topic, bookingId.toString(), message);
+        sendEvent("BookingConfirmed", bookingId.toString(), message);
         return message;
     }
 
@@ -161,5 +163,11 @@ class TicketIssueFailedTest {
                 ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
                 ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
                 ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class));
+    }
+
+    private void sendEvent(String eventType, String key, String payload) {
+        ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, payload);
+        record.headers().add("eventType", eventType.getBytes(StandardCharsets.UTF_8));
+        kafkaTemplate.send(record);
     }
 }

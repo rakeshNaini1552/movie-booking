@@ -5,9 +5,12 @@ import com.movie.booking.ticketservice.service.TicketFailureService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.listener.ConsumerRecordRecoverer;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,6 +29,11 @@ public class TicketIssueFailedRecoverer implements ConsumerRecordRecoverer {
     }
 
     private void reportFailure(ConsumerRecord<?, ?> record, Exception exception) {
+        if (!isBookingConfirmed(record)) {
+            log.warn("Dead-lettering record {}-{}@{} without TicketIssueFailed: not a {} event",
+                    record.topic(), record.partition(), record.offset(), KafkaConsumer.BOOKING_CONFIRMED);
+            return;
+        }
         BookingConfirmedEvent event = parse(record);
         if (event == null || event.bookingId() == null || event.userId() == null) {
             log.warn("Dead-lettering record {}-{}@{} without TicketIssueFailed: no bookingId/userId in payload",
@@ -34,6 +42,12 @@ public class TicketIssueFailedRecoverer implements ConsumerRecordRecoverer {
         }
         ticketFailureService.reportIssueFailed(event.bookingId(), event.userId(), reasonFor(exception));
         log.warn("Reported TicketIssueFailed for booking {}", event.bookingId());
+    }
+
+    private boolean isBookingConfirmed(ConsumerRecord<?, ?> record) {
+        Header header = record.headers().lastHeader(KafkaConsumer.EVENT_TYPE_HEADER);
+        return header != null
+                && KafkaConsumer.BOOKING_CONFIRMED.equals(new String(header.value(), StandardCharsets.UTF_8));
     }
 
     private BookingConfirmedEvent parse(ConsumerRecord<?, ?> record) {
