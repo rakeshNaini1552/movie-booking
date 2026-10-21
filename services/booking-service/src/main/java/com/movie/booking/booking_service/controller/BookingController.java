@@ -34,6 +34,11 @@ public class BookingController {
         return new PayBookingResponse(bookingId, outcome.bookingStatus(), outcome.paymentStatus());
     }
 
+    @PostMapping("/{bookingId}/cancel")
+    public CancelBookingResponse cancel(@PathVariable UUID bookingId) {
+        return new CancelBookingResponse(bookingId, bookingService.cancel(bookingId));
+    }
+
     @GetMapping("/{bookingId}")
     public BookingResponse getBooking(@PathVariable UUID bookingId) {
         PayableBooking booking = bookingService.getBooking(bookingId);
