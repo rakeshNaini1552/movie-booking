@@ -1,4 +1,4 @@
-package com.movie.booking.booking_service.config;
+package com.movie.booking.ticketservice.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;

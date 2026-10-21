@@ -1,6 +1,6 @@
-package com.movie.booking.booking_service.repository;
+package com.movie.booking.ticketservice.repository;
 
-import com.movie.booking.booking_service.entity.OutboxEvent;
+import com.movie.booking.ticketservice.entity.OutboxEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

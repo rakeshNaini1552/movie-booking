@@ -1,4 +1,4 @@
-package com.movie.booking.booking_service.entity;
+package com.movie.booking.ticketservice.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

@@ -1,8 +1,10 @@
 package com.movie.booking.ticketservice;
 
+import com.movie.booking.ticketservice.entity.OutboxEvent;
 import com.movie.booking.ticketservice.entity.Ticket;
 import com.movie.booking.ticketservice.entity.TicketStatus;
 import com.movie.booking.ticketservice.event.BookingConfirmedEvent;
+import com.movie.booking.ticketservice.repository.OutboxRepository;
 import com.movie.booking.ticketservice.repository.TicketRepository;
 import com.movie.booking.ticketservice.service.QrSigner;
 import com.movie.booking.ticketservice.service.TicketService;
@@ -31,9 +33,13 @@ class TicketServiceTest {
     @Autowired
     private QrSigner qrSigner;
 
+    @Autowired
+    private OutboxRepository outboxRepository;
+
     @BeforeEach
     void clean() {
         ticketRepository.deleteAll();
+        outboxRepository.deleteAll();
     }
 
     @Test
@@ -67,6 +73,31 @@ class TicketServiceTest {
 
         assertThat(ticketRepository.count()).isEqualTo(2);
         assertThat(second.getTicketId()).isNotEqualTo(first.getTicketId());
+    }
+    
+    @Test
+    void newTicketWritesOneTicketIssuedOutboxRow() {
+        BookingConfirmedEvent event = newEvent(UUID.randomUUID());
+
+        Ticket ticket = ticketService.issueTicket(event);
+
+        List<OutboxEvent> rows = outboxRepository.findAll();
+        assertThat(rows).hasSize(1);
+        OutboxEvent row = rows.get(0);
+        assertThat(row.getEventType()).isEqualTo("TicketIssued");
+        assertThat(row.getAggregateId()).isEqualTo(event.bookingId());
+        assertThat(row.getSentAt()).isNull();
+        assertThat(row.getPayload()).contains(ticket.getTicketId().toString());
+    }
+
+    @Test
+    void duplicateEventDoesNotWriteSecondOutboxRow() {
+        BookingConfirmedEvent event = newEvent(UUID.randomUUID());
+
+        ticketService.issueTicket(event);
+        ticketService.issueTicket(event);
+
+        assertThat(outboxRepository.count()).isEqualTo(1);
     }
 
     private BookingConfirmedEvent newEvent(UUID bookingId) {
