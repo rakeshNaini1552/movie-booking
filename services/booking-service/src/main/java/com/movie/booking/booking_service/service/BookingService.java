@@ -81,6 +81,40 @@ public class BookingService {
         return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
     }
 
+    public BookingStatus cancel(UUID bookingId) {
+        PayableBooking booking = getBooking(bookingId);
+
+        boolean cancelled = switch (booking.status()) {
+            case CANCELLED -> true;
+            case PENDING -> cancelPending(booking);
+            case CONFIRMED -> bookingStateService.markCancelledFromConfirmed(bookingId);
+            case FAILED, EXPIRED -> false;
+        };
+        if (cancelled) {
+            return BookingStatus.CANCELLED;
+        }
+
+        // The conditional update lost a race (or the booking was never cancellable): report what it is now.
+        BookingStatus current = getBooking(bookingId).status();
+        if (current == BookingStatus.CANCELLED) {
+            return current;
+        }
+        throw new BookingNotCancellableException(bookingId, current);
+    }
+
+    private boolean cancelPending(PayableBooking booking) {
+        if (!bookingStateService.markCancelledFromPending(booking.bookingId())) {
+            return false;
+        }
+        try {
+            seatClient.releaseSeats(booking.showId(), booking.seatIds(), booking.bookingId());
+        } catch (SeatServiceUnavailableException e) {
+            // The booking is already CANCELLED; the Redis hold expires on its own TTL.
+            log.warn("Booking {} cancelled but seat release failed: {}", booking.bookingId(), e.getMessage());
+        }
+        return true;
+    }
+
     public PayableBooking getBooking(UUID bookingId) {
         return bookingStateService.findPayable(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId));

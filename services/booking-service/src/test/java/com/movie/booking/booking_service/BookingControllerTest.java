@@ -257,4 +257,34 @@ class BookingControllerTest {
 
         verifyNoInteractions(bookingService);
     }
+
+    @Test
+    void cancel_returns_200_with_cancelled_status() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        when(bookingService.cancel(bookingId)).thenReturn(BookingStatus.CANCELLED);
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/cancel", bookingId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bookingId").value(bookingId.toString()))
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    void cancel_returns_404_for_unknown_booking() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        when(bookingService.cancel(bookingId)).thenThrow(new BookingNotFoundException(bookingId));
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/cancel", bookingId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void cancel_returns_409_when_booking_is_not_cancellable() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        when(bookingService.cancel(bookingId))
+                .thenThrow(new BookingNotCancellableException(bookingId, BookingStatus.EXPIRED));
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/cancel", bookingId))
+                .andExpect(status().isConflict());
+    }
 }

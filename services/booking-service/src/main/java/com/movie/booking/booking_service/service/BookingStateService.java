@@ -6,7 +6,9 @@ import com.movie.booking.booking_service.dto.PayableBooking;
 import com.movie.booking.booking_service.entity.Booking;
 import com.movie.booking.booking_service.entity.BookingSeat;
 import com.movie.booking.booking_service.entity.BookingSeatId;
+import com.movie.booking.booking_service.event.BookingCancelledEvent;
 import com.movie.booking.booking_service.event.BookingConfirmedEvent;
+import com.movie.booking.booking_service.event.RefundRequestedEvent;
 import com.movie.booking.booking_service.repository.BookingRepository;
 import com.movie.booking.booking_service.repository.BookingSeatRepository;
 import lombok.RequiredArgsConstructor;
@@ -78,6 +80,37 @@ public class BookingStateService {
         BookingConfirmedEvent event = new BookingConfirmedEvent(
                 eventId, clock.instant(), bookingId, booking.getUserId(), booking.getShowId(), seatIds);
         outboxService.enqueue(bookingId, eventId, "BookingConfirmed", event);
+        return true;
+    }
+
+    @Transactional
+    public boolean markCancelledFromPending(UUID bookingId) {
+        return bookingRepository.transition(
+                bookingId, BookingStatus.PENDING, BookingStatus.CANCELLED, clock.instant()) == 1;
+    }
+
+    @Transactional
+    public boolean markCancelledFromConfirmed(UUID bookingId) {
+        boolean cancelled = bookingRepository.transition(
+                bookingId, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, clock.instant()) == 1;
+        if (!cancelled) {
+            return false;
+        }
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow();
+        List<String> seatIds = bookingSeatRepository.findByIdBookingId(bookingId)
+                .stream()
+                .map(seat -> seat.getId().getSeatId())
+                .toList();
+
+        UUID cancelledEventId = UUID.randomUUID();
+        outboxService.enqueue(bookingId, cancelledEventId, "BookingCancelled",
+                new BookingCancelledEvent(cancelledEventId, clock.instant(), bookingId,
+                        booking.getUserId(), booking.getShowId(), seatIds));
+
+        UUID refundEventId = UUID.randomUUID();
+        outboxService.enqueue(bookingId, refundEventId, "RefundRequested",
+                new RefundRequestedEvent(refundEventId, clock.instant(), bookingId,
+                        booking.getUserId(), booking.getTotalAmount()));
         return true;
     }
 

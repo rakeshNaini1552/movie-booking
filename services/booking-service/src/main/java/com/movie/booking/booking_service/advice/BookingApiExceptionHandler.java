@@ -34,6 +34,12 @@ public class BookingApiExceptionHandler {
         return new ApiError("Booking not payable");
     }
 
+    @ExceptionHandler(BookingNotCancellableException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleBookingNotCancellable(BookingNotCancellableException e) {
+        return new ApiError("Booking not cancellable");
+    }
+
     @ExceptionHandler(InvalidPaymentTokenException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleInvalidPaymentToken(InvalidPaymentTokenException e) {
