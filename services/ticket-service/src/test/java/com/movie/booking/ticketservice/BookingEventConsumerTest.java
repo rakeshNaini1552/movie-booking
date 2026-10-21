@@ -5,6 +5,7 @@ import com.movie.booking.ticketservice.entity.TicketStatus;
 import com.movie.booking.ticketservice.event.BookingConfirmedEvent;
 import com.movie.booking.ticketservice.repository.TicketRepository;
 import com.movie.booking.ticketservice.service.QrSigner;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -79,6 +81,12 @@ class BookingEventConsumerTest {
         BookingConfirmedEvent event = new BookingConfirmedEvent(
                 UUID.randomUUID(), Instant.now(), bookingId,
                 UUID.randomUUID(), UUID.randomUUID(), List.of("A1"));
-        kafkaTemplate.send(topic, bookingId.toString(), jsonMapper.writeValueAsString(event));
+        sendEvent("BookingConfirmed", bookingId.toString(), jsonMapper.writeValueAsString(event));
+    }
+
+    private void sendEvent(String eventType, String key, String payload) {
+        ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, payload);
+        record.headers().add("eventType", eventType.getBytes(StandardCharsets.UTF_8));
+        kafkaTemplate.send(record);
     }
 }

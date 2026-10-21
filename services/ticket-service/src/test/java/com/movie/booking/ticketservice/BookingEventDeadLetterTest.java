@@ -3,6 +3,7 @@ package com.movie.booking.ticketservice;
 import com.movie.booking.ticketservice.event.BookingConfirmedEvent;
 import com.movie.booking.ticketservice.repository.TicketRepository;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.testcontainers.kafka.KafkaContainer;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -56,7 +58,7 @@ class BookingEventDeadLetterTest {
     void malformedMessageEndsUpInDeadLetterTopic() {
         String junk = "not-json-" + UUID.randomUUID();
 
-        kafkaTemplate.send(topic, UUID.randomUUID().toString(), junk);
+        sendEvent("BookingConfirmed", UUID.randomUUID().toString(), junk);
 
         try (KafkaConsumer<String, String> dltConsumer = dltConsumer()) {
             dltConsumer.subscribe(List.of(dltTopic));
@@ -73,11 +75,11 @@ class BookingEventDeadLetterTest {
     void validMessageAfterMalformedOneStillIssuesTicket() {
         UUID bookingId = UUID.randomUUID();
 
-        kafkaTemplate.send(topic, UUID.randomUUID().toString(), "not-json-" + UUID.randomUUID());
+        sendEvent("BookingConfirmed", UUID.randomUUID().toString(), "not-json-" + UUID.randomUUID());
         BookingConfirmedEvent event = new BookingConfirmedEvent(
                 UUID.randomUUID(), Instant.now(), bookingId,
                 UUID.randomUUID(), UUID.randomUUID(), List.of("A1"));
-        kafkaTemplate.send(topic, bookingId.toString(), jsonMapper.writeValueAsString(event));
+        sendEvent("BookingConfirmed", bookingId.toString(), jsonMapper.writeValueAsString(event));
 
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
                 assertThat(ticketRepository.findByBookingId(bookingId)).isPresent());
@@ -90,5 +92,11 @@ class BookingEventDeadLetterTest {
                 ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
                 ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
                 ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class));
+    }
+
+    private void sendEvent(String eventType, String key, String payload) {
+        ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, payload);
+        record.headers().add("eventType", eventType.getBytes(StandardCharsets.UTF_8));
+        kafkaTemplate.send(record);
     }
 }

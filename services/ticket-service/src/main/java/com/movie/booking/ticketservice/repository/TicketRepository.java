@@ -21,4 +21,11 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
                  @Param("expected") TicketStatus expected,
                  @Param("newStatus") TicketStatus newStatus,
                  @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true)
+    @Query("update Ticket t set t.status = :newStatus "
+            + "where t.bookingId = :bookingId and t.status = :expected")
+    int voidIfIssued(@Param("bookingId") UUID bookingId,
+                     @Param("expected") TicketStatus expected,
+                     @Param("newStatus") TicketStatus newStatus);
 }
