@@ -37,6 +37,6 @@ public class OutboxService {
 
     @Transactional
     public void markSent(UUID id) {
-        outboxRepository.findById(id).ifPresent(row -> row.markSent(Instant.now()));
+        outboxRepository.findById(id).ifPresent(row -> row.markSent(clock.instant()));
     }
 }

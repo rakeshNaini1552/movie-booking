@@ -1,14 +1,12 @@
 spring:
   application:
     name: ticket-service
-
   datasource:
     url: jdbc:postgresql://${TICKET_DB_HOST:localhost}:${TICKET_DB_PORT:5432}/${TICKET_DB_NAME:ticket_db}
     username: ${TICKET_DB_USER}
     password: ${TICKET_DB_PASSWORD}
     hikari:
       connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:2000}
-
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -20,8 +18,19 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
 
 ticket:
+  outbox:
+    topic: ticket-events
+    poll-interval-ms: ${TICKET_OUTBOX_POLL_MS:1000}
+    publisher:
+      enabled: ${TICKET_OUTBOX_PUBLISHER_ENABLED:true}
   consumer:
     topic: booking-events
     dlt-topic: booking-events-dlt
@@ -30,17 +39,8 @@ ticket:
       initial-interval-ms: 1000
       multiplier: 2.0
       max-interval-ms: 10000
-
   qr:
     secret: ${TICKET_QR_SECRET}
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
-
-  flyway:
-    enabled: true
 
 server:
   port: 8084

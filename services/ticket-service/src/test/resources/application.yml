@@ -1,3 +1,6 @@
 ticket:
+  outbox:
+    publisher:
+      enabled: false
   qr:
     secret: test-secret-for-tests
