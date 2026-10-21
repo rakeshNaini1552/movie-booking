@@ -21,6 +21,18 @@ spring:
   flyway:
     enabled: true
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: seat-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -35,6 +47,14 @@ seat:
       batch-size: ${SEAT_HOLD_EXPIRY_BATCH_SIZE:100}
       lock-at-most-for: ${SEAT_HOLD_EXPIRY_LOCK_AT_MOST_FOR:PT1M}
       lock-at-least-for: ${SEAT_HOLD_EXPIRY_LOCK_AT_LEAST_FOR:PT1S}
+  consumer:
+    topic: ${BOOKING_EVENTS_TOPIC:booking-events}
+    dlt-topic: booking-events-dlt
+    retry:
+      max-retries: 4
+      initial-interval-ms: 1000
+      multiplier: 2.0
+      max-interval-ms: 10000
 
 server:
   port: ${SERVER_PORT:8081}

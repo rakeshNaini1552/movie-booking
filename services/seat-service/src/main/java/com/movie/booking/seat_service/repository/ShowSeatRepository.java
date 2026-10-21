@@ -35,4 +35,18 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, ShowSeatId> 
                         @Param("seatIds") Collection<String> seatIds,
                         @Param("bookingId") UUID bookingId,
                         @Param("now") Instant now);
+
+    @Modifying
+    @Query("""
+    UPDATE ShowSeat s
+    SET s.status = SeatStatus.AVAILABLE, s.bookingId = null, s.updatedAt = :now, s.version = s.version + 1
+    WHERE s.id.showId = :showId
+      AND s.id.seatId IN :seatIds
+      AND s.bookingId = :bookingId
+      AND s.status = SeatStatus.BOOKED
+    """)
+    int releaseBooked(@Param("showId") UUID showId,
+                      @Param("seatIds") Collection<String> seatIds,
+                      @Param("bookingId") UUID bookingId,
+                      @Param("now") Instant now);
 }
