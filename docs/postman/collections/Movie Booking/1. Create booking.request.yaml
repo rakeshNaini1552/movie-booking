@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{bookingServiceUrl}}/api/v1/bookings"
+method: POST
+headers:
+  Idempotency-Key: "{{idempotencyKey}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "userId": "{{userId}}",
+      "showId": "{{showId}}",
+      "seatIds": [
+        "{{seatId}}"
+      ]
+    }
+scripts:
+  - type: beforeRequest
+    code: pm.environment.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      const b = pm.response.json();
+      pm.test('response has bookingId', () => pm.expect(!!b.bookingId).to.be.true);
+      pm.environment.set('bookingId', b.bookingId);
+    language: text/javascript
+order: 1000
