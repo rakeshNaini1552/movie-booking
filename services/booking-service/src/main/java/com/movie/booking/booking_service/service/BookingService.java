@@ -70,7 +70,8 @@ public class BookingService {
         } catch (SeatConfirmationFailedException | SeatServiceUnavailableException e) {
             log.error("PAID but seats not confirmed for booking {} (payment {}): {}",
                     booking.bookingId(), result.paymentId(), e.getMessage());
-            throw e;
+            bookingStateService.markFailedAndRequestRefund(booking.bookingId());
+            return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
         }
 
         if (!bookingStateService.markConfirmed(booking.bookingId())) {

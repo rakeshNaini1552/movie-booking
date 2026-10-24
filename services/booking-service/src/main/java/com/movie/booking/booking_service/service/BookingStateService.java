@@ -96,21 +96,7 @@ public class BookingStateService {
         if (!cancelled) {
             return false;
         }
-        Booking booking = bookingRepository.findById(bookingId).orElseThrow();
-        List<String> seatIds = bookingSeatRepository.findByIdBookingId(bookingId)
-                .stream()
-                .map(seat -> seat.getId().getSeatId())
-                .toList();
-
-        UUID cancelledEventId = UUID.randomUUID();
-        outboxService.enqueue(bookingId, cancelledEventId, "BookingCancelled",
-                new BookingCancelledEvent(cancelledEventId, clock.instant(), bookingId,
-                        booking.getUserId(), booking.getShowId(), seatIds));
-
-        UUID refundEventId = UUID.randomUUID();
-        outboxService.enqueue(bookingId, refundEventId, "RefundRequested",
-                new RefundRequestedEvent(refundEventId, clock.instant(), bookingId,
-                        booking.getUserId(), booking.getTotalAmount()));
+        publishEventByBookingIdHelper(bookingId);
         return true;
     }
 
@@ -138,5 +124,31 @@ public class BookingStateService {
     public boolean markExpired(UUID bookingId) {
         return bookingRepository.transition(
                 bookingId, BookingStatus.PENDING, BookingStatus.EXPIRED, clock.instant()) == 1;
+    }
+
+    @Transactional
+    public void markFailedAndRequestRefund(UUID bookingId) {
+        bookingRepository.transition(
+                bookingId, BookingStatus.PENDING, BookingStatus.FAILED, clock.instant());
+
+        publishEventByBookingIdHelper(bookingId);
+    }
+
+    private void publishEventByBookingIdHelper(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow();
+        List<String> seatIds = bookingSeatRepository.findByIdBookingId(bookingId)
+                .stream()
+                .map(seat -> seat.getId().getSeatId())
+                .toList();
+
+        UUID cancelledEventId = UUID.randomUUID();
+        outboxService.enqueue(bookingId, cancelledEventId, "BookingCancelled",
+                new BookingCancelledEvent(cancelledEventId, clock.instant(), bookingId,
+                        booking.getUserId(), booking.getShowId(), seatIds));
+
+        UUID refundEventId = UUID.randomUUID();
+        outboxService.enqueue(bookingId, refundEventId, "RefundRequested",
+                new RefundRequestedEvent(refundEventId, clock.instant(), bookingId,
+                        booking.getUserId(), booking.getTotalAmount()));
     }
 }
