@@ -130,16 +130,18 @@ class BookingServicePayTest {
     }
 
     @Test
-    void confirm_failure_after_payment_leaves_booking_pending_and_rethrows() {
+    void confirm_failure_after_payment_marks_failed_requests_refund_and_returns_failed_outcome() {
         givenBooking(BookingStatus.PENDING);
         when(paymentClient.pay(any(), any(), any(), any()))
                 .thenReturn(new PaymentResult(paymentId, PaymentStatus.SUCCESS));
         doThrow(new SeatConfirmationFailedException("hold expired"))
                 .when(seatClient).confirmSeats(showId, seats, bookingId);
 
-        assertThatThrownBy(() -> service.pay(command))
-                .isInstanceOf(SeatConfirmationFailedException.class);
+        PayOutcome result = service.pay(command);
 
+        assertThat(result.bookingStatus()).isEqualTo(BookingStatus.FAILED);
+        assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.SUCCESS);
+        verify(bookingStateService).markFailedAndRequestRefund(bookingId);
         verify(bookingStateService, never()).markConfirmed(any());
         verify(bookingStateService, never()).markFailed(any());
     }
