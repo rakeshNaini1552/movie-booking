@@ -2,15 +2,16 @@ package com.movie.booking.ticketservice.service;
 
 import com.movie.booking.ticketservice.entity.Ticket;
 import com.movie.booking.ticketservice.entity.TicketStatus;
+import com.movie.booking.ticketservice.event.TicketScannedEvent;
 import com.movie.booking.ticketservice.exception.InvalidQrException;
 import com.movie.booking.ticketservice.exception.TicketNotFoundException;
 import com.movie.booking.ticketservice.exception.TicketNotScannableException;
 import com.movie.booking.ticketservice.event.BookingConfirmedEvent;
 import com.movie.booking.ticketservice.event.TicketIssuedEvent;
 import com.movie.booking.ticketservice.repository.TicketRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.util.UUID;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class TicketService {
 
     private static final String TICKET_ISSUED = "TicketIssued";
+    private static final String TICKET_SCANNED = "TicketScanned";
 
     private final TicketRepository ticketRepository;
     private final OutboxService outboxService;
@@ -78,6 +80,15 @@ public class TicketService {
         if (updated == 0) {
             throw new TicketNotScannableException(ticket);
         }
+
+        TicketScannedEvent scannedEvent = new TicketScannedEvent(
+                UUID.randomUUID(),
+                clock.instant(),
+                ticket.getTicketId(),
+                ticket.getBookingId());
+
+        outboxService.enqueue(ticket.getBookingId(), scannedEvent.eventId(), TICKET_SCANNED, scannedEvent);
+
         return ticket;
     }
 }
