@@ -97,16 +97,18 @@ class BookingServicePayTest {
     }
 
     @Test
-    void booking_expired_during_payment_is_reported_and_not_confirmed() {
+    void booking_no_longer_pending_after_seat_confirm_is_failed_with_refund_requested() {
         givenBooking(BookingStatus.PENDING);
         when(paymentClient.pay(any(), any(), any(), any()))
                 .thenReturn(new PaymentResult(paymentId, PaymentStatus.SUCCESS));
         when(bookingStateService.markConfirmed(bookingId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.pay(command))
-                .isInstanceOf(BookingNotPayableException.class);
+        PayOutcome result = service.pay(command);
 
+        assertThat(result.bookingStatus()).isEqualTo(BookingStatus.FAILED);
+        assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.SUCCESS);
         verify(seatClient).confirmSeats(showId, seats, bookingId);
+        verify(bookingStateService).markFailedAndRequestRefund(bookingId);
     }
 
     @Test

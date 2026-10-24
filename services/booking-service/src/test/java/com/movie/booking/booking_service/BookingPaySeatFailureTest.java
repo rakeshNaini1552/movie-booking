@@ -111,6 +111,46 @@ class BookingPaySeatFailureTest {
         assertThat(outboxRepository.count()).isEqualTo(rowsAfterFirstPay).isEqualTo(2);
     }
 
+    @Test
+    void bookingExpiredBeforeConfirmStaysExpiredAndRequestsRefund() {
+        assertNoLongerPendingAfterSeatConfirm("EXPIRED");
+    }
+
+    @Test
+    void bookingCancelledBeforeConfirmStaysCancelledAndRequestsRefund() {
+        assertNoLongerPendingAfterSeatConfirm("CANCELLED");
+    }
+
+    @Test
+    void normalPaySucceedsWithOneBookingConfirmedRowAndNoRefund() {
+        UUID bookingId = insertBooking("PENDING", "A1", "A2");
+
+        PayOutcome outcome = bookingService.pay(payCommand(bookingId));
+
+        assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS));
+        assertThat(statusOf(bookingId)).isEqualTo("CONFIRMED");
+        List<OutboxEvent> rows = outboxRepository.findAll();
+        assertThat(rows).extracting(OutboxEvent::getEventType).containsExactly("BookingConfirmed");
+        assertThat(rows.get(0).getAggregateId()).isEqualTo(bookingId);
+    }
+
+    private void assertNoLongerPendingAfterSeatConfirm(String statusBeforeConfirm) {
+        UUID bookingId = insertBooking("PENDING", "A1", "A2");
+        doAnswer(invocation -> {
+            jdbc.update("UPDATE booking SET status = ? WHERE booking_id = ?", statusBeforeConfirm, bookingId);
+            return null;
+        }).when(seatClient).confirmSeats(any(), any(), any());
+
+        PayOutcome outcome = bookingService.pay(payCommand(bookingId));
+
+        assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS));
+        assertThat(statusOf(bookingId)).isEqualTo(statusBeforeConfirm);
+        List<OutboxEvent> rows = outboxRepository.findAll();
+        assertThat(rows).extracting(OutboxEvent::getEventType)
+                .containsExactlyInAnyOrder("BookingCancelled", "RefundRequested");
+        assertThat(rows).allSatisfy(r -> assertThat(r.getAggregateId()).isEqualTo(bookingId));
+    }
+
     private void assertFailedWithCancelAndRefundEvents(UUID bookingId) {
         assertThat(statusOf(bookingId)).isEqualTo("FAILED");
         List<OutboxEvent> rows = outboxRepository.findAll();

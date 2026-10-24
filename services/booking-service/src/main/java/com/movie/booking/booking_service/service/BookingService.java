@@ -77,7 +77,8 @@ public class BookingService {
         if (!bookingStateService.markConfirmed(booking.bookingId())) {
             log.error("PAID and seats confirmed, but booking {} is no longer PENDING (payment {})",
                     booking.bookingId(), result.paymentId());
-            throw new BookingNotPayableException(booking.bookingId(), BookingStatus.EXPIRED);
+            bookingStateService.markFailedAndRequestRefund(booking.bookingId());
+            return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
         }
         return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
     }
