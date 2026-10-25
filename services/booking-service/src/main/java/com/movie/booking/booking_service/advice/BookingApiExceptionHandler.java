@@ -57,4 +57,10 @@ public class BookingApiExceptionHandler {
     public ApiError handleSeatConfirmFailure(SeatConfirmationFailedException e) {
         return new ApiError("Seats cannot be confirmed, Please try again!!....");
     }
+
+    @ExceptionHandler(TicketAlreadyUsedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleTicketAlreadyUsed(TicketAlreadyUsedException e) {
+        return new ApiError("Booking cannot be cancelled: ticket already used");
+    }
 }

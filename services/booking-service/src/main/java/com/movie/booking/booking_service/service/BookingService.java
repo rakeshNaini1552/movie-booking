@@ -96,10 +96,12 @@ public class BookingService {
             return BookingStatus.CANCELLED;
         }
 
-        // The conditional update lost a race (or the booking was never cancellable): report what it is now.
         BookingStatus current = getBooking(bookingId).status();
         if (current == BookingStatus.CANCELLED) {
             return current;
+        }
+        if (current == BookingStatus.CONFIRMED) {
+            throw new TicketAlreadyUsedException(bookingId);
         }
         throw new BookingNotCancellableException(bookingId, current);
     }
