@@ -91,7 +91,7 @@ public class BookingStateService {
 
     @Transactional
     public boolean markCancelledFromConfirmed(UUID bookingId) {
-        boolean cancelled = bookingRepository.transition(
+        boolean cancelled = bookingRepository.transitionIfTicketUnused(
                 bookingId, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, clock.instant()) == 1;
         if (!cancelled) {
             return false;
@@ -124,6 +124,12 @@ public class BookingStateService {
     public boolean markExpired(UUID bookingId) {
         return bookingRepository.transition(
                 bookingId, BookingStatus.PENDING, BookingStatus.EXPIRED, clock.instant()) == 1;
+    }
+
+    @Transactional
+    public boolean markTicketUsed(UUID bookingId, Instant usedAt) {
+        return bookingRepository.markTicketUsed(
+                bookingId,usedAt, Instant.now()) == 1;
     }
 
     @Transactional

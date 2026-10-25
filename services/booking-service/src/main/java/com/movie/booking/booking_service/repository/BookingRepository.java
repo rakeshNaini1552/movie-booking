@@ -26,4 +26,19 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                    @Param("expected") BookingStatus expected,
                    @Param("newStatus") BookingStatus newStatus,
                    @Param("now") Instant now);
+
+    @Modifying
+    @Query("update Booking b set b.ticketUsedAt = :usedAt, b.updatedAt =:now "
+            + "where b.bookingId = :id and b.ticketUsedAt is null ")
+    int markTicketUsed(@Param("id") UUID id,
+                   @Param("usedAt") Instant usedAt,
+                       @Param("now") Instant now);
+
+    @Modifying
+    @Query("update Booking b set b.status = :newStatus, b.updatedAt = :now "
+            + "where b.bookingId = :id and b.status = :expected and b.ticketUsedAt is null")
+    int transitionIfTicketUnused(@Param("id") UUID id,
+                                 @Param("expected") BookingStatus expected,
+                                 @Param("newStatus") BookingStatus newStatus,
+                                 @Param("now") Instant now);
 }

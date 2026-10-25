@@ -15,6 +15,11 @@ spring:
       acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: booking-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
   jpa:
     hibernate:
@@ -36,6 +41,8 @@ booking:
     poll-interval-ms: ${BOOKING_OUTBOX_POLL_MS:1000}
     publisher:
       enabled: ${BOOKING_OUTBOX_PUBLISHER_ENABLED:true}
+  consumer:
+    ticket-topic: ticket-events
 
 server:
   port: ${SERVER_PORT:8082}

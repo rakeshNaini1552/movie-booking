@@ -1,4 +1,9 @@
 package com.movie.booking.booking_service.exception;
 
-public class TicketAlreadyUsedException {
+import java.util.UUID;
+
+public class TicketAlreadyUsedException extends RuntimeException {
+    public TicketAlreadyUsedException(UUID bookingId) {
+        super("Booking " + bookingId + " cannot be cancelled: its ticket was already used");
+    }
 }

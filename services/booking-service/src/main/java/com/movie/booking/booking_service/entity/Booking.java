@@ -38,6 +38,9 @@ public class Booking {
     @Column(name = "idempotency_key")
     private UUID idempotencyKey;
 
+    @Column(name = "ticket_used_at")
+    private Instant ticketUsedAt;
+
     protected Booking() {}
 
     public Booking(UUID bookingId, UUID userId, UUID showId, BigDecimal totalAmount, Instant now, UUID idempotencyKey) {
