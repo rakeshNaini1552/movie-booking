@@ -66,8 +66,20 @@ services:
     volumes:
       - ticket-pgdata:/var/lib/postgresql/data
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "8180:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+
 volumes:
   pgdata:
   booking-pgdata:
   payment-pgdata:
   ticket-pgdata:
+  keycloak-data:
