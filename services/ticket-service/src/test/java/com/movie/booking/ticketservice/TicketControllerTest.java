@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -56,7 +57,7 @@ class TicketControllerTest {
     void getByBookingReturnsTicket() throws Exception {
         Ticket ticket = saveTicket();
 
-        mockMvc.perform(get("/tickets/by-booking/{id}", ticket.getBookingId()))
+        mockMvc.perform(get("/tickets/by-booking/{id}", ticket.getBookingId()).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticketId").value(ticket.getTicketId().toString()))
                 .andExpect(jsonPath("$.bookingId").value(ticket.getBookingId().toString()))
@@ -68,7 +69,7 @@ class TicketControllerTest {
 
     @Test
     void getByBookingIs404WhenNotIssuedYet() throws Exception {
-        mockMvc.perform(get("/tickets/by-booking/{id}", UUID.randomUUID()))
+        mockMvc.perform(get("/tickets/by-booking/{id}", UUID.randomUUID()).with(jwt()))
                 .andExpect(status().isNotFound());
     }
 
@@ -76,10 +77,10 @@ class TicketControllerTest {
     void getByTicketIdReturnsTicketOr404() throws Exception {
         Ticket ticket = saveTicket();
 
-        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId()))
+        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId()).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticketId").value(ticket.getTicketId().toString()));
-        mockMvc.perform(get("/tickets/{id}", UUID.randomUUID()))
+        mockMvc.perform(get("/tickets/{id}", UUID.randomUUID()).with(jwt()))
                 .andExpect(status().isNotFound());
     }
 
@@ -139,6 +140,7 @@ class TicketControllerTest {
 
         scan(ticket.getTicketId(), "not-a-qr").andExpect(status().isBadRequest());
         mockMvc.perform(post("/tickets/{id}/scan", ticket.getTicketId())
+                        .with(staff())
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest());
     }
@@ -189,8 +191,13 @@ class TicketControllerTest {
 
     private org.springframework.test.web.servlet.ResultActions scan(UUID ticketId, String payload) throws Exception {
         return mockMvc.perform(post("/tickets/{id}/scan", ticketId)
+                .with(staff())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"payload\":\"" + payload + "\"}"));
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor staff() {
+        return jwt().authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_staff"));
     }
 
     private Ticket saveTicket() {

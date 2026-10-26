@@ -7,6 +7,11 @@ spring:
     password: ${TICKET_DB_PASSWORD}
     hikari:
       connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:2000}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/movie-booking
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
