@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.movie.booking.seat_service.TestJwt.internalService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,7 +43,7 @@ class SeatBookingControllerTest {
     }
 
     private void holdSeats(UUID showId, String seatId, UUID bookingId) throws Exception {
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"seatIds\": [\"%s\"], \"bookingId\": \"%s\"}".formatted(seatId, bookingId)))
                 .andExpect(status().isCreated());
@@ -61,7 +62,7 @@ class SeatBookingControllerTest {
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
         holdSeats(showId, "A1", bookingId);
 
-        mockMvc.perform(post("/api/v1/shows/{showId}/bookings", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/bookings", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(confirmBody("A1", bookingId)))
                 .andExpect(status().isCreated())
@@ -78,7 +79,7 @@ class SeatBookingControllerTest {
         UUID showId = UUID.randomUUID();
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
 
-        mockMvc.perform(post("/api/v1/shows/{showId}/bookings", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/bookings", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(confirmBody("A1", UUID.randomUUID())))
                 .andExpect(status().isConflict());
@@ -91,7 +92,7 @@ class SeatBookingControllerTest {
 
     @Test
     void returns_400_when_the_body_is_invalid() throws Exception {
-        mockMvc.perform(post("/api/v1/shows/{showId}/bookings", UUID.randomUUID())
+        mockMvc.perform(post("/api/v1/shows/{showId}/bookings", UUID.randomUUID()).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"seatIds\": []}"))
                 .andExpect(status().isBadRequest());
