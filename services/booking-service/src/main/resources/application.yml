@@ -58,6 +58,8 @@ booking:
       enabled: ${BOOKING_OUTBOX_PUBLISHER_ENABLED:true}
   consumer:
     ticket-topic: ticket-events
+  health:
+    kafka-timeout-ms: ${KAFKA_HEALTH_TIMEOUT_MS:2000}
 
 server:
   port: ${SERVER_PORT:8082}
@@ -71,7 +73,7 @@ management:
     health:
       probes:
         enabled: true
-      show-details: never
+      show-details: when_authorized
       group:
         liveness:
           include: livenessState
