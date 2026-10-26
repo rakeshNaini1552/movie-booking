@@ -66,20 +66,37 @@ public class BookingService {
 
         try {
             seatClient.confirmSeats(booking.showId(), booking.seatIds(), booking.bookingId());
-        } catch (SeatConfirmationFailedException | SeatServiceUnavailableException e) {
+        } catch (RuntimeException e) {
             log.error("PAID but seats not confirmed for booking {} (payment {}): {}",
                     booking.bookingId(), result.paymentId(), e.getMessage());
-            bookingStateService.markFailedAndRequestRefund(booking.bookingId());
-            return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
+            return failAndRequestRefund(booking.bookingId(), result.paymentId());
         }
 
-        if (!bookingStateService.markConfirmed(booking.bookingId())) {
+        boolean confirmed;
+        try {
+            confirmed = bookingStateService.markConfirmed(booking.bookingId());
+        } catch (RuntimeException e) {
+            log.error("PAID and seats confirmed, but booking {} could not be marked CONFIRMED (payment {}): {}",
+                    booking.bookingId(), result.paymentId(), e.getMessage());
+            return failAndRequestRefund(booking.bookingId(), result.paymentId());
+        }
+        if (!confirmed) {
             log.error("PAID and seats confirmed, but booking {} is no longer PENDING (payment {})",
                     booking.bookingId(), result.paymentId());
-            bookingStateService.markFailedAndRequestRefund(booking.bookingId());
-            return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
+            return failAndRequestRefund(booking.bookingId(), result.paymentId());
         }
         return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
+    }
+
+    private PayOutcome failAndRequestRefund(UUID bookingId, UUID paymentId) {
+        try {
+            bookingStateService.markFailedAndRequestRefund(bookingId);
+        } catch (RuntimeException e) {
+            log.error("PAID but the refund request could not be recorded for booking {} (payment {}): {}",
+                    bookingId, paymentId, e.getMessage());
+            throw e;
+        }
+        return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
     }
 
     public BookingStatus cancel(UUID bookingId, UUID userId) {
