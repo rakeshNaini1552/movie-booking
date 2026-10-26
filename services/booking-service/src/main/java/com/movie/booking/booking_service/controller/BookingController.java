@@ -4,9 +4,13 @@ import com.movie.booking.booking_service.dto.*;
 import com.movie.booking.booking_service.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -18,11 +22,19 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CreateBookingResponse createBooking(@Valid @RequestBody CreateBookingRequest createBookingRequest, @RequestHeader("idempotency-key")UUID idempotencyKey){
+    public CreateBookingResponse createBooking(@AuthenticationPrincipal Jwt jwt,
+                                               @Valid @RequestBody CreateBookingRequest createBookingRequest,
+                                               @RequestHeader("idempotency-key") UUID idempotencyKey) {
+        UUID userId = currentuserId(jwt);
         return new CreateBookingResponse(
                 bookingService.createBooking(
-                    new CreateBookingCommand(createBookingRequest.userId(), createBookingRequest.showId(), createBookingRequest.seatIds(), idempotencyKey)
-            ));
+                        new CreateBookingCommand(userId, createBookingRequest.showId(), createBookingRequest.seatIds(), idempotencyKey)
+                ));
+    }
+
+    private static @NonNull UUID currentuserId(Jwt jwt) {
+        UUID userId = UUID.fromString(Objects.requireNonNull(jwt.getSubject()));
+        return userId;
     }
 
     @PostMapping("/{bookingId}/payments")
