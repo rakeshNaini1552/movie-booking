@@ -39,6 +39,12 @@ import static org.awaitility.Awaitility.await;
 @Import(TestcontainersConfiguration.class)
 class RefundRequestedConsumerTest {
 
+    // Copy of GOLDEN_REFUND_REQUESTED in booking-service's SagaRefundRequestedPublishedTest; keep identical.
+    private static final String GOLDEN_REFUND_REQUESTED = """
+            {"eventId":"11111111-1111-4111-8111-111111111111","occurredAt":"2026-01-01T00:00:00Z",\
+            "bookingId":"22222222-2222-4222-8222-222222222222","userId":"33333333-3333-4333-8333-333333333333",\
+            "amount":500.00}""";
+
     @Autowired KafkaTemplate<String, String> kafkaTemplate;
     @Autowired PaymentRepository paymentRepository;
     @Autowired ProcessedEventRepository processedEventRepository;
@@ -66,6 +72,19 @@ class RefundRequestedConsumerTest {
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
                 assertThat(statusOf(bookingId)).isEqualTo("REFUNDED"));
         assertThat(processedEventRepository.existsById(event.eventId())).isTrue();
+    }
+
+    @Test
+    void consumesTheExactJsonBookingServicePublishesForARefund() {
+        UUID bookingId = UUID.fromString("22222222-2222-4222-8222-222222222222");
+        UUID eventId = UUID.fromString("11111111-1111-4111-8111-111111111111");
+        savePayment(bookingId, PaymentStatus.SUCCESS);
+
+        sendEvent("RefundRequested", bookingId, GOLDEN_REFUND_REQUESTED);
+
+        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
+                assertThat(statusOf(bookingId)).isEqualTo("REFUNDED"));
+        assertThat(processedEventRepository.existsById(eventId)).isTrue();
     }
 
     @Test
