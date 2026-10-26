@@ -46,6 +46,8 @@ class BookingPaySeatFailureTest {
     @MockitoBean PaymentClient paymentClient;
     @MockitoBean SeatClient seatClient;
 
+    private final UUID owner = UUID.randomUUID();
+
     @BeforeEach
     void cleanUp() {
         reset(paymentClient, seatClient);
@@ -171,7 +173,7 @@ class BookingPaySeatFailureTest {
     }
 
     private PayBookingCommand payCommand(UUID bookingId) {
-        return new PayBookingCommand(bookingId, "tok_success", UUID.randomUUID());
+        return new PayBookingCommand(bookingId, "tok_success", UUID.randomUUID(), owner);
     }
 
     private String payload(List<OutboxEvent> rows, String type) {
@@ -190,7 +192,7 @@ class BookingPaySeatFailureTest {
                                      created_at, updated_at, idempotency_key)
                 VALUES (?, ?, ?, ?, 200.00, ?, ?, ?)
                 """,
-                bookingId, UUID.randomUUID(), UUID.randomUUID(), status, now, now, UUID.randomUUID());
+                bookingId, owner, UUID.randomUUID(), status, now, now, UUID.randomUUID());
         for (String seatId : seatIds) {
             jdbc.update("INSERT INTO booking_seat (booking_id, seat_id) VALUES (?, ?)", bookingId, seatId);
         }

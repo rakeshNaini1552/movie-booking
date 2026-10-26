@@ -37,23 +37,28 @@ public class BookingController {
         return userId;
     }
 
+    private UUID currentUserId(Jwt jwt) {
+        return UUID.fromString(Objects.requireNonNull(jwt.getSubject()));
+    }
+
     @PostMapping("/{bookingId}/payments")
-    public PayBookingResponse pay(@PathVariable UUID bookingId,
+    public PayBookingResponse pay(@AuthenticationPrincipal Jwt jwt,
+                                  @PathVariable UUID bookingId,
                                   @RequestHeader("Idempotency-Key") UUID idempotencyKey,
                                   @Valid @RequestBody PayBookingRequest request) {
         PayOutcome outcome = bookingService.pay(
-                new PayBookingCommand(bookingId, request.paymentToken(), idempotencyKey));
+                new PayBookingCommand(bookingId, request.paymentToken(), idempotencyKey, currentUserId(jwt)));
         return new PayBookingResponse(bookingId, outcome.bookingStatus(), outcome.paymentStatus());
     }
 
     @PostMapping("/{bookingId}/cancel")
-    public CancelBookingResponse cancel(@PathVariable UUID bookingId) {
-        return new CancelBookingResponse(bookingId, bookingService.cancel(bookingId));
+    public CancelBookingResponse cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID bookingId) {
+        return new CancelBookingResponse(bookingId, bookingService.cancel(bookingId, currentUserId(jwt)));
     }
 
     @GetMapping("/{bookingId}")
-    public BookingResponse getBooking(@PathVariable UUID bookingId) {
-        PayableBooking booking = bookingService.getBooking(bookingId);
+    public BookingResponse getBooking(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID bookingId) {
+        PayableBooking booking = bookingService.getOwnedBooking(bookingId, currentUserId(jwt));
         return new BookingResponse(booking.bookingId(), booking.showId(), booking.status(),
                 booking.totalAmount(), booking.seatIds());
     }

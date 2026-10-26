@@ -6,5 +6,5 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-public record PayableBooking(UUID bookingId, UUID showId, BigDecimal totalAmount,
+public record PayableBooking(UUID bookingId, UUID userId, UUID showId, BigDecimal totalAmount,
                              BookingStatus status, List<String> seatIds) {}
