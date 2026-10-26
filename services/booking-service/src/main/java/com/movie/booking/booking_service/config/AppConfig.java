@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestClient;
 
 import java.net.http.HttpClient;
@@ -22,7 +23,8 @@ public class AppConfig {
     public RestClient seatServiceRestClient(
             @Value("${seat-service.base-url}") String baseUrl,
             @Value("${seat-service.connect-timeout-ms}") long connectTimeoutMs,
-            @Value("${seat-service.read-timeout-ms}") long readTimeoutMs) {
+            @Value("${seat-service.read-timeout-ms}") long readTimeoutMs,
+            ClientHttpRequestInterceptor serviceTokenInterceptor) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -33,6 +35,7 @@ public class AppConfig {
         return RestClient.builder()
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
+                .requestInterceptor(serviceTokenInterceptor)
                 .build();
     }
 
@@ -40,7 +43,8 @@ public class AppConfig {
     public RestClient paymentServiceRestClient(
             @Value("${payment-service.base-url}") String baseUrl,
             @Value("${payment-service.connect-timeout-ms}") long connectTimeoutMs,
-            @Value("${payment-service.read-timeout-ms}") long readTimeoutMs) {
+            @Value("${payment-service.read-timeout-ms}") long readTimeoutMs,
+            ClientHttpRequestInterceptor serviceTokenInterceptor) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -51,6 +55,7 @@ public class AppConfig {
         return RestClient.builder()
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
+                .requestInterceptor(serviceTokenInterceptor)
                 .build();
     }
 }

@@ -37,6 +37,8 @@ class BookingCancelTicketUsedTest {
     @MockitoBean PaymentClient paymentClient;
     @MockitoBean SeatClient seatClient;
 
+    private final UUID owner = UUID.randomUUID();
+
     @BeforeEach
     void cleanUp() {
         outboxRepository.deleteAll();
@@ -48,7 +50,7 @@ class BookingCancelTicketUsedTest {
     void cancellingConfirmedBookingWithUsedTicketReturns409AndChangesNothing() throws Exception {
         UUID bookingId = insertConfirmedBooking(Instant.now().minusSeconds(60), "A1", "A2");
 
-        mockMvc.perform(post(CANCEL_URL, bookingId))
+        mockMvc.perform(post(CANCEL_URL, bookingId).with(TestAuth.asUser(owner)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Booking cannot be cancelled: ticket already used"));
 
@@ -60,7 +62,7 @@ class BookingCancelTicketUsedTest {
     void cancellingConfirmedBookingWithUnusedTicketReturns200AndWritesBothEvents() throws Exception {
         UUID bookingId = insertConfirmedBooking(null, "A1", "A2");
 
-        mockMvc.perform(post(CANCEL_URL, bookingId))
+        mockMvc.perform(post(CANCEL_URL, bookingId).with(TestAuth.asUser(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.bookingId").value(bookingId.toString()))
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
@@ -76,7 +78,7 @@ class BookingCancelTicketUsedTest {
     void cancellingPendingBookingReturns200() throws Exception {
         UUID bookingId = insertBooking("PENDING", "A1");
 
-        mockMvc.perform(post(CANCEL_URL, bookingId))
+        mockMvc.perform(post(CANCEL_URL, bookingId).with(TestAuth.asUser(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
@@ -87,7 +89,7 @@ class BookingCancelTicketUsedTest {
     void cancellingAlreadyCancelledBookingReturns200() throws Exception {
         UUID bookingId = insertBooking("CANCELLED", "A1");
 
-        mockMvc.perform(post(CANCEL_URL, bookingId))
+        mockMvc.perform(post(CANCEL_URL, bookingId).with(TestAuth.asUser(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
@@ -98,7 +100,7 @@ class BookingCancelTicketUsedTest {
     void cancellingFailedBookingReturns409NotCancellable() throws Exception {
         UUID bookingId = insertBooking("FAILED", "A1");
 
-        mockMvc.perform(post(CANCEL_URL, bookingId))
+        mockMvc.perform(post(CANCEL_URL, bookingId).with(TestAuth.asUser(owner)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Booking not cancellable"));
 
@@ -109,7 +111,7 @@ class BookingCancelTicketUsedTest {
     void cancellingExpiredBookingReturns409NotCancellable() throws Exception {
         UUID bookingId = insertBooking("EXPIRED", "A1");
 
-        mockMvc.perform(post(CANCEL_URL, bookingId))
+        mockMvc.perform(post(CANCEL_URL, bookingId).with(TestAuth.asUser(owner)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Booking not cancellable"));
 
@@ -136,7 +138,7 @@ class BookingCancelTicketUsedTest {
                                      created_at, updated_at, idempotency_key, ticket_used_at)
                 VALUES (?, ?, ?, ?, 200.00, ?, ?, ?, ?)
                 """,
-                bookingId, UUID.randomUUID(), UUID.randomUUID(), status, now, now, UUID.randomUUID(),
+                bookingId, owner, UUID.randomUUID(), status, now, now, UUID.randomUUID(),
                 ticketUsedAt == null ? null : Timestamp.from(ticketUsedAt));
         for (String seatId : seatIds) {
             jdbc.update("INSERT INTO booking_seat (booking_id, seat_id) VALUES (?, ?)", bookingId, seatId);

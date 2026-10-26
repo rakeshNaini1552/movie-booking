@@ -107,7 +107,7 @@ public class BookingStateService {
                     List<String> seatIds = bookingSeatRepository.findByIdBookingId(bookingId).stream()
                             .map(seat -> seat.getId().getSeatId())
                             .toList();
-                    return new PayableBooking(booking.getBookingId(), booking.getShowId(),
+                    return new PayableBooking(booking.getBookingId(), booking.getUserId(), booking.getShowId(),
                             booking.getTotalAmount(), booking.getStatus(), seatIds);
                 });
     }

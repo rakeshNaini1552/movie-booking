@@ -25,13 +25,14 @@ class BookingServiceGetBookingTest {
             bookingStateService, mock(PaymentClient.class), mock(SeatClient.class));
 
     @Test
-    void returns_the_booking_when_it_exists() {
+    void returns_the_booking_to_its_owner() {
         UUID bookingId = UUID.randomUUID();
-        PayableBooking booking = new PayableBooking(bookingId, UUID.randomUUID(),
+        UUID owner = UUID.randomUUID();
+        PayableBooking booking = new PayableBooking(bookingId, owner, UUID.randomUUID(),
                 new BigDecimal("500.00"), BookingStatus.PENDING, List.of("A1"));
         when(bookingStateService.findPayable(bookingId)).thenReturn(Optional.of(booking));
 
-        assertThat(service.getBooking(bookingId)).isEqualTo(booking);
+        assertThat(service.getOwnedBooking(bookingId, owner)).isEqualTo(booking);
     }
 
     @Test
@@ -39,7 +40,18 @@ class BookingServiceGetBookingTest {
         UUID bookingId = UUID.randomUUID();
         when(bookingStateService.findPayable(bookingId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getBooking(bookingId))
+        assertThatThrownBy(() -> service.getOwnedBooking(bookingId, UUID.randomUUID()))
+                .isInstanceOf(BookingNotFoundException.class);
+    }
+
+    @Test
+    void throws_not_found_when_the_caller_is_not_the_owner() {
+        UUID bookingId = UUID.randomUUID();
+        PayableBooking booking = new PayableBooking(bookingId, UUID.randomUUID(), UUID.randomUUID(),
+                new BigDecimal("500.00"), BookingStatus.PENDING, List.of("A1"));
+        when(bookingStateService.findPayable(bookingId)).thenReturn(Optional.of(booking));
+
+        assertThatThrownBy(() -> service.getOwnedBooking(bookingId, UUID.randomUUID()))
                 .isInstanceOf(BookingNotFoundException.class);
     }
 }

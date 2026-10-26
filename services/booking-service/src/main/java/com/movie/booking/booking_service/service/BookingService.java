@@ -48,8 +48,7 @@ public class BookingService {
     }
 
     public PayOutcome pay(PayBookingCommand command) {
-        PayableBooking booking = bookingStateService.findPayable(command.bookingId())
-                .orElseThrow(() -> new BookingNotFoundException(command.bookingId()));
+        PayableBooking booking = getOwnedBooking(command.bookingId(), command.userId());
 
         if (booking.status() != BookingStatus.PENDING) {
             throw new BookingNotPayableException(booking.bookingId(), booking.status());
@@ -83,8 +82,8 @@ public class BookingService {
         return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
     }
 
-    public BookingStatus cancel(UUID bookingId) {
-        PayableBooking booking = getBooking(bookingId);
+    public BookingStatus cancel(UUID bookingId, UUID userId) {
+        PayableBooking booking = getOwnedBooking(bookingId, userId);
 
         boolean cancelled = switch (booking.status()) {
             case CANCELLED -> true;
@@ -119,7 +118,15 @@ public class BookingService {
         return true;
     }
 
-    public PayableBooking getBooking(UUID bookingId) {
+    public PayableBooking getOwnedBooking(UUID bookingId, UUID userId) {
+        PayableBooking booking = getBooking(bookingId);
+        if (!booking.userId().equals(userId)) {
+            throw new BookingNotFoundException(bookingId);
+        }
+        return booking;
+    }
+
+    private PayableBooking getBooking(UUID bookingId) {
         return bookingStateService.findPayable(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId));
     }

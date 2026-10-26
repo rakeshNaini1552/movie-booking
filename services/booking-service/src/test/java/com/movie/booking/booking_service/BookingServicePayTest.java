@@ -37,13 +37,14 @@ class BookingServicePayTest {
     private final UUID showId = UUID.randomUUID();
     private final UUID paymentId = UUID.randomUUID();
     private final UUID key = UUID.randomUUID();
+    private final UUID userId = UUID.randomUUID();
     private final BigDecimal amount = new BigDecimal("500.00");
     private final List<String> seats = List.of("A1", "A2");
-    private final PayBookingCommand command = new PayBookingCommand(bookingId, "tok_success", key);
+    private final PayBookingCommand command = new PayBookingCommand(bookingId, "tok_success", key, userId);
 
     private void givenBooking(BookingStatus status) {
         when(bookingStateService.findPayable(bookingId))
-                .thenReturn(Optional.of(new PayableBooking(bookingId, showId, amount, status, seats)));
+                .thenReturn(Optional.of(new PayableBooking(bookingId, userId, showId, amount, status, seats)));
     }
 
     @Test
@@ -88,8 +89,8 @@ class BookingServicePayTest {
         when(paymentClient.pay(bookingId, amount, "tok_success", secondKey))
                 .thenReturn(new PaymentResult(paymentId, PaymentStatus.SUCCESS));
 
-        PayOutcome first = service.pay(new PayBookingCommand(bookingId, "tok_decline", key));
-        PayOutcome second = service.pay(new PayBookingCommand(bookingId, "tok_success", secondKey));
+        PayOutcome first = service.pay(new PayBookingCommand(bookingId, "tok_decline", key, userId));
+        PayOutcome second = service.pay(new PayBookingCommand(bookingId, "tok_success", secondKey, userId));
 
         assertThat(first.paymentStatus()).isEqualTo(PaymentStatus.FAILED);
         assertThat(second.bookingStatus()).isEqualTo(BookingStatus.CONFIRMED);

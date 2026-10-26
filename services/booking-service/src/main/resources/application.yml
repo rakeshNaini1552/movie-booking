@@ -3,6 +3,16 @@ spring:
     name: booking-service
   security:
     oauth2:
+      client:
+        registration:
+          booking-service:
+            provider: keycloak
+            client-id: booking-service
+            client-secret: ${BOOKING_SERVICE_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/realms/movie-booking
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8180/realms/movie-booking

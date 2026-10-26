@@ -48,6 +48,8 @@ class BookingCancelTest {
     @MockitoBean SeatClient seatClient;
     @MockitoSpyBean OutboxService outboxService;
 
+    private final UUID owner = UUID.randomUUID();
+
     @BeforeEach
     void cleanUp() {
         reset(seatClient, outboxService);
@@ -60,7 +62,7 @@ class BookingCancelTest {
     void cancellingPendingBookingReleasesSeatsAndWritesNoEvents() {
         UUID bookingId = insertBooking("PENDING", "A1", "A2");
 
-        BookingStatus result = bookingService.cancel(bookingId);
+        BookingStatus result = bookingService.cancel(bookingId, owner);
 
         assertThat(result).isEqualTo(BookingStatus.CANCELLED);
         assertThat(statusOf(bookingId)).isEqualTo("CANCELLED");
@@ -74,7 +76,7 @@ class BookingCancelTest {
         doThrow(new SeatServiceUnavailableException("down", new RuntimeException()))
                 .when(seatClient).releaseSeats(any(), any(), any());
 
-        assertThat(bookingService.cancel(bookingId)).isEqualTo(BookingStatus.CANCELLED);
+        assertThat(bookingService.cancel(bookingId, owner)).isEqualTo(BookingStatus.CANCELLED);
 
         assertThat(statusOf(bookingId)).isEqualTo("CANCELLED");
     }
@@ -83,7 +85,7 @@ class BookingCancelTest {
     void cancellingConfirmedBookingWritesBookingCancelledAndRefundRequested() {
         UUID bookingId = insertBooking("CONFIRMED", "A1", "A2");
 
-        assertThat(bookingService.cancel(bookingId)).isEqualTo(BookingStatus.CANCELLED);
+        assertThat(bookingService.cancel(bookingId, owner)).isEqualTo(BookingStatus.CANCELLED);
 
         assertThat(statusOf(bookingId)).isEqualTo("CANCELLED");
         List<OutboxEvent> rows = outboxRepository.findAll();
@@ -109,8 +111,8 @@ class BookingCancelTest {
     void cancellingTwiceIsIdempotentAndWritesEventsOnce() {
         UUID bookingId = insertBooking("CONFIRMED", "A1");
 
-        bookingService.cancel(bookingId);
-        BookingStatus second = bookingService.cancel(bookingId);
+        bookingService.cancel(bookingId, owner);
+        BookingStatus second = bookingService.cancel(bookingId, owner);
 
         assertThat(second).isEqualTo(BookingStatus.CANCELLED);
         assertThat(outboxRepository.count()).isEqualTo(2);
@@ -121,9 +123,9 @@ class BookingCancelTest {
         UUID failed = insertBooking("FAILED", "A1");
         UUID expired = insertBooking("EXPIRED", "A2");
 
-        assertThatThrownBy(() -> bookingService.cancel(failed))
+        assertThatThrownBy(() -> bookingService.cancel(failed, owner))
                 .isInstanceOf(BookingNotCancellableException.class);
-        assertThatThrownBy(() -> bookingService.cancel(expired))
+        assertThatThrownBy(() -> bookingService.cancel(expired, owner))
                 .isInstanceOf(BookingNotCancellableException.class);
 
         assertThat(statusOf(failed)).isEqualTo("FAILED");
@@ -133,7 +135,7 @@ class BookingCancelTest {
 
     @Test
     void unknownBookingIsNotFound() {
-        assertThatThrownBy(() -> bookingService.cancel(UUID.randomUUID()))
+        assertThatThrownBy(() -> bookingService.cancel(UUID.randomUUID(), owner))
                 .isInstanceOf(BookingNotFoundException.class);
     }
 
@@ -143,7 +145,7 @@ class BookingCancelTest {
         doThrow(new RuntimeException("outbox down"))
                 .when(outboxService).enqueue(any(), any(), any(), any());
 
-        assertThatThrownBy(() -> bookingService.cancel(bookingId)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> bookingService.cancel(bookingId, owner)).isInstanceOf(RuntimeException.class);
 
         assertThat(statusOf(bookingId)).isEqualTo("CONFIRMED");
         assertThat(outboxRepository.findAll()).isEmpty();
@@ -155,8 +157,8 @@ class BookingCancelTest {
         CountDownLatch start = new CountDownLatch(1);
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {
-            Future<BookingStatus> a = pool.submit(() -> { start.await(); return bookingService.cancel(bookingId); });
-            Future<BookingStatus> b = pool.submit(() -> { start.await(); return bookingService.cancel(bookingId); });
+            Future<BookingStatus> a = pool.submit(() -> { start.await(); return bookingService.cancel(bookingId, owner); });
+            Future<BookingStatus> b = pool.submit(() -> { start.await(); return bookingService.cancel(bookingId, owner); });
             start.countDown();
 
             assertThat(a.get()).isEqualTo(BookingStatus.CANCELLED);
@@ -183,7 +185,7 @@ class BookingCancelTest {
                                      created_at, updated_at, idempotency_key)
                 VALUES (?, ?, ?, ?, 200.00, ?, ?, ?)
                 """,
-                bookingId, UUID.randomUUID(), UUID.randomUUID(), status, now, now, UUID.randomUUID());
+                bookingId, owner, UUID.randomUUID(), status, now, now, UUID.randomUUID());
         for (String seatId : seatIds) {
             jdbc.update("INSERT INTO booking_seat (booking_id, seat_id) VALUES (?, ?)", bookingId, seatId);
         }
