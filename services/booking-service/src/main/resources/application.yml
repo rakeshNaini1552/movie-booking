@@ -50,7 +50,7 @@ booking:
   expiry:
     enabled: ${BOOKING_EXPIRY_ENABLED:true}
     poll-interval-ms: ${BOOKING_EXPIRY_POLL_MS:60000}
-    pending-timeout: ${BOOKING_EXPIRY_PENDING_TIMEOUT:10m}
+    pending-timeout: ${BOOKING_EXPIRY_PENDING_TIMEOUT:5m}
   outbox:
     topic: ${BOOKING_EVENTS_TOPIC:booking-events}
     poll-interval-ms: ${BOOKING_OUTBOX_POLL_MS:1000}
