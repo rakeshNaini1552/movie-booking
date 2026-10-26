@@ -1,5 +1,6 @@
 package com.movie.booking.payment_service;
 
+import com.movie.booking.payment_service.config.SecurityConfig;
 import com.movie.booking.payment_service.controller.PaymentController;
 import com.movie.booking.payment_service.entity.Payment;
 import com.movie.booking.payment_service.entity.PaymentStatus;
@@ -8,7 +9,10 @@ import com.movie.booking.payment_service.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -19,11 +23,13 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PaymentController.class)
+@Import(SecurityConfig.class)
 class PaymentControllerTest {
 
     @Autowired
@@ -31,6 +37,9 @@ class PaymentControllerTest {
 
     @MockitoBean
     private PaymentService paymentService;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     private static final String BODY = """
             {"bookingId":"22222222-2222-4222-8222-222222222222","amount":500.00,"paymentToken":"tok_success"}
@@ -44,6 +53,7 @@ class PaymentControllerTest {
         when(paymentService.pay(any())).thenReturn(payment);
 
         mockMvc.perform(post("/api/v1/payments")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_internal-service")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Idempotency-Key", UUID.randomUUID().toString())
                         .content(BODY))
@@ -57,6 +67,7 @@ class PaymentControllerTest {
         when(paymentService.pay(any())).thenThrow(new InvalidPaymentTokenException("Unknown payment token"));
 
         mockMvc.perform(post("/api/v1/payments")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_internal-service")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Idempotency-Key", UUID.randomUUID().toString())
                         .content(BODY))
@@ -67,6 +78,7 @@ class PaymentControllerTest {
     @Test
     void missing_idempotency_key_returns_400() throws Exception {
         mockMvc.perform(post("/api/v1/payments")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_internal-service")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(BODY))
                 .andExpect(status().isBadRequest());
@@ -77,6 +89,7 @@ class PaymentControllerTest {
     @Test
     void non_positive_amount_returns_400() throws Exception {
         mockMvc.perform(post("/api/v1/payments")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_internal-service")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Idempotency-Key", UUID.randomUUID().toString())
                         .content("""
