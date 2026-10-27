@@ -1,5 +1,7 @@
 package com.movie.booking.booking_service.service;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,13 +18,16 @@ public class BookingExpiryService {
     private final BookingStateService bookingStateService;
     private final Clock clock;
     private final Duration pendingTimeout;
+    private final Counter expirationsCounter;
 
     public BookingExpiryService(BookingStateService bookingStateService,
                                 Clock clock,
-                                @Value("${booking.expiry.pending-timeout}") Duration pendingTimeout) {
+                                @Value("${booking.expiry.pending-timeout}") Duration pendingTimeout,
+                                MeterRegistry meterRegistry) {
         this.bookingStateService = bookingStateService;
         this.clock = clock;
         this.pendingTimeout = pendingTimeout;
+        this.expirationsCounter = meterRegistry.counter("hold.expirations");
     }
 
     public int expireStaleBookings() {
@@ -38,6 +43,7 @@ public class BookingExpiryService {
             }
         }
         if (expired > 0) {
+            expirationsCounter.increment(expired);
             log.info("Expired {} stale PENDING bookings", expired);
         }
         return expired;

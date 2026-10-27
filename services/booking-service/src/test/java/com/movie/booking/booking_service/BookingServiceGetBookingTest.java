@@ -6,6 +6,7 @@ import com.movie.booking.booking_service.dto.PayableBooking;
 import com.movie.booking.booking_service.exception.BookingNotFoundException;
 import com.movie.booking.booking_service.service.BookingService;
 import com.movie.booking.booking_service.service.BookingStateService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -22,7 +23,8 @@ class BookingServiceGetBookingTest {
 
     private final BookingStateService bookingStateService = mock(BookingStateService.class);
     private final BookingService service = new BookingService(
-            bookingStateService, mock(PaymentClient.class), mock(SeatClient.class));
+            bookingStateService, mock(PaymentClient.class), mock(SeatClient.class),
+            new SimpleMeterRegistry());
 
     @Test
     void returns_the_booking_to_its_owner() {

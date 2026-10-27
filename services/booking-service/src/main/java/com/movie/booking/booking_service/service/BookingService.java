@@ -6,6 +6,8 @@ import com.movie.booking.booking_service.client.PaymentClient;
 import com.movie.booking.booking_service.client.SeatClient;
 import com.movie.booking.booking_service.dto.*;
 import com.movie.booking.booking_service.exception.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,12 +18,24 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BookingService {
 
     private final BookingStateService bookingStateService;
     private final PaymentClient paymentClient;
     private final SeatClient seatClient;
+    private final Counter confirmedCounter;
+    private final Counter seatConfirmFailedCounter;
+    private final Counter notPendingCounter;
+
+    public BookingService(BookingStateService bookingStateService, PaymentClient paymentClient,
+                          SeatClient seatClient, MeterRegistry meterRegistry) {
+        this.bookingStateService = bookingStateService;
+        this.paymentClient = paymentClient;
+        this.seatClient = seatClient;
+        this.confirmedCounter = meterRegistry.counter("bookings.confirmed");
+        this.seatConfirmFailedCounter = meterRegistry.counter("saga.compensations", "reason", "seat_confirm_failed");
+        this.notPendingCounter = meterRegistry.counter("saga.compensations", "reason", "booking_not_pending");
+    }
 
     public UUID createBooking(CreateBookingCommand command) {
         Optional<UUID> existing = bookingStateService.findBookingIdByKey(command.idempotencyKey());
@@ -70,6 +84,7 @@ public class BookingService {
             log.error("PAID but seats not confirmed for booking {} (payment {}): {}",
                     booking.bookingId(), result.paymentId(), e.getMessage());
             bookingStateService.markFailedAndRequestRefund(booking.bookingId());
+            seatConfirmFailedCounter.increment();
             return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
         }
 
@@ -77,10 +92,11 @@ public class BookingService {
             log.error("PAID and seats confirmed, but booking {} is no longer PENDING (payment {})",
                     booking.bookingId(), result.paymentId());
             bookingStateService.markFailedAndRequestRefund(booking.bookingId());
+            notPendingCounter.increment();
             return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
         }
-        return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
-    }
+        confirmedCounter.increment();
+        return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);    }
 
     public BookingStatus cancel(UUID bookingId, UUID userId) {
         PayableBooking booking = getOwnedBooking(bookingId, userId);
