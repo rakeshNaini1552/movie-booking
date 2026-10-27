@@ -101,6 +101,9 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: ${SEAT_CB_HALF_OPEN_CALLS:3}
         record-exceptions:
           - com.movie.booking.booking_service.exception.SeatServiceUnavailableException
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-} bookingId=%X{bookingId:-}]"
 
 seat-service:
   base-url: ${SEAT_SERVICE_URL:http://localhost:8081}

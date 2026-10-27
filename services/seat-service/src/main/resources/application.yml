@@ -82,3 +82,6 @@ management:
           include: livenessState
         readiness:
           include: readinessState,db,redis
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}]"

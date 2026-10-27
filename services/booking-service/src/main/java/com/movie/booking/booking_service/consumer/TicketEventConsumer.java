@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
+import org.slf4j.MDC;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
@@ -33,7 +34,13 @@ public class TicketEventConsumer {
         }
 
         TicketScannedEvent event = jsonMapper.readValue(record.value(), TicketScannedEvent.class);
-        boolean updated = bookingStateService.markTicketUsed(event.bookingId(), event.occurredAt());
-        log.debug("TicketScanned for booking {}: ticket_used_at updated={}", event.bookingId(), updated);
+
+        MDC.put("bookingId", String.valueOf(event.bookingId()));
+        try {
+            boolean updated = bookingStateService.markTicketUsed(event.bookingId(), event.occurredAt());
+            log.info("TicketScanned for booking {}: ticket_used_at updated={}", event.bookingId(), updated);
+        } finally {
+            MDC.remove("bookingId");
+        }
     }
 }
