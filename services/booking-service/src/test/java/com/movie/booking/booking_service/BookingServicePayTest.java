@@ -12,6 +12,7 @@ import com.movie.booking.booking_service.exception.PaymentServiceUnavailableExce
 import com.movie.booking.booking_service.exception.SeatConfirmationFailedException;
 import com.movie.booking.booking_service.service.BookingService;
 import com.movie.booking.booking_service.service.BookingStateService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
@@ -30,8 +31,9 @@ class BookingServicePayTest {
     private final BookingStateService bookingStateService = mock(BookingStateService.class);
     private final SeatClient seatClient = mock(SeatClient.class);
     private final PaymentClient paymentClient = mock(PaymentClient.class);
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
     private final BookingService service =
-            new BookingService(bookingStateService, paymentClient, seatClient);
+            new BookingService(bookingStateService, paymentClient, seatClient, registry);
 
     private final UUID bookingId = UUID.randomUUID();
     private final UUID showId = UUID.randomUUID();
@@ -41,6 +43,10 @@ class BookingServicePayTest {
     private final BigDecimal amount = new BigDecimal("500.00");
     private final List<String> seats = List.of("A1", "A2");
     private final PayBookingCommand command = new PayBookingCommand(bookingId, "tok_success", key, userId);
+
+    private double compensations(String reason) {
+        return registry.counter("saga.compensations", "reason", reason).count();
+    }
 
     private void givenBooking(BookingStatus status) {
         when(bookingStateService.findPayable(bookingId))
@@ -62,6 +68,9 @@ class BookingServicePayTest {
         order.verify(paymentClient).pay(bookingId, amount, "tok_success", key);
         order.verify(seatClient).confirmSeats(showId, seats, bookingId);
         order.verify(bookingStateService).markConfirmed(bookingId);
+        assertThat(registry.counter("bookings.confirmed").count()).isEqualTo(1.0);
+        assertThat(compensations("seat_confirm_failed")).isEqualTo(0.0);
+        assertThat(compensations("booking_not_pending")).isEqualTo(0.0);
     }
 
     @Test
@@ -77,6 +86,9 @@ class BookingServicePayTest {
         verifyNoInteractions(seatClient);
         verify(bookingStateService, never()).markFailed(any());
         verify(bookingStateService, never()).markConfirmed(any());
+        assertThat(registry.counter("bookings.confirmed").count()).isEqualTo(0.0);
+        assertThat(compensations("seat_confirm_failed")).isEqualTo(0.0);
+        assertThat(compensations("booking_not_pending")).isEqualTo(0.0);
     }
 
     @Test
@@ -110,6 +122,9 @@ class BookingServicePayTest {
         assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.SUCCESS);
         verify(seatClient).confirmSeats(showId, seats, bookingId);
         verify(bookingStateService).markFailedAndRequestRefund(bookingId);
+        assertThat(registry.counter("bookings.confirmed").count()).isEqualTo(0.0);
+        assertThat(compensations("seat_confirm_failed")).isEqualTo(0.0);
+        assertThat(compensations("booking_not_pending")).isEqualTo(1.0);
     }
 
     @Test
@@ -147,6 +162,9 @@ class BookingServicePayTest {
         verify(bookingStateService).markFailedAndRequestRefund(bookingId);
         verify(bookingStateService, never()).markConfirmed(any());
         verify(bookingStateService, never()).markFailed(any());
+        assertThat(registry.counter("bookings.confirmed").count()).isEqualTo(0.0);
+        assertThat(compensations("seat_confirm_failed")).isEqualTo(1.0);
+        assertThat(compensations("booking_not_pending")).isEqualTo(0.0);
     }
 
     @Test
