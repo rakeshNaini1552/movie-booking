@@ -24,7 +24,8 @@ public class AppConfig {
             @Value("${seat-service.base-url}") String baseUrl,
             @Value("${seat-service.connect-timeout-ms}") long connectTimeoutMs,
             @Value("${seat-service.read-timeout-ms}") long readTimeoutMs,
-            ClientHttpRequestInterceptor serviceTokenInterceptor) {
+            ClientHttpRequestInterceptor serviceTokenInterceptor,
+            ClientHttpRequestInterceptor requestIdInterceptor) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -36,6 +37,7 @@ public class AppConfig {
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .requestInterceptor(serviceTokenInterceptor)
+                .requestInterceptor(requestIdInterceptor)
                 .build();
     }
 
@@ -44,7 +46,8 @@ public class AppConfig {
             @Value("${payment-service.base-url}") String baseUrl,
             @Value("${payment-service.connect-timeout-ms}") long connectTimeoutMs,
             @Value("${payment-service.read-timeout-ms}") long readTimeoutMs,
-            ClientHttpRequestInterceptor serviceTokenInterceptor) {
+            ClientHttpRequestInterceptor serviceTokenInterceptor,
+            ClientHttpRequestInterceptor requestIdInterceptor) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -56,6 +59,7 @@ public class AppConfig {
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .requestInterceptor(serviceTokenInterceptor)
+                .requestInterceptor(requestIdInterceptor)
                 .build();
     }
 }
