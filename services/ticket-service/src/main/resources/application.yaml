@@ -14,6 +14,10 @@ spring:
           issuer-uri: http://localhost:8180/realms/movie-booking
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     producer:
       acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -51,6 +55,22 @@ server:
   port: 8084
 
 management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING:1.0}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
   endpoints:
     web:
       exposure:
@@ -69,5 +89,10 @@ management:
         readiness:
           include: readinessState,db
 logging:
+  file:
+    name: ${LOG_DIR:../../deploy/logs}/${spring.application.name}.log
+  structured:
+    format:
+      file: ecs
   pattern:
-    level: "%5p [requestId=%X{requestId:-}]"
+    level: "%5p [requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-}]"

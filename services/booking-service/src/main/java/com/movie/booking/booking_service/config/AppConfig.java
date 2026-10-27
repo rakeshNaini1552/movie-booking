@@ -25,7 +25,8 @@ public class AppConfig {
             @Value("${seat-service.connect-timeout-ms}") long connectTimeoutMs,
             @Value("${seat-service.read-timeout-ms}") long readTimeoutMs,
             ClientHttpRequestInterceptor serviceTokenInterceptor,
-            ClientHttpRequestInterceptor requestIdInterceptor) {
+            ClientHttpRequestInterceptor requestIdInterceptor,
+            RestClient.Builder restClientBuilder) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -33,7 +34,7 @@ public class AppConfig {
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
-        return RestClient.builder()
+        return restClientBuilder
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .requestInterceptor(serviceTokenInterceptor)
@@ -47,7 +48,8 @@ public class AppConfig {
             @Value("${payment-service.connect-timeout-ms}") long connectTimeoutMs,
             @Value("${payment-service.read-timeout-ms}") long readTimeoutMs,
             ClientHttpRequestInterceptor serviceTokenInterceptor,
-            ClientHttpRequestInterceptor requestIdInterceptor) {
+            ClientHttpRequestInterceptor requestIdInterceptor,
+            RestClient.Builder restClientBuilder) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -55,7 +57,7 @@ public class AppConfig {
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
-        return RestClient.builder()
+        return restClientBuilder
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .requestInterceptor(serviceTokenInterceptor)

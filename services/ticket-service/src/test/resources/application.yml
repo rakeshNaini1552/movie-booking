@@ -4,3 +4,6 @@ ticket:
       enabled: false
   qr:
     secret: test-secret-for-tests
+logging:
+  file:
+    name: target/test-logs/app.log

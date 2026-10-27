@@ -1,0 +1,43 @@
+// Tails the JSON log files the host services write into deploy/logs and ships them to Loki.
+local.file_match "services" {
+  path_targets = [{"__path__" = "/var/log/services/*.log"}]
+  sync_period  = "5s"
+}
+
+loki.source.file "services" {
+  targets    = local.file_match.services.targets
+  forward_to = [loki.process.services.receiver]
+}
+
+loki.process "services" {
+  // Boot's ECS format nests these: {"service":{"name":...},"log":{"level":...},"traceId":...}
+  stage.json {
+    expressions = {
+      service = "service.name",
+      level   = "log.level",
+      traceId = "traceId",
+    }
+  }
+
+  // Low-cardinality fields become labels; traceId is high-cardinality, so structured metadata.
+  stage.labels {
+    values = {
+      service = "",
+      level   = "",
+    }
+  }
+
+  stage.structured_metadata {
+    values = {
+      traceId = "",
+    }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
