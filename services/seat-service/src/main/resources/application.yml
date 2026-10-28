@@ -5,7 +5,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/movie-booking
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/movie-booking}
 
   threads:
     virtual:

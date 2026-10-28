@@ -12,10 +12,10 @@ spring:
             authorization-grant-type: client_credentials
         provider:
           keycloak:
-            issuer-uri: http://localhost:8180/realms/movie-booking
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/movie-booking}
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/movie-booking
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/movie-booking}
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:booking_db}
