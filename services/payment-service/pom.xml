@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.1</version>
+		<version>4.1.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.movie.booking.payment_service</groupId>
@@ -28,7 +28,24 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<snappy-java.version>1.1.10.9</snappy-java.version>
+		<lz4-java.version>1.11.4</lz4-java.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<!-- Not managed by Spring Boot; transitive via kafka-clients. Pinned for CVE fixes. -->
+			<dependency>
+				<groupId>org.xerial.snappy</groupId>
+				<artifactId>snappy-java</artifactId>
+				<version>${snappy-java.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>at.yawk.lz4</groupId>
+				<artifactId>lz4-java</artifactId>
+				<version>${lz4-java.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
