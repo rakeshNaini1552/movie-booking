@@ -13,7 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 21 }
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
       - name: Run tests
         working-directory: services/${{ matrix.service }}
         run: ./mvnw test
