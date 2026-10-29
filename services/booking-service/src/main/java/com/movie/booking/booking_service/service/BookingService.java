@@ -26,6 +26,7 @@ public class BookingService {
     private final Counter confirmedCounter;
     private final Counter seatConfirmFailedCounter;
     private final Counter notPendingCounter;
+    private final Counter markConfirmedFailedCounter;
 
     public BookingService(BookingStateService bookingStateService, PaymentClient paymentClient,
                           SeatClient seatClient, MeterRegistry meterRegistry) {
@@ -35,6 +36,7 @@ public class BookingService {
         this.confirmedCounter = meterRegistry.counter("bookings.confirmed");
         this.seatConfirmFailedCounter = meterRegistry.counter("saga.compensations", "reason", "seat_confirm_failed");
         this.notPendingCounter = meterRegistry.counter("saga.compensations", "reason", "booking_not_pending");
+        this.markConfirmedFailedCounter = meterRegistry.counter("saga.compensations", "reason", "mark_confirmed_failed");
     }
 
     public UUID createBooking(CreateBookingCommand command) {
@@ -80,23 +82,40 @@ public class BookingService {
 
         try {
             seatClient.confirmSeats(booking.showId(), booking.seatIds(), booking.bookingId());
-        } catch (SeatConfirmationFailedException | SeatServiceUnavailableException e) {
+        } catch (RuntimeException e) {
             log.error("PAID but seats not confirmed for booking {} (payment {}): {}",
                     booking.bookingId(), result.paymentId(), e.getMessage());
-            bookingStateService.markFailedAndRequestRefund(booking.bookingId());
-            seatConfirmFailedCounter.increment();
-            return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
+            return failAndRequestRefund(booking.bookingId(), result.paymentId(), seatConfirmFailedCounter);
         }
 
-        if (!bookingStateService.markConfirmed(booking.bookingId())) {
+        boolean confirmed;
+        try {
+            confirmed = bookingStateService.markConfirmed(booking.bookingId());
+        } catch (RuntimeException e) {
+            log.error("PAID and seats confirmed, but booking {} could not be marked CONFIRMED (payment {}): {}",
+                    booking.bookingId(), result.paymentId(), e.getMessage());
+            return failAndRequestRefund(booking.bookingId(), result.paymentId(), markConfirmedFailedCounter);
+        }
+        if (!confirmed) {
             log.error("PAID and seats confirmed, but booking {} is no longer PENDING (payment {})",
                     booking.bookingId(), result.paymentId());
-            bookingStateService.markFailedAndRequestRefund(booking.bookingId());
-            notPendingCounter.increment();
-            return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
+            return failAndRequestRefund(booking.bookingId(), result.paymentId(), notPendingCounter);
         }
         confirmedCounter.increment();
-        return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);    }
+        return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
+    }
+
+    private PayOutcome failAndRequestRefund(UUID bookingId, UUID paymentId, Counter compensationCounter) {
+        try {
+            bookingStateService.markFailedAndRequestRefund(bookingId);
+        } catch (RuntimeException e) {
+            log.error("PAID but the refund request could not be recorded for booking {} (payment {}): {}",
+                    bookingId, paymentId, e.getMessage());
+            throw e;
+        }
+        compensationCounter.increment();
+        return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
+    }
 
     public BookingStatus cancel(UUID bookingId, UUID userId) {
         PayableBooking booking = getOwnedBooking(bookingId, userId);

@@ -6,5 +6,5 @@ import lombok.Getter;
 import lombok.Setter;
 
 public enum PaymentStatus {
-    SUCCESS, FAILED;
+    SUCCESS, FAILED, REFUNDED;
 }

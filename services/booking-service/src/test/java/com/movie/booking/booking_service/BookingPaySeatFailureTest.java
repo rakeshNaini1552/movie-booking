@@ -13,13 +13,20 @@ import com.movie.booking.booking_service.exception.SeatConfirmationFailedExcepti
 import com.movie.booking.booking_service.exception.SeatServiceUnavailableException;
 import com.movie.booking.booking_service.repository.OutboxRepository;
 import com.movie.booking.booking_service.service.BookingService;
+import com.movie.booking.booking_service.service.BookingStateService;
+import com.movie.booking.booking_service.service.OutboxService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.dao.TransientDataAccessResourceException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.web.client.HttpClientErrorException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.sql.Timestamp;
@@ -30,6 +37,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
@@ -45,12 +53,14 @@ class BookingPaySeatFailureTest {
     @Autowired JdbcTemplate jdbc;
     @MockitoBean PaymentClient paymentClient;
     @MockitoBean SeatClient seatClient;
+    @MockitoSpyBean BookingStateService bookingStateService;
+    @MockitoSpyBean OutboxService outboxService;
 
     private final UUID owner = UUID.randomUUID();
 
     @BeforeEach
     void cleanUp() {
-        reset(paymentClient, seatClient);
+        reset(paymentClient, seatClient, bookingStateService, outboxService);
         outboxRepository.deleteAll();
         jdbc.update("DELETE FROM booking_seat");
         jdbc.update("DELETE FROM booking");
@@ -80,6 +90,83 @@ class BookingPaySeatFailureTest {
 
         assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS));
         assertFailedWithCancelAndRefundEvents(bookingId);
+    }
+
+    @Test
+    void seatServiceRejectingTheServiceTokenAfterPaymentFailsBookingAndRequestsRefund() {
+        UUID bookingId = insertBooking("PENDING", "A1", "A2");
+        doThrow(HttpClientErrorException.create(HttpStatus.FORBIDDEN, "Forbidden", HttpHeaders.EMPTY, new byte[0], null))
+                .when(seatClient).confirmSeats(any(), any(), any());
+
+        PayOutcome outcome = bookingService.pay(payCommand(bookingId));
+
+        assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS));
+        assertFailedWithCancelAndRefundEvents(bookingId);
+    }
+
+    @Test
+    void unexpectedSeatConfirmErrorAfterPaymentFailsBookingAndRequestsRefund() {
+        UUID bookingId = insertBooking("PENDING", "A1", "A2");
+        doThrow(new IllegalStateException("token endpoint unreachable"))
+                .when(seatClient).confirmSeats(any(), any(), any());
+
+        PayOutcome outcome = bookingService.pay(payCommand(bookingId));
+
+        assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS));
+        assertFailedWithCancelAndRefundEvents(bookingId);
+    }
+
+    @Test
+    void markConfirmedThrowingAfterPaymentFailsBookingAndRequestsRefund() {
+        UUID bookingId = insertBooking("PENDING", "A1", "A2");
+        doThrow(new IllegalStateException("boom")).when(bookingStateService).markConfirmed(bookingId);
+
+        PayOutcome outcome = bookingService.pay(payCommand(bookingId));
+
+        assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS));
+        assertFailedWithCancelAndRefundEvents(bookingId);
+    }
+
+    @Test
+    void databaseErrorInMarkConfirmedAfterPaymentFailsBookingAndRequestsRefund() {
+        UUID bookingId = insertBooking("PENDING", "A1", "A2");
+        doThrow(new TransientDataAccessResourceException("connection lost"))
+                .when(bookingStateService).markConfirmed(bookingId);
+
+        PayOutcome outcome = bookingService.pay(payCommand(bookingId));
+
+        assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS));
+        assertFailedWithCancelAndRefundEvents(bookingId);
+    }
+
+    @Test
+    void bookingConfirmedOutboxFailureRollsBackConfirmAndTheBookingEndsFailedWithRefund() {
+        UUID bookingId = insertBooking("PENDING", "A1", "A2");
+        doThrow(new IllegalStateException("outbox down"))
+                .when(outboxService).enqueue(any(), any(), eq("BookingConfirmed"), any());
+
+        PayOutcome outcome = bookingService.pay(payCommand(bookingId));
+
+        assertThat(outcome).isEqualTo(new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS));
+        assertFailedWithCancelAndRefundEvents(bookingId);
+        assertThat(outboxRepository.findAll()).extracting(OutboxEvent::getEventType)
+                .doesNotContain("BookingConfirmed");
+    }
+
+    @Test
+    void failureToRecordTheRefundRequestPropagatesAndLeavesTheBookingPending() {
+        UUID bookingId = insertBooking("PENDING", "A1");
+        doThrow(new SeatConfirmationFailedException("hold expired"))
+                .when(seatClient).confirmSeats(any(), any(), any());
+        doThrow(new IllegalStateException("outbox down"))
+                .when(outboxService).enqueue(any(), any(), any(), any());
+
+        assertThatThrownBy(() -> bookingService.pay(payCommand(bookingId)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("outbox down");
+
+        assertThat(statusOf(bookingId)).isEqualTo("PENDING");
+        assertThat(outboxRepository.findAll()).isEmpty();
     }
 
     @Test
