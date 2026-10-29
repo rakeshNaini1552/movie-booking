@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.movie.booking.seat_service.TestJwt.internalService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,7 +47,7 @@ public class SeatHoldControllerTest {
     public void returns_409_when_seat_is_booked() throws Exception {
         UUID showId = UUID.randomUUID();
         insertSeat(showId, "A1", SeatStatus.BOOKED);
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(holdBody("A1", UUID.randomUUID())))
                 .andExpect(status().isConflict());
@@ -56,7 +57,7 @@ public class SeatHoldControllerTest {
     public void returns_201_when_seat_is_booked() throws Exception {
         UUID showId = UUID.randomUUID();
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(holdBody("A1", UUID.randomUUID())))
                 .andExpect(status().isCreated())
@@ -70,7 +71,7 @@ public class SeatHoldControllerTest {
         String body = holdBody("A1", UUID.randomUUID());
 
         for (int i = 0; i < 2; i++) {
-            mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+            mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isCreated());
@@ -83,7 +84,7 @@ public class SeatHoldControllerTest {
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
         holdSeat(showId, "A1", UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(holdBody("A1", UUID.randomUUID())))
                 .andExpect(status().isConflict());
@@ -92,7 +93,7 @@ public class SeatHoldControllerTest {
     @Test
     public void returns_400_when_seats_are_empty() throws Exception {
         UUID showId = UUID.randomUUID();
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"seatIds\": [], \"bookingId\": \"%s\"}".formatted(UUID.randomUUID())))
                 .andExpect(status().isBadRequest());
@@ -101,7 +102,7 @@ public class SeatHoldControllerTest {
     @Test
     public void returns_400_when_booking_id_is_missing() throws Exception {
         UUID showId = UUID.randomUUID();
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"seatIds\": [\"A1\"]}"))
                 .andExpect(status().isBadRequest());
@@ -117,7 +118,7 @@ public class SeatHoldControllerTest {
         // shrink the TTL so we can see that extend resets it
         redis.expire("hold:" + showId + ":A1", Duration.ofSeconds(10));
 
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/extend", showId, bookingId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/extend", showId, bookingId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {"seatIds": ["A1"]}
@@ -134,7 +135,7 @@ public class SeatHoldControllerTest {
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
         holdSeat(showId, "A1", UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/extend", showId, UUID.randomUUID())
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/extend", showId, UUID.randomUUID()).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {"seatIds": ["A1"]}
@@ -149,7 +150,7 @@ public class SeatHoldControllerTest {
     }
 
     private void holdSeat(UUID showId, String seatId, UUID bookingId) throws Exception {
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(holdBody(seatId, bookingId)))
                 .andExpect(status().isCreated());
@@ -162,7 +163,7 @@ public class SeatHoldControllerTest {
         insertSeat(showId, "A2", SeatStatus.AVAILABLE);
         holdSeat(showId, "A1", UUID.randomUUID());
 
-        mockMvc.perform(get("/api/v1/shows/{showId}/seats", showId))
+        mockMvc.perform(get("/api/v1/shows/{showId}/seats", showId).with(internalService()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.seatId=='A1')].status").value("HELD"))
                 .andExpect(jsonPath("$[?(@.seatId=='A2')].status").value("AVAILABLE"));
@@ -174,7 +175,7 @@ public class SeatHoldControllerTest {
         UUID bookingId = UUID.randomUUID();
         holdSeat(showId, "A1", bookingId);
 
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, bookingId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, bookingId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"seatIds\": [\"A1\"]}"))
                 .andExpect(status().isNoContent());
@@ -189,13 +190,13 @@ public class SeatHoldControllerTest {
         insertSeat(showId, "A1", SeatStatus.AVAILABLE);
         holdSeat(showId, "A1", UUID.randomUUID());
 
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, UUID.randomUUID())
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, UUID.randomUUID()).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"seatIds\": [\"A1\"]}"))
                 .andExpect(status().isNoContent());
 
         assertThat(redis.hasKey("hold:" + showId + ":A1")).isTrue();
-        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId)
+        mockMvc.perform(post("/api/v1/shows/{showId}/holds", showId).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(holdBody("A1", UUID.randomUUID())))
                 .andExpect(status().isConflict());
@@ -209,7 +210,7 @@ public class SeatHoldControllerTest {
         holdSeat(showId, "A1", bookingId);
 
         for (int i = 0; i < 2; i++) {
-            mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, bookingId)
+            mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release", showId, bookingId).with(internalService())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"seatIds\": [\"A1\"]}"))
                     .andExpect(status().isNoContent());
@@ -219,7 +220,7 @@ public class SeatHoldControllerTest {
     @Test
     void release_with_empty_seat_list_returns_400() throws Exception {
         mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release",
-                        UUID.randomUUID(), UUID.randomUUID())
+                        UUID.randomUUID(), UUID.randomUUID()).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"seatIds\": []}"))
                 .andExpect(status().isBadRequest());
@@ -228,7 +229,7 @@ public class SeatHoldControllerTest {
     @Test
     void release_without_body_returns_400() throws Exception {
         mockMvc.perform(post("/api/v1/shows/{showId}/holds/{bookingId}/release",
-                        UUID.randomUUID(), UUID.randomUUID())
+                        UUID.randomUUID(), UUID.randomUUID()).with(internalService())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }

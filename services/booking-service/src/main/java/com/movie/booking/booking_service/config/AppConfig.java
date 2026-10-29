@@ -24,7 +24,9 @@ public class AppConfig {
             @Value("${seat-service.base-url}") String baseUrl,
             @Value("${seat-service.connect-timeout-ms}") long connectTimeoutMs,
             @Value("${seat-service.read-timeout-ms}") long readTimeoutMs,
-            ClientHttpRequestInterceptor serviceTokenInterceptor) {
+            ClientHttpRequestInterceptor serviceTokenInterceptor,
+            ClientHttpRequestInterceptor requestIdInterceptor,
+            RestClient.Builder restClientBuilder) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -32,10 +34,11 @@ public class AppConfig {
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
-        return RestClient.builder()
+        return restClientBuilder
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .requestInterceptor(serviceTokenInterceptor)
+                .requestInterceptor(requestIdInterceptor)
                 .build();
     }
 
@@ -44,7 +47,9 @@ public class AppConfig {
             @Value("${payment-service.base-url}") String baseUrl,
             @Value("${payment-service.connect-timeout-ms}") long connectTimeoutMs,
             @Value("${payment-service.read-timeout-ms}") long readTimeoutMs,
-            ClientHttpRequestInterceptor serviceTokenInterceptor) {
+            ClientHttpRequestInterceptor serviceTokenInterceptor,
+            ClientHttpRequestInterceptor requestIdInterceptor,
+            RestClient.Builder restClientBuilder) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
@@ -52,10 +57,11 @@ public class AppConfig {
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
-        return RestClient.builder()
+        return restClientBuilder
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .requestInterceptor(serviceTokenInterceptor)
+                .requestInterceptor(requestIdInterceptor)
                 .build();
     }
 }

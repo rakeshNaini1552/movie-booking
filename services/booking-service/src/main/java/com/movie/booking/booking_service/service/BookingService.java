@@ -6,6 +6,8 @@ import com.movie.booking.booking_service.client.PaymentClient;
 import com.movie.booking.booking_service.client.SeatClient;
 import com.movie.booking.booking_service.dto.*;
 import com.movie.booking.booking_service.exception.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,12 +18,26 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BookingService {
 
     private final BookingStateService bookingStateService;
     private final PaymentClient paymentClient;
     private final SeatClient seatClient;
+    private final Counter confirmedCounter;
+    private final Counter seatConfirmFailedCounter;
+    private final Counter notPendingCounter;
+    private final Counter markConfirmedFailedCounter;
+
+    public BookingService(BookingStateService bookingStateService, PaymentClient paymentClient,
+                          SeatClient seatClient, MeterRegistry meterRegistry) {
+        this.bookingStateService = bookingStateService;
+        this.paymentClient = paymentClient;
+        this.seatClient = seatClient;
+        this.confirmedCounter = meterRegistry.counter("bookings.confirmed");
+        this.seatConfirmFailedCounter = meterRegistry.counter("saga.compensations", "reason", "seat_confirm_failed");
+        this.notPendingCounter = meterRegistry.counter("saga.compensations", "reason", "booking_not_pending");
+        this.markConfirmedFailedCounter = meterRegistry.counter("saga.compensations", "reason", "mark_confirmed_failed");
+    }
 
     public UUID createBooking(CreateBookingCommand command) {
         Optional<UUID> existing = bookingStateService.findBookingIdByKey(command.idempotencyKey());
@@ -69,7 +85,7 @@ public class BookingService {
         } catch (RuntimeException e) {
             log.error("PAID but seats not confirmed for booking {} (payment {}): {}",
                     booking.bookingId(), result.paymentId(), e.getMessage());
-            return failAndRequestRefund(booking.bookingId(), result.paymentId());
+            return failAndRequestRefund(booking.bookingId(), result.paymentId(), seatConfirmFailedCounter);
         }
 
         boolean confirmed;
@@ -78,17 +94,18 @@ public class BookingService {
         } catch (RuntimeException e) {
             log.error("PAID and seats confirmed, but booking {} could not be marked CONFIRMED (payment {}): {}",
                     booking.bookingId(), result.paymentId(), e.getMessage());
-            return failAndRequestRefund(booking.bookingId(), result.paymentId());
+            return failAndRequestRefund(booking.bookingId(), result.paymentId(), markConfirmedFailedCounter);
         }
         if (!confirmed) {
             log.error("PAID and seats confirmed, but booking {} is no longer PENDING (payment {})",
                     booking.bookingId(), result.paymentId());
-            return failAndRequestRefund(booking.bookingId(), result.paymentId());
+            return failAndRequestRefund(booking.bookingId(), result.paymentId(), notPendingCounter);
         }
+        confirmedCounter.increment();
         return new PayOutcome(BookingStatus.CONFIRMED, PaymentStatus.SUCCESS);
     }
 
-    private PayOutcome failAndRequestRefund(UUID bookingId, UUID paymentId) {
+    private PayOutcome failAndRequestRefund(UUID bookingId, UUID paymentId, Counter compensationCounter) {
         try {
             bookingStateService.markFailedAndRequestRefund(bookingId);
         } catch (RuntimeException e) {
@@ -96,6 +113,7 @@ public class BookingService {
                     bookingId, paymentId, e.getMessage());
             throw e;
         }
+        compensationCounter.increment();
         return new PayOutcome(BookingStatus.FAILED, PaymentStatus.SUCCESS);
     }
 

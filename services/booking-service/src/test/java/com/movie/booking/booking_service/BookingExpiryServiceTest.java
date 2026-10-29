@@ -2,6 +2,7 @@ package com.movie.booking.booking_service;
 
 import com.movie.booking.booking_service.service.BookingExpiryService;
 import com.movie.booking.booking_service.service.BookingStateService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -21,8 +22,9 @@ class BookingExpiryServiceTest {
 
     private final BookingStateService bookingStateService = mock(BookingStateService.class);
     private final Instant now = Instant.parse("2026-10-16T12:00:00Z");
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
     private final BookingExpiryService service = new BookingExpiryService(
-            bookingStateService, Clock.fixed(now, ZoneOffset.UTC), Duration.ofMinutes(10));
+            bookingStateService, Clock.fixed(now, ZoneOffset.UTC), Duration.ofMinutes(10), registry);
 
     private final UUID first = UUID.randomUUID();
     private final UUID second = UUID.randomUUID();
@@ -61,5 +63,29 @@ class BookingExpiryServiceTest {
 
         assertThat(service.expireStaleBookings()).isEqualTo(1);
         verify(bookingStateService).markExpired(second);
+    }
+
+    @Test
+    void counter_stays_at_zero_when_nothing_expired() {
+        when(bookingStateService.findStalePendingIds(any())).thenReturn(List.of());
+
+        service.expireStaleBookings();
+
+        assertThat(registry.counter("hold.expirations").count()).isEqualTo(0.0);
+    }
+
+    @Test
+    void counter_increases_by_the_number_of_rows_actually_expired() {
+        UUID third = UUID.randomUUID();
+        UUID lost = UUID.randomUUID();
+        when(bookingStateService.findStalePendingIds(any())).thenReturn(List.of(first, second, third, lost));
+        when(bookingStateService.markExpired(first)).thenReturn(true);
+        when(bookingStateService.markExpired(second)).thenReturn(true);
+        when(bookingStateService.markExpired(third)).thenReturn(true);
+        when(bookingStateService.markExpired(lost)).thenReturn(false);
+
+        service.expireStaleBookings();
+
+        assertThat(registry.counter("hold.expirations").count()).isEqualTo(3.0);
     }
 }

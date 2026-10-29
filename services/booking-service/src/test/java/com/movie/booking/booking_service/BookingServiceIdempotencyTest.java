@@ -5,6 +5,7 @@ import com.movie.booking.booking_service.client.SeatClient;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.service.BookingService;
 import com.movie.booking.booking_service.service.BookingStateService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,7 +29,7 @@ class BookingServiceIdempotencyTest {
     void setUp() {
         stateService = mock(BookingStateService.class);
         seatClient = mock(SeatClient.class);
-        bookingService = new BookingService(stateService, paymentClient, seatClient);
+        bookingService = new BookingService(stateService, paymentClient, seatClient, new SimpleMeterRegistry());
     }
 
     @Test
