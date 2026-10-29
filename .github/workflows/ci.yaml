@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [booking-service, seat-service, payment_service, ticket-service]
+        service: [booking-service, seat-service, payment-service, ticket-service]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
