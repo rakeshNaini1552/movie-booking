@@ -17,3 +17,13 @@ jobs:
       - name: Run tests
         working-directory: services/${{ matrix.service }}
         run: ./mvnw test
+  dependency-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
