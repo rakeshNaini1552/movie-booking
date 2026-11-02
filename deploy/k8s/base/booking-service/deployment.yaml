@@ -1,38 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ticket-service
+  name: booking-service
   namespace: movie-booking
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ticket-service
+      app: booking-service
   template:
     metadata:
       labels:
-        app: ticket-service
+        app: booking-service
     spec:
       imagePullSecrets:
         - name: ghcr-pull
       containers:
-        - name: ticket-service
-          image: ghcr.io/rakeshnaini1552/ticket-service:6308e0fb85eca3e348d7ea7962796e9c98cef347
+        - name: booking-service
+          image: ghcr.io/rakeshnaini1552/booking-service
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8084
+            - containerPort: 8082
           envFrom:
             - configMapRef:
-                name: ticket-service-config
+                name: booking-service-config
             - secretRef:
-                name: ticket-service-db
+                name: booking-service-db
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 8084
+              port: 8082
             initialDelaySeconds: 20
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 8084
+              port: 8082
             initialDelaySeconds: 60
