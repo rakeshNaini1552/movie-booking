@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ticket-service-config
+  namespace: movie-booking
+data:
+  TICKET_DB_HOST: host.docker.internal
+  TICKET_DB_PORT: "5435"
+  TICKET_DB_NAME: ticket_db
+  KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9094
+  KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking
+  OTEL_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
+  LOG_DIR: /tmp/logs
