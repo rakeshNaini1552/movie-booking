@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seat-service-config
+  namespace: movie-booking
+data:
+  SEAT_DB_HOST: host.docker.internal
+  SEAT_DB_PORT: "5432"
+  SEAT_DB_NAME: seat_db
+  REDIS_HOST: host.docker.internal
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9094
+  KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking
+  OTEL_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
+  LOG_DIR: /tmp/logs

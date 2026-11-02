@@ -7,7 +7,7 @@ data:
   DB_HOST: host.docker.internal
   DB_PORT: "5434"
   DB_NAME: payment_db
-  KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9092
+  KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9094
   KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking
   OTEL_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
   LOG_DIR: /tmp/logs

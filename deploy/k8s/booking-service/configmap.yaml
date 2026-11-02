@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: booking-service-config
+  namespace: movie-booking
+data:
+  DB_HOST: host.docker.internal
+  DB_PORT: "5433"
+  DB_NAME: booking_db
+  KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9094
+  KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking
+  OTEL_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
+  SEAT_SERVICE_URL: http://seat-service:8081
+  PAYMENT_SERVICE_URL: http://payment-service:8083
+  LOG_DIR: /tmp/logs
