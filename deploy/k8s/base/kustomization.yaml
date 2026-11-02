@@ -4,15 +4,19 @@ resources:
   - seat-service/configmap.yaml
   - seat-service/deployment.yaml
   - seat-service/service.yaml
+  - seat-service/hpa.yaml
   - booking-service/configmap.yaml
   - booking-service/deployment.yaml
   - booking-service/service.yaml
+  - booking-service/hpa.yaml
   - payment-service/configmap.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml
+  - payment-service/hpa.yaml
   - ticket-service/configmap.yaml
   - ticket-service/deployment.yaml
   - ticket-service/service.yaml
+  - ticket-service/hpa.yaml
   - alloy/rbac.yaml
   - alloy/configmap.yaml
   - alloy/deployment.yaml

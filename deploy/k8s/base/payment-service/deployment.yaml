@@ -5,6 +5,11 @@ metadata:
   namespace: movie-booking
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: payment-service
@@ -26,6 +31,13 @@ spec:
                 name: payment-service-config
             - secretRef:
                 name: payment-service-db
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 250m
+            limits:
+              memory: 1Gi
+              cpu: "1"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
