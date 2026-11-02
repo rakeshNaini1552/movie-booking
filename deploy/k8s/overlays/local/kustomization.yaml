@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+images:
+  - name: ghcr.io/rakeshnaini1552/seat-service
+    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347
+  - name: ghcr.io/rakeshnaini1552/booking-service
+    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347
+  - name: ghcr.io/rakeshnaini1552/payment-service
+    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347
+  - name: ghcr.io/rakeshnaini1552/ticket-service
+    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347

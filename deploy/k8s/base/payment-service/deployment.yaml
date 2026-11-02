@@ -17,7 +17,7 @@ spec:
         - name: ghcr-pull
       containers:
         - name: payment-service
-          image: ghcr.io/rakeshnaini1552/payment-service:6308e0fb85eca3e348d7ea7962796e9c98cef347
+          image: ghcr.io/rakeshnaini1552/payment-service
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8083
