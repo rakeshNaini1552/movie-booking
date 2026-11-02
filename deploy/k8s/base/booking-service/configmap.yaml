@@ -13,3 +13,4 @@ data:
   SEAT_SERVICE_URL: http://seat-service:8081
   PAYMENT_SERVICE_URL: http://payment-service:8083
   LOG_DIR: /tmp/logs
+  LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
