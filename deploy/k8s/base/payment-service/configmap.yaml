@@ -11,3 +11,4 @@ data:
   KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking
   OTEL_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
   LOG_DIR: /tmp/logs
+  LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs

@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: movie-booking
+data:
+  config.alloy: |
+    // Ships metrics and logs of the movie-booking pods to the compose Prometheus and Loki on the Mac.
+    discovery.kubernetes "pods" {
+      role = "pod"
+      namespaces {
+        names = ["movie-booking"]
+      }
+    }
+
+    discovery.relabel "services" {
+      targets = discovery.kubernetes.pods.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        regex         = "(seat|booking|payment|ticket)-service"
+        action        = "keep"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        target_label  = "app"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+    }
+
+    prometheus.scrape "services" {
+      targets         = discovery.relabel.services.output
+      metrics_path    = "/actuator/prometheus"
+      scrape_interval = "15s"
+      forward_to      = [prometheus.remote_write.default.receiver]
+    }
+
+    prometheus.remote_write "default" {
+      endpoint {
+        url = "http://host.docker.internal:9090/api/v1/write"
+      }
+    }
+
+    loki.source.kubernetes "services" {
+      targets    = discovery.relabel.services.output
+      forward_to = [loki.process.services.receiver]
+    }
+
+    loki.process "services" {
+      // Boot's ECS format nests these: {"service":{"name":...},"log":{"level":...},"traceId":...}
+      stage.json {
+        expressions = {
+          service = "service.name",
+          level   = "log.level",
+          traceId = "traceId",
+        }
+      }
+
+      // Same labels as deploy/alloy/config.alloy so existing Grafana queries keep working.
+      stage.labels {
+        values = {
+          service = "",
+          level   = "",
+        }
+      }
+
+      stage.structured_metadata {
+        values = {
+          traceId = "",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
+
+    loki.write "default" {
+      endpoint {
+        url = "http://host.docker.internal:3100/loki/api/v1/push"
+      }
+    }

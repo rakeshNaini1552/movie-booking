@@ -13,3 +13,6 @@ resources:
   - ticket-service/configmap.yaml
   - ticket-service/deployment.yaml
   - ticket-service/service.yaml
+  - alloy/rbac.yaml
+  - alloy/configmap.yaml
+  - alloy/deployment.yaml
