@@ -6,6 +6,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/movie-booking}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   cloud:
     gateway:
       server:
@@ -17,6 +21,12 @@ spring:
                 - Path=/api/v1/bookings/**
               filters:
                 - AddRequestHeader=X-Gateway, spring
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: ${GATEWAY_RATE_REPLENISH:5}
+                    redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_BURST:10}
+                    redis-rate-limiter.requestedTokens: 1
+                    key-resolver: "#{@userKeyResolver}"
 
 management:
   endpoints:
