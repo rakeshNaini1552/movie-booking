@@ -48,7 +48,7 @@ class GatewaySecurityTest {
 
 	@Test
 	void healthIsOpenWithoutToken() {
-		client.get().uri("/actuator/health").exchange()
+		client.get().uri("/actuator/health/liveness").exchange()
 				.expectStatus().isOk();
 	}
 
