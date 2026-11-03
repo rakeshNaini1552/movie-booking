@@ -20,3 +20,6 @@ resources:
   - alloy/rbac.yaml
   - alloy/configmap.yaml
   - alloy/deployment.yaml
+  - gateway-service/configmap.yaml
+  - gateway-service/deployment.yaml
+  - gateway-service/service.yaml

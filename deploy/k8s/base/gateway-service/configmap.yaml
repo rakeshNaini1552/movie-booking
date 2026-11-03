@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-service-config
+  namespace: movie-booking
+data:
+  BOOKING_SERVICE_URL: http://booking-service:8082
+  SEAT_SERVICE_URL: http://seat-service:8081
+  TICKET_SERVICE_URL: http://ticket-service:8084
+  PAYMENT_SERVICE_URL: http://payment-service:8083
+  LOG_DIR: /tmp/logs
+  LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
