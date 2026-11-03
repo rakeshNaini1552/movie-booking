@@ -37,7 +37,7 @@ Java 21, Spring Boot 4.1.x (Jackson 3: `tools.jackson.databind.json.JsonMapper`,
 ## Tests
 - Testcontainers with `@ServiceConnection` (`PostgreSQLContainer`, `KafkaContainer`), images pinned to the versions used in compose. Shared `TestcontainersConfiguration` (public) imported with `@Import`.
 - `@SpringBootTest` for integration tests. Awaitility for anything asynchronous (never `Thread.sleep`). Unique random UUIDs per test; clean tables in `@BeforeEach`.
-- Test `application.properties` in `src/test/resources` sets `<svc>.outbox.publisher.enabled=false` and any required secrets (for example `ticket.qr.secret`).
+- Test `application.yml` in `src/test/resources` sets `<svc>.outbox.publisher.enabled=false` and any required secrets (for example `ticket.qr.secret`).
 - Test effects, not implementation: rows written, events on the topic, status codes, and rollback behaviour (use `@MockitoSpyBean` with `doThrow().when()` to prove atomicity).
 - Every step ends with all tests in all touched services green.
 
