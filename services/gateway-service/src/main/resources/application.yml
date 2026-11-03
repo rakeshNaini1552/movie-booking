@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: booking-service
+              uri: ${BOOKING_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/bookings/**
+              filters:
+                - AddRequestHeader=X-Gateway, spring
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+server:
+  port: 8090
