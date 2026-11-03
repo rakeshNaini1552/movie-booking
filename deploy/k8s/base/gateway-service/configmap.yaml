@@ -8,5 +8,6 @@ data:
   SEAT_SERVICE_URL: http://seat-service:8081
   TICKET_SERVICE_URL: http://ticket-service:8084
   PAYMENT_SERVICE_URL: http://payment-service:8083
+  KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking
   LOG_DIR: /tmp/logs
   LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
