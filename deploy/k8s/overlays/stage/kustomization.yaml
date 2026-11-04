@@ -1,0 +1,88 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: movie-booking-stage
+resources:
+  - ../../base
+  - namespace.yaml
+images:
+  - name: ghcr.io/rakeshnaini1552/seat-service
+    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+  - name: ghcr.io/rakeshnaini1552/booking-service
+    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+  - name: ghcr.io/rakeshnaini1552/payment-service
+    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+  - name: ghcr.io/rakeshnaini1552/ticket-service
+    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+  - name: ghcr.io/rakeshnaini1552/gateway-service
+    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+patches:
+  - target:
+      kind: ConfigMap
+      name: seat-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: seat-service-config
+      data:
+        SEAT_DB_NAME: seat_db_stage
+        SPRING_DATA_REDIS_DATABASE: "1"
+        BOOKING_EVENTS_TOPIC: booking-events-stage
+        BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-stage
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
+  - target:
+      kind: ConfigMap
+      name: booking-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: booking-service-config
+      data:
+        DB_NAME: booking_db_stage
+        BOOKING_EVENTS_TOPIC: booking-events-stage
+        TICKET_EVENTS_TOPIC: ticket-events-stage
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
+  - target:
+      kind: ConfigMap
+      name: payment-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: payment-service-config
+      data:
+        DB_NAME: payment_db_stage
+        BOOKING_EVENTS_TOPIC: booking-events-stage
+        BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-stage
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
+  - target:
+      kind: ConfigMap
+      name: ticket-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ticket-service-config
+      data:
+        TICKET_DB_NAME: ticket_db_stage
+        BOOKING_EVENTS_TOPIC: booking-events-stage
+        BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-stage
+        TICKET_EVENTS_TOPIC: ticket-events-stage
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
+  - target:
+      kind: ConfigMap
+      name: gateway-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: gateway-service-config
+      data:
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage  
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |-
+      - op: replace
+        path: /spec/maxReplicas
+        value: 1
