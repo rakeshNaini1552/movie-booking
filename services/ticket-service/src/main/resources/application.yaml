@@ -36,13 +36,13 @@ spring:
 
 ticket:
   outbox:
-    topic: ticket-events
+    topic: ${TICKET_EVENTS_TOPIC:ticket-events}
     poll-interval-ms: ${TICKET_OUTBOX_POLL_MS:1000}
     publisher:
       enabled: ${TICKET_OUTBOX_PUBLISHER_ENABLED:true}
   consumer:
-    topic: booking-events
-    dlt-topic: booking-events-dlt
+    topic: ${BOOKING_EVENTS_TOPIC:booking-events}
+    dlt-topic: ${BOOKING_EVENTS_DLT_TOPIC:booking-events-dlt}
     retry:
       max-retries: 4
       initial-interval-ms: 1000

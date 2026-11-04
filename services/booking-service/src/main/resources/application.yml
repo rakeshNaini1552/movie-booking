@@ -61,7 +61,7 @@ booking:
     publisher:
       enabled: ${BOOKING_OUTBOX_PUBLISHER_ENABLED:true}
   consumer:
-    ticket-topic: ticket-events
+    ticket-topic: ${TICKET_EVENTS_TOPIC:ticket-events}
   health:
     kafka-timeout-ms: ${KAFKA_HEALTH_TIMEOUT_MS:2000}
 

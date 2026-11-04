@@ -58,7 +58,7 @@ seat:
       lock-at-least-for: ${SEAT_HOLD_EXPIRY_LOCK_AT_LEAST_FOR:PT1S}
   consumer:
     topic: ${BOOKING_EVENTS_TOPIC:booking-events}
-    dlt-topic: booking-events-dlt
+    dlt-topic: ${BOOKING_EVENTS_DLT_TOPIC:booking-events-dlt}
     retry:
       max-retries: 4
       initial-interval-ms: 1000
