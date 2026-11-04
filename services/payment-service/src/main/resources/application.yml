@@ -36,8 +36,8 @@ spring:
 
 payment:
   consumer:
-    topic: booking-events
-    dlt-topic: booking-events-dlt
+    topic: ${BOOKING_EVENTS_TOPIC:booking-events}
+    dlt-topic: ${BOOKING_EVENTS_DLT_TOPIC:booking-events-dlt}
     retry:
       max-retries: 4
       initial-interval-ms: 1000
