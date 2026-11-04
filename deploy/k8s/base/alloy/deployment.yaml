@@ -24,6 +24,11 @@ spec:
             - --server.http.listen-addr=0.0.0.0:12345
           ports:
             - containerPort: 12345
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           resources:
             requests:
               cpu: 50m

@@ -9,7 +9,7 @@ data:
     discovery.kubernetes "pods" {
       role = "pod"
       namespaces {
-        names = ["movie-booking"]
+        names = [sys.env("POD_NAMESPACE")]
       }
     }
 
