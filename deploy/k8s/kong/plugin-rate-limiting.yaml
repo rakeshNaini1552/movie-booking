@@ -1,0 +1,12 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: rate-limiting
+  namespace: movie-booking
+plugin: rate-limiting
+config:
+  second: 5
+  policy: local
+  limit_by: header
+  header_name: Authorization
+  fault_tolerant: true
