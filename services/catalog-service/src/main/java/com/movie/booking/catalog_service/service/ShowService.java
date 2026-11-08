@@ -10,7 +10,7 @@ import com.movie.booking.catalog_service.entity.Show;
 import com.movie.booking.catalog_service.exception.ConflictException;
 import com.movie.booking.catalog_service.exception.InvalidRequestException;
 import com.movie.booking.catalog_service.exception.ResourceNotFoundException;
-import com.movie.booking.catalog_service.mapper.CatalogMapper;
+import com.movie.booking.catalog_service.mapper.ShowMapper;
 import com.movie.booking.catalog_service.repository.CatalogSpecs;
 import com.movie.booking.catalog_service.repository.MovieRepository;
 import com.movie.booking.catalog_service.repository.ScreenRepository;
@@ -34,13 +34,13 @@ public class ShowService {
     private final ShowRepository showRepository;
     private final MovieRepository movieRepository;
     private final ScreenRepository screenRepository;
-    private final CatalogMapper mapper;
+    private final ShowMapper mapper;
     private final Clock clock;
 
     @Transactional
     public ShowResponse create(ShowRequest request) {
         validate(request, NO_SHOW);
-        Show show = showRepository.save(mapper.toEntity(request, Instant.now(clock)));
+        Show show = showRepository.save(mapper.toEntity(request, UUID.randomUUID(), Instant.now(clock)));
         return mapper.toResponse(show);
     }
 

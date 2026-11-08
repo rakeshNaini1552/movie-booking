@@ -9,7 +9,7 @@ import com.movie.booking.catalog_service.entity.Show;
 import com.movie.booking.catalog_service.exception.ConflictException;
 import com.movie.booking.catalog_service.exception.InvalidRequestException;
 import com.movie.booking.catalog_service.exception.ResourceNotFoundException;
-import com.movie.booking.catalog_service.mapper.CatalogMapper;
+import com.movie.booking.catalog_service.mapper.ShowMapperImpl;
 import com.movie.booking.catalog_service.repository.MovieRepository;
 import com.movie.booking.catalog_service.repository.ScreenRepository;
 import com.movie.booking.catalog_service.repository.ShowRepository;
@@ -50,7 +50,7 @@ class ShowServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ShowService(showRepository, movieRepository, screenRepository, new CatalogMapper(),
+        service = new ShowService(showRepository, movieRepository, screenRepository, new ShowMapperImpl(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 

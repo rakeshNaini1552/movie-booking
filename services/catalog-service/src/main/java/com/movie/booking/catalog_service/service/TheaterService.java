@@ -6,7 +6,7 @@ import com.movie.booking.catalog_service.dto.TheaterResponse;
 import com.movie.booking.catalog_service.entity.Theater;
 import com.movie.booking.catalog_service.exception.ConflictException;
 import com.movie.booking.catalog_service.exception.ResourceNotFoundException;
-import com.movie.booking.catalog_service.mapper.CatalogMapper;
+import com.movie.booking.catalog_service.mapper.TheaterMapper;
 import com.movie.booking.catalog_service.repository.CatalogSpecs;
 import com.movie.booking.catalog_service.repository.ScreenRepository;
 import com.movie.booking.catalog_service.repository.ShowRepository;
@@ -27,12 +27,12 @@ public class TheaterService {
     private final TheaterRepository theaterRepository;
     private final ScreenRepository screenRepository;
     private final ShowRepository showRepository;
-    private final CatalogMapper mapper;
+    private final TheaterMapper mapper;
     private final Clock clock;
 
     @Transactional
     public TheaterResponse create(TheaterRequest request) {
-        Theater theater = theaterRepository.save(mapper.toEntity(request, Instant.now(clock)));
+        Theater theater = theaterRepository.save(mapper.toEntity(request, UUID.randomUUID(), Instant.now(clock)));
         return mapper.toResponse(theater);
     }
 

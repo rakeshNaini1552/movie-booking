@@ -6,7 +6,7 @@ import com.movie.booking.catalog_service.dto.ScreenResponse;
 import com.movie.booking.catalog_service.entity.Screen;
 import com.movie.booking.catalog_service.exception.ConflictException;
 import com.movie.booking.catalog_service.exception.ResourceNotFoundException;
-import com.movie.booking.catalog_service.mapper.CatalogMapper;
+import com.movie.booking.catalog_service.mapper.ScreenMapper;
 import com.movie.booking.catalog_service.repository.ScreenRepository;
 import com.movie.booking.catalog_service.repository.ShowRepository;
 import com.movie.booking.catalog_service.repository.TheaterRepository;
@@ -26,7 +26,7 @@ public class ScreenService {
     private final ScreenRepository screenRepository;
     private final TheaterRepository theaterRepository;
     private final ShowRepository showRepository;
-    private final CatalogMapper mapper;
+    private final ScreenMapper mapper;
     private final Clock clock;
 
     @Transactional
@@ -35,7 +35,7 @@ public class ScreenService {
         if (screenRepository.existsByTheaterIdAndName(theaterId, request.name())) {
             throw nameTaken(theaterId, request.name());
         }
-        Screen screen = screenRepository.save(mapper.toEntity(theaterId, request, Instant.now(clock)));
+        Screen screen = screenRepository.save(mapper.toEntity(theaterId, request, UUID.randomUUID(), Instant.now(clock)));
         return mapper.toResponse(screen);
     }
 
