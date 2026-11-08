@@ -27,6 +27,14 @@ data:
         target_label  = "app"
       }
 
+      // Marks the Spring gateway's series for the Kong comparison (Kong's Alloy sets gateway="kong").
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        regex         = "gateway-service"
+        target_label  = "gateway"
+        replacement   = "spring"
+      }
+
       rule {
         source_labels = ["__meta_kubernetes_pod_name"]
         target_label  = "pod"

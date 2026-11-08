@@ -1,0 +1,137 @@
+# A second, small Alloy that scrapes only the Kong gateway pod and pushes to the compose Prometheus.
+# It lives in the kong namespace because a Role only reaches pods in its own namespace.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alloy-kong
+  namespace: kong
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: alloy-kong
+  namespace: kong
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alloy-kong
+  namespace: kong
+subjects:
+  - kind: ServiceAccount
+    name: alloy-kong
+    namespace: kong
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: alloy-kong
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-kong-config
+  namespace: kong
+data:
+  config.alloy: |
+    // Scrapes Kong's status listener (port 8100, path /metrics) and tags every series gateway="kong".
+    discovery.kubernetes "kong" {
+      role = "pod"
+      namespaces {
+        names = [sys.env("POD_NAMESPACE")]
+      }
+    }
+
+    discovery.relabel "kong_gateway" {
+      targets = discovery.kubernetes.kong.targets
+
+      // One target per container port; keep only the status port of the gateway pod.
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_port_number"]
+        regex         = "8100"
+        action        = "keep"
+      }
+
+      rule {
+        target_label = "gateway"
+        replacement  = "kong"
+      }
+
+      rule {
+        target_label = "app"
+        replacement  = "kong-gateway"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+    }
+
+    prometheus.scrape "kong" {
+      targets         = discovery.relabel.kong_gateway.output
+      metrics_path    = "/metrics"
+      scrape_interval = "15s"
+      forward_to      = [prometheus.remote_write.default.receiver]
+    }
+
+    prometheus.remote_write "default" {
+      endpoint {
+        url = "http://host.docker.internal:9090/api/v1/write"
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alloy-kong
+  namespace: kong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alloy-kong
+  template:
+    metadata:
+      labels:
+        app: alloy-kong
+    spec:
+      serviceAccountName: alloy-kong
+      containers:
+        - name: alloy
+          image: grafana/alloy:v1.10.0
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/tmp/alloy
+            - --server.http.listen-addr=0.0.0.0:12345
+          ports:
+            - containerPort: 12345
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 12345
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+      volumes:
+        - name: config
+          configMap:
+            name: alloy-kong-config
