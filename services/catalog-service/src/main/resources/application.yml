@@ -35,6 +35,12 @@ spring:
 server:
   port: ${SERVER_PORT:8085}
 
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
+
 management:
   tracing:
     sampling:
