@@ -7,7 +7,7 @@ import com.movie.booking.catalog_service.dto.PageResponse;
 import com.movie.booking.catalog_service.entity.Movie;
 import com.movie.booking.catalog_service.exception.ConflictException;
 import com.movie.booking.catalog_service.exception.ResourceNotFoundException;
-import com.movie.booking.catalog_service.mapper.CatalogMapper;
+import com.movie.booking.catalog_service.mapper.MovieMapper;
 import com.movie.booking.catalog_service.repository.CatalogSpecs;
 import com.movie.booking.catalog_service.repository.MovieRepository;
 import com.movie.booking.catalog_service.repository.ShowRepository;
@@ -26,12 +26,12 @@ public class MovieService {
 
     private final MovieRepository movieRepository;
     private final ShowRepository showRepository;
-    private final CatalogMapper mapper;
+    private final MovieMapper mapper;
     private final Clock clock;
 
     @Transactional
     public MovieResponse create(MovieRequest request) {
-        Movie movie = movieRepository.save(mapper.toEntity(request, Instant.now(clock)));
+        Movie movie = movieRepository.save(mapper.toEntity(request, UUID.randomUUID(), Instant.now(clock)));
         return mapper.toResponse(movie);
     }
 

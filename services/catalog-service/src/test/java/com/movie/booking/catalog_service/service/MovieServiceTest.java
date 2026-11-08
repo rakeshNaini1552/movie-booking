@@ -6,7 +6,7 @@ import com.movie.booking.catalog_service.dto.MovieResponse;
 import com.movie.booking.catalog_service.entity.Movie;
 import com.movie.booking.catalog_service.exception.ConflictException;
 import com.movie.booking.catalog_service.exception.ResourceNotFoundException;
-import com.movie.booking.catalog_service.mapper.CatalogMapper;
+import com.movie.booking.catalog_service.mapper.MovieMapperImpl;
 import com.movie.booking.catalog_service.repository.MovieRepository;
 import com.movie.booking.catalog_service.repository.ShowRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,7 @@ class MovieServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new MovieService(movieRepository, showRepository, new CatalogMapper(),
+        service = new MovieService(movieRepository, showRepository, new MovieMapperImpl(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 

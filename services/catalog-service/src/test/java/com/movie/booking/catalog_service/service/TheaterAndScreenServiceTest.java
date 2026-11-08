@@ -5,7 +5,8 @@ import com.movie.booking.catalog_service.entity.Screen;
 import com.movie.booking.catalog_service.entity.Theater;
 import com.movie.booking.catalog_service.exception.ConflictException;
 import com.movie.booking.catalog_service.exception.ResourceNotFoundException;
-import com.movie.booking.catalog_service.mapper.CatalogMapper;
+import com.movie.booking.catalog_service.mapper.ScreenMapperImpl;
+import com.movie.booking.catalog_service.mapper.TheaterMapperImpl;
 import com.movie.booking.catalog_service.repository.ScreenRepository;
 import com.movie.booking.catalog_service.repository.ShowRepository;
 import com.movie.booking.catalog_service.repository.TheaterRepository;
@@ -43,9 +44,9 @@ class TheaterAndScreenServiceTest {
     void setUp() {
         Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
         theaterService = new TheaterService(theaterRepository, screenRepository, showRepository,
-                new CatalogMapper(), clock);
+                new TheaterMapperImpl(), clock);
         screenService = new ScreenService(screenRepository, theaterRepository, showRepository,
-                new CatalogMapper(), clock);
+                new ScreenMapperImpl(), clock);
     }
 
     @Test
