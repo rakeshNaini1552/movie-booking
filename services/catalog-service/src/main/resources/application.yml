@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: catalog-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/movie-booking}
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: jdbc:postgresql://${CATALOG_DB_HOST:localhost}:${CATALOG_DB_PORT:5436}/${CATALOG_DB_NAME:catalog_db}
+    username: ${CATALOG_DB_USER}
+    password: ${CATALOG_DB_PASSWORD}
+    hikari:
+      connection-timeout: ${CATALOG_DB_CONNECTION_TIMEOUT_MS:2000}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+  data:
+    web:
+      pageable:
+        default-page-size: ${CATALOG_PAGE_DEFAULT_SIZE:20}
+        max-page-size: ${CATALOG_PAGE_MAX_SIZE:100}
+
+server:
+  port: ${SERVER_PORT:8085}
+
+management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING:1.0}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+logging:
+  file:
+    name: ${LOG_DIR:../../deploy/logs}/${spring.application.name}.log
+  structured:
+    format:
+      file: ecs
+  pattern:
+    level: "%5p [requestId=%X{requestId:-} traceId=%X{traceId:-} spanId=%X{spanId:-}]"
