@@ -66,6 +66,16 @@ services:
       - "${TICKET_DB_PORT:-5435}:5432"
     volumes:
       - ticket-pgdata:/var/lib/postgresql/data
+  catalog-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${CATALOG_DB_NAME}
+      POSTGRES_USER: ${CATALOG_DB_USER}
+      POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD}
+    ports:
+      - "${CATALOG_DB_PORT:-5436}:5432"
+    volumes:
+      - catalog-pgdata:/var/lib/postgresql/data
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
@@ -150,6 +160,7 @@ volumes:
   booking-pgdata:
   payment-pgdata:
   ticket-pgdata:
+  catalog-pgdata:
   keycloak-data:
   grafana-data:
   tempo-data:
