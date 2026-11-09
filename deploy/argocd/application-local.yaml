@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: movie-booking-local
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Must match the URL in the repository secret exactly: Argo CD finds the deploy key by URL.
+    repoURL: git@github.com:rakeshNaini1552/movie-booking.git
+    targetRevision: main
+    path: deploy/k8s/overlays/local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: movie-booking
+  # No syncPolicy: sync is manual until we turn on automatic sync.
+  ignoreDifferences:
+    # The HPAs change the live replica count, so git's value of 1 must not count as a difference.
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
