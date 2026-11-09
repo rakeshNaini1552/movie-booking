@@ -5,6 +5,10 @@ resources:
   - seat-service/deployment.yaml
   - seat-service/service.yaml
   - seat-service/hpa.yaml
+  - catalog-service/configmap.yaml
+  - catalog-service/deployment.yaml
+  - catalog-service/service.yaml
+  - catalog-service/hpa.yaml
   - booking-service/configmap.yaml
   - booking-service/deployment.yaml
   - booking-service/service.yaml

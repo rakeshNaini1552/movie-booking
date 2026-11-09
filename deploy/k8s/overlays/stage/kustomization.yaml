@@ -6,15 +6,17 @@ resources:
   - namespace.yaml
 images:
   - name: ghcr.io/rakeshnaini1552/seat-service
-    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/booking-service
-    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/payment-service
-    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/ticket-service
-    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/gateway-service
-    newTag: 69a295cc150a6847926fd08232bec556bfcb7b04
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
+  - name: ghcr.io/rakeshnaini1552/catalog-service
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
 patches:
   - target:
       kind: ConfigMap
@@ -79,7 +81,18 @@ patches:
       metadata:
         name: gateway-service-config
       data:
-        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage  
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
+  - target:
+      kind: ConfigMap
+      name: catalog-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: catalog-service-config
+      data:
+        CATALOG_DB_NAME: catalog_db_stage
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
   - target:
       kind: HorizontalPodAutoscaler
     patch: |-

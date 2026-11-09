@@ -1,0 +1,32 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: catalog-service
+  namespace: movie-booking
+  annotations:
+    konghq.com/plugins: correlation-id,jwt,rate-limiting
+spec:
+  parentRefs:
+    - name: kong
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/movies
+      backendRefs:
+        - name: catalog-service
+          port: 8085
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/theaters
+      backendRefs:
+        - name: catalog-service
+          port: 8085
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/shows
+      backendRefs:
+        - name: catalog-service
+          port: 8085

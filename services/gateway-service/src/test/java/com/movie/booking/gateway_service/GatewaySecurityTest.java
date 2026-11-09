@@ -47,6 +47,24 @@ class GatewaySecurityTest {
 	}
 
 	@Test
+	void catalogPathsWithoutTokenAreUnauthorized() {
+		for (String path : new String[] {"/api/v1/movies", "/api/v1/theaters/1/screens", "/api/v1/shows"}) {
+			client.get().uri(path).exchange()
+					.expectStatus().isUnauthorized();
+		}
+	}
+
+	@Test
+	void catalogPathsWithValidJwtAreRoutedToCatalogService() {
+		// Catalog URL is unreachable in tests: a routed request fails with 5xx, an unrouted one would be 404
+		for (String path : new String[] {"/api/v1/movies", "/api/v1/theaters/1/screens", "/api/v1/shows"}) {
+			client.mutateWith(SecurityMockServerConfigurers.mockJwt())
+					.get().uri(path).exchange()
+					.expectStatus().value(status -> assertThat(status).isNotIn(401, 404));
+		}
+	}
+
+	@Test
 	void healthIsOpenWithoutToken() {
 		client.get().uri("/actuator/health/liveness").exchange()
 				.expectStatus().isOk();
