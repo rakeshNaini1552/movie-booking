@@ -4,12 +4,14 @@ resources:
   - ../../base
 images:
   - name: ghcr.io/rakeshnaini1552/seat-service
-    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/booking-service
-    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/payment-service
-    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/ticket-service
-    newTag: 6308e0fb85eca3e348d7ea7962796e9c98cef347
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/gateway-service
-    newTag: 85f52310a80449ca2ead57614331d76dc12d96c9
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
+  - name: ghcr.io/rakeshnaini1552/catalog-service
+    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140

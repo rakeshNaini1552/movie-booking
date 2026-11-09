@@ -27,6 +27,18 @@ spring:
                     redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_BURST:10}
                     redis-rate-limiter.requestedTokens: 1
                     key-resolver: "#{@userKeyResolver}"
+            - id: catalog-service
+              uri: ${CATALOG_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/v1/movies/**,/api/v1/theaters/**,/api/v1/shows/**
+              filters:
+                - AddRequestHeader=X-Gateway, spring
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: ${GATEWAY_RATE_REPLENISH:5}
+                    redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_BURST:10}
+                    redis-rate-limiter.requestedTokens: 1
+                    key-resolver: "#{@userKeyResolver}"
 
 management:
   endpoints:
