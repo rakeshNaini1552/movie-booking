@@ -23,11 +23,11 @@ class TheaterAndScreenApiIntegrationTest extends ApiTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("PVR"))
                 .andExpect(jsonPath("$.city").value("Pune"));
-        mockMvc.perform(put("/api/v1/theaters/{id}", id).with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/theaters/{id}", id).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON).content(theaterJson("INOX", "Mumbai")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("INOX"));
-        mockMvc.perform(delete("/api/v1/theaters/{id}", id).with(TestJwt.user())).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/theaters/{id}", id).with(TestJwt.admin())).andExpect(status().isNoContent());
         mockMvc.perform(get("/api/v1/theaters/{id}", id).with(TestJwt.user())).andExpect(status().isNotFound());
     }
 
@@ -56,7 +56,7 @@ class TheaterAndScreenApiIntegrationTest extends ApiTestBase {
         UUID theaterId = createTheater("PVR", "Pune");
         createScreen(theaterId, "Screen 1");
 
-        mockMvc.perform(delete("/api/v1/theaters/{id}", theaterId).with(TestJwt.user()))
+        mockMvc.perform(delete("/api/v1/theaters/{id}", theaterId).with(TestJwt.admin()))
                 .andExpect(status().isNoContent());
 
         assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM screen", Integer.class)).isZero();
@@ -69,7 +69,7 @@ class TheaterAndScreenApiIntegrationTest extends ApiTestBase {
         createAndGetId("/api/v1/shows",
                 showJson(createMovie("Dune"), screenId, "2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z"));
 
-        mockMvc.perform(delete("/api/v1/theaters/{id}", theaterId).with(TestJwt.user()))
+        mockMvc.perform(delete("/api/v1/theaters/{id}", theaterId).with(TestJwt.admin()))
                 .andExpect(status().isConflict());
 
         assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM theater", Integer.class)).isOne();
@@ -88,13 +88,13 @@ class TheaterAndScreenApiIntegrationTest extends ApiTestBase {
                 .andExpect(jsonPath("$.seatsPerRow").value(12));
         mockMvc.perform(get("/api/v1/theaters/{t}/screens", theaterId).with(TestJwt.user()))
                 .andExpect(jsonPath("$.totalElements").value(1));
-        mockMvc.perform(put("/api/v1/theaters/{t}/screens/{s}", theaterId, screenId).with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/theaters/{t}/screens/{s}", theaterId, screenId).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"IMAX\", \"seatRows\": 20, \"seatsPerRow\": 30}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("IMAX"))
                 .andExpect(jsonPath("$.seatRows").value(20));
-        mockMvc.perform(delete("/api/v1/theaters/{t}/screens/{s}", theaterId, screenId).with(TestJwt.user()))
+        mockMvc.perform(delete("/api/v1/theaters/{t}/screens/{s}", theaterId, screenId).with(TestJwt.admin()))
                 .andExpect(status().isNoContent());
         mockMvc.perform(get("/api/v1/theaters/{t}/screens/{s}", theaterId, screenId).with(TestJwt.user()))
                 .andExpect(status().isNotFound());
@@ -144,7 +144,7 @@ class TheaterAndScreenApiIntegrationTest extends ApiTestBase {
         createAndGetId("/api/v1/shows",
                 showJson(createMovie("Dune"), screenId, "2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z"));
 
-        mockMvc.perform(delete("/api/v1/theaters/{t}/screens/{s}", theaterId, screenId).with(TestJwt.user()))
+        mockMvc.perform(delete("/api/v1/theaters/{t}/screens/{s}", theaterId, screenId).with(TestJwt.admin()))
                 .andExpect(status().isConflict());
     }
 }

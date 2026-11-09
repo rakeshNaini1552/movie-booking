@@ -72,7 +72,7 @@ class ShowServiceTest {
     void create_saves_the_show_when_nothing_overlaps() {
         movieAndScreenExist();
         when(showRepository.existsOverlapping(any(), any(), any(), any())).thenReturn(false);
-        when(showRepository.save(any(Show.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(showRepository.saveAndFlush(any(Show.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ShowResponse response = service.create(request(START, END));
 
@@ -89,7 +89,7 @@ class ShowServiceTest {
         assertThatThrownBy(() -> service.create(request(START, END)))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("overlapping");
-        verify(showRepository, never()).save(any());
+        verify(showRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -98,7 +98,7 @@ class ShowServiceTest {
                 .isInstanceOf(InvalidRequestException.class);
         assertThatThrownBy(() -> service.create(request(START, START)))
                 .isInstanceOf(InvalidRequestException.class);
-        verify(showRepository, never()).save(any());
+        verify(showRepository, never()).saveAndFlush(any());
     }
 
     @Test

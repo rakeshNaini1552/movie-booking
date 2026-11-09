@@ -1,0 +1,51 @@
+type Query {
+    movie(id: ID!): Movie
+    movies(status: String, titleContains: String, page: Int = 0, size: Int = 20): [Movie!]!
+}
+
+type Movie {
+    id: ID!
+    title: String!
+    description: String
+    durationMinutes: Int!
+    language: String!
+    rating: String
+    releaseDate: String
+    status: String!
+    createdAt: String!
+    updatedAt: String!
+    shows: [Show!]!
+}
+
+type Show {
+    id: ID!
+    movieId: ID!
+    screenId: ID!
+    startsAt: String!
+    endsAt: String!
+    basePrice: Float!
+    status: String!
+    createdAt: String!
+    updatedAt: String!
+    screen: Screen!
+}
+
+type Screen {
+    id: ID!
+    theaterId: ID!
+    name: String!
+    seatRows: Int!
+    seatsPerRow: Int!
+    createdAt: String!
+    updatedAt: String!
+    theater: Theater!
+}
+
+type Theater {
+    id: ID!
+    name: String!
+    city: String!
+    address: String!
+    createdAt: String!
+    updatedAt: String!
+}

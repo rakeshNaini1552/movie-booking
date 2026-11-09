@@ -46,7 +46,7 @@ class CatalogControllerSliceTest {
 
     @Test
     void movie_with_invalid_fields_returns_400_listing_every_field_error() throws Exception {
-        mockMvc.perform(post("/api/v1/movies").with(TestJwt.user())
+        mockMvc.perform(post("/api/v1/movies").with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"title": "  ", "durationMinutes": 0, "language": ""}
@@ -62,7 +62,7 @@ class CatalogControllerSliceTest {
 
     @Test
     void movie_without_duration_returns_400() throws Exception {
-        mockMvc.perform(post("/api/v1/movies").with(TestJwt.user())
+        mockMvc.perform(post("/api/v1/movies").with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\": \"Dune\", \"language\": \"en\"}"))
                 .andExpect(status().isBadRequest())
@@ -71,7 +71,7 @@ class CatalogControllerSliceTest {
 
     @Test
     void theater_with_blank_name_returns_400() throws Exception {
-        mockMvc.perform(post("/api/v1/theaters").with(TestJwt.user())
+        mockMvc.perform(post("/api/v1/theaters").with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"\", \"city\": \"Pune\", \"address\": \"MG Road\"}"))
                 .andExpect(status().isBadRequest())
@@ -80,7 +80,7 @@ class CatalogControllerSliceTest {
 
     @Test
     void screen_with_non_positive_or_too_large_dimensions_returns_400() throws Exception {
-        mockMvc.perform(post("/api/v1/theaters/{id}/screens", UUID.randomUUID()).with(TestJwt.user())
+        mockMvc.perform(post("/api/v1/theaters/{id}/screens", UUID.randomUUID()).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"S1\", \"seatRows\": 0, \"seatsPerRow\": 100}"))
                 .andExpect(status().isBadRequest())
@@ -90,7 +90,7 @@ class CatalogControllerSliceTest {
 
     @Test
     void show_with_end_before_start_and_negative_price_returns_400() throws Exception {
-        mockMvc.perform(post("/api/v1/shows").with(TestJwt.user())
+        mockMvc.perform(post("/api/v1/shows").with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"movieId": "%s", "screenId": "%s",
@@ -104,7 +104,7 @@ class CatalogControllerSliceTest {
 
     @Test
     void malformed_json_returns_400_problem_detail() throws Exception {
-        mockMvc.perform(post("/api/v1/movies").with(TestJwt.user())
+        mockMvc.perform(post("/api/v1/movies").with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{not json"))
                 .andExpect(status().isBadRequest())
@@ -137,7 +137,7 @@ class CatalogControllerSliceTest {
         UUID id = UUID.randomUUID();
         org.mockito.Mockito.doThrow(new ConflictException("Theater has shows")).when(theaterService).delete(id);
 
-        mockMvc.perform(delete("/api/v1/theaters/{id}", id).with(TestJwt.user()))
+        mockMvc.perform(delete("/api/v1/theaters/{id}", id).with(TestJwt.admin()))
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(409))
@@ -148,7 +148,7 @@ class CatalogControllerSliceTest {
     void unexpected_error_returns_500_without_leaking_details() throws Exception {
         when(showService.cancel(any())).thenThrow(new IllegalStateException("secret internal detail"));
 
-        mockMvc.perform(post("/api/v1/shows/{id}/cancel", UUID.randomUUID()).with(TestJwt.user()))
+        mockMvc.perform(post("/api/v1/shows/{id}/cancel", UUID.randomUUID()).with(TestJwt.admin()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
                 .andExpect(jsonPath("$.detail").value("An unexpected error occurred"))
@@ -159,7 +159,7 @@ class CatalogControllerSliceTest {
 
     @Test
     void unsupported_method_stays_405_not_500() throws Exception {
-        mockMvc.perform(put("/api/v1/shows").with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/shows").with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isMethodNotAllowed());
     }

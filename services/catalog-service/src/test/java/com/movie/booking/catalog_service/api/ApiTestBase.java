@@ -11,11 +11,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -31,8 +34,16 @@ abstract class ApiTestBase {
         jdbcTemplate.execute("TRUNCATE show, screen, theater, movie");
     }
 
+    // GraphQL over HTTP completes asynchronously, so the body only exists after the async dispatch.
+    protected ResultActions graphQl(String body) throws Exception {
+        MvcResult started = mockMvc.perform(post("/graphql").with(TestJwt.user())
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(request().asyncStarted()).andReturn();
+        return mockMvc.perform(asyncDispatch(started));
+    }
+
     protected ResultActions postJson(String path, String body, Object... uriVars) throws Exception {
-        return mockMvc.perform(post(path, uriVars).with(TestJwt.user())
+        return mockMvc.perform(post(path, uriVars).with(TestJwt.admin())
                 .contentType(MediaType.APPLICATION_JSON).content(body));
     }
 

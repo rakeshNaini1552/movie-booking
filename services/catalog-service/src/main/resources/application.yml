@@ -27,6 +27,12 @@ spring:
     enabled: true
 
   data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # Short timeouts so a dead Redis costs a cache miss, not a stuck request.
+      timeout: ${CATALOG_REDIS_TIMEOUT:500ms}
+      connect-timeout: ${CATALOG_REDIS_CONNECT_TIMEOUT:500ms}
     web:
       pageable:
         default-page-size: ${CATALOG_PAGE_DEFAULT_SIZE:20}
@@ -34,6 +40,15 @@ spring:
 
 server:
   port: ${SERVER_PORT:8085}
+
+catalog:
+  cache:
+    enabled: ${CATALOG_CACHE_ENABLED:true}
+    ttl: ${CATALOG_CACHE_TTL:PT10M}
+  security:
+    admin-role: ${CATALOG_ADMIN_ROLE:catalog-admin}
+  graphql:
+    max-page-size: ${CATALOG_GRAPHQL_MAX_PAGE_SIZE:100}
 
 springdoc:
   api-docs:
@@ -65,6 +80,10 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  health:
+    redis:
+      # The cache is optional, so a Redis outage must not turn /actuator/health DOWN.
+      enabled: false
   endpoint:
     health:
       probes:

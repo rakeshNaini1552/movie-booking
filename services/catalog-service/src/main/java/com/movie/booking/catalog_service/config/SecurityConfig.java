@@ -1,7 +1,9 @@
 package com.movie.booking.catalog_service.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,12 +21,20 @@ import java.util.Map;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // Screens live under /theaters, so these three prefixes cover every catalog write.
+    private static final String[] WRITE_PATHS = {"/api/v1/movies/**", "/api/v1/theaters/**", "/api/v1/shows/**"};
+
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                            @Value("${catalog.security.admin-role}") String adminRole) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/actuator/health/liveness", "/actuator/health/readiness", "/actuator/prometheus", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, WRITE_PATHS).hasRole(adminRole)
+                        .requestMatchers(HttpMethod.PUT, WRITE_PATHS).hasRole(adminRole)
+                        .requestMatchers(HttpMethod.PATCH, WRITE_PATHS).hasRole(adminRole)
+                        .requestMatchers(HttpMethod.DELETE, WRITE_PATHS).hasRole(adminRole)
                         .anyRequest().authenticated())
                         .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter())));
         return http.build();
