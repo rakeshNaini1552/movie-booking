@@ -18,7 +18,6 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -34,12 +33,13 @@ abstract class ApiTestBase {
         jdbcTemplate.execute("TRUNCATE show, screen, theater, movie");
     }
 
-    // GraphQL over HTTP completes asynchronously, so the body only exists after the async dispatch.
+    // GraphQL over HTTP usually completes asynchronously, so the body only exists after the async dispatch.
+    // If the execution finished before the handler returned, the response is already written and async never starts.
     protected ResultActions graphQl(String body) throws Exception {
-        MvcResult started = mockMvc.perform(post("/graphql").with(TestJwt.user())
-                        .contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(request().asyncStarted()).andReturn();
-        return mockMvc.perform(asyncDispatch(started));
+        ResultActions performed = mockMvc.perform(post("/graphql").with(TestJwt.user())
+                .contentType(MediaType.APPLICATION_JSON).content(body));
+        MvcResult result = performed.andReturn();
+        return result.getRequest().isAsyncStarted() ? mockMvc.perform(asyncDispatch(result)) : performed;
     }
 
     protected ResultActions postJson(String path, String body, Object... uriVars) throws Exception {
