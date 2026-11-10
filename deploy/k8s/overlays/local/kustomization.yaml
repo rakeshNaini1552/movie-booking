@@ -14,4 +14,4 @@ images:
   - name: ghcr.io/rakeshnaini1552/gateway-service
     newTag: 07a98f689d6081b418a195659b529ff9a726c733
   - name: ghcr.io/rakeshnaini1552/catalog-service
-    newTag: 8e2c1d45cef3d972c4f1fea0084b5b9889cbbfd6
+    newTag: 7883b59861784fe3a0524b4eaa0d17b7808d2c5f
