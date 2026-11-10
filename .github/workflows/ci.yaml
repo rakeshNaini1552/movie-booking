@@ -4,12 +4,53 @@ on:
   pull_request:
 
 jobs:
-  test:
+  changes:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        service: [booking-service, seat-service, payment-service, ticket-service, gateway-service, catalog-service]
+    permissions:
+      contents: read
+    outputs:
+      booking_service: ${{ steps.detect.outputs.booking_service }}
+      seat_service: ${{ steps.detect.outputs.seat_service }}
+      payment_service: ${{ steps.detect.outputs.payment_service }}
+      ticket_service: ${{ steps.detect.outputs.ticket_service }}
+      gateway_service: ${{ steps.detect.outputs.gateway_service }}
+      catalog_service: ${{ steps.detect.outputs.catalog_service }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # A service is tested when its own folder changed or when the workflows changed.
+      # There are no root-level build files shared by the services.
+      - name: Detect changed services
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          SERVICES="booking-service seat-service payment-service ticket-service gateway-service catalog-service"
+
+          files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+
+          shared=false
+          if grep -q '^\.github/workflows/' <<<"$files"; then
+            shared=true
+          fi
+
+          for service in $SERVICES; do
+            result=false
+            if [[ "$shared" == true ]] || grep -q "^services/$service/" <<<"$files"; then
+              result=true
+            fi
+            echo "${service//-/_}=$result" >> "$GITHUB_OUTPUT"
+          done
+
+  test-booking-service:
+    name: test (booking-service)
+    needs: changes
+    if: needs.changes.outputs.booking_service == 'true'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
@@ -18,8 +59,89 @@ jobs:
           java-version: 21
           cache: maven
       - name: Run tests
-        working-directory: services/${{ matrix.service }}
+        working-directory: services/booking-service
         run: ./mvnw test
+
+  test-seat-service:
+    name: test (seat-service)
+    needs: changes
+    if: needs.changes.outputs.seat_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Run tests
+        working-directory: services/seat-service
+        run: ./mvnw test
+
+  test-payment-service:
+    name: test (payment-service)
+    needs: changes
+    if: needs.changes.outputs.payment_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Run tests
+        working-directory: services/payment-service
+        run: ./mvnw test
+
+  test-ticket-service:
+    name: test (ticket-service)
+    needs: changes
+    if: needs.changes.outputs.ticket_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Run tests
+        working-directory: services/ticket-service
+        run: ./mvnw test
+
+  test-gateway-service:
+    name: test (gateway-service)
+    needs: changes
+    if: needs.changes.outputs.gateway_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Run tests
+        working-directory: services/gateway-service
+        run: ./mvnw test
+
+  test-catalog-service:
+    name: test (catalog-service)
+    needs: changes
+    if: needs.changes.outputs.catalog_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Run tests
+        working-directory: services/catalog-service
+        run: ./mvnw test
+
   dependency-review:
     runs-on: ubuntu-latest
     permissions:
