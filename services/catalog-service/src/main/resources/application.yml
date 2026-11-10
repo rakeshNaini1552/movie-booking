@@ -45,6 +45,7 @@ catalog:
   cache:
     enabled: ${CATALOG_CACHE_ENABLED:true}
     ttl: ${CATALOG_CACHE_TTL:PT10M}
+    prefix: ${CATALOG_CACHE_PREFIX:catalog:}
   security:
     admin-role: ${CATALOG_ADMIN_ROLE:catalog-admin}
   graphql:
