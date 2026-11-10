@@ -28,7 +28,6 @@ public class TheaterController {
 
     @Operation(summary = "Create a theater")
     @ApiResponse(responseCode = "400", description = "Validation failed or malformed body", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TheaterResponse create(@RequestBody @Valid TheaterRequest request) {
@@ -36,7 +35,6 @@ public class TheaterController {
     }
 
     @Operation(summary = "Get a theater by id")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Theater not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @GetMapping("/{id}")
     public TheaterResponse get(@PathVariable UUID id) {
@@ -46,7 +44,6 @@ public class TheaterController {
     @Operation(summary = "List theaters",
             description = "Optionally filtered by city; paged and sortable.")
     @ApiResponse(responseCode = "400", description = "Unknown sort property", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @GetMapping
     public PageResponse<TheaterResponse> list(@RequestParam(required = false) String city, Pageable pageable) {
         return theaterService.list(city, pageable);
@@ -54,7 +51,6 @@ public class TheaterController {
 
     @Operation(summary = "Update a theater")
     @ApiResponse(responseCode = "400", description = "Validation failed or malformed body", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Theater not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PutMapping("/{id}")
     public TheaterResponse update(@PathVariable UUID id, @RequestBody @Valid TheaterRequest request) {
@@ -63,7 +59,6 @@ public class TheaterController {
 
     @Operation(summary = "Delete a theater",
             description = "Hard delete: its screens are deleted with it.")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Theater not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Theater has shows and cannot be deleted", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @DeleteMapping("/{id}")

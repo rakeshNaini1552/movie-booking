@@ -67,7 +67,7 @@ class ShowApiIntegrationTest extends ApiTestBase {
     @Test
     void cancelled_show_no_longer_blocks_the_slot() throws Exception {
         UUID first = createShow("2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z");
-        mockMvc.perform(post("/api/v1/shows/{id}/cancel", first).with(TestJwt.user()))
+        mockMvc.perform(post("/api/v1/shows/{id}/cancel", first).with(TestJwt.admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
@@ -77,7 +77,7 @@ class ShowApiIntegrationTest extends ApiTestBase {
     @Test
     void a_new_show_can_reuse_the_exact_start_of_a_cancelled_show() throws Exception {
         UUID first = createShow("2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z");
-        mockMvc.perform(post("/api/v1/shows/{id}/cancel", first).with(TestJwt.user())).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/shows/{id}/cancel", first).with(TestJwt.admin())).andExpect(status().isOk());
 
         createShow("2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z");
 
@@ -101,11 +101,11 @@ class ShowApiIntegrationTest extends ApiTestBase {
     void cancel_twice_is_idempotent_and_unknown_show_is_404() throws Exception {
         UUID id = createShow("2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z");
 
-        mockMvc.perform(post("/api/v1/shows/{id}/cancel", id).with(TestJwt.user())).andExpect(status().isOk());
-        mockMvc.perform(post("/api/v1/shows/{id}/cancel", id).with(TestJwt.user()))
+        mockMvc.perform(post("/api/v1/shows/{id}/cancel", id).with(TestJwt.admin())).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/shows/{id}/cancel", id).with(TestJwt.admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
-        mockMvc.perform(post("/api/v1/shows/{id}/cancel", UUID.randomUUID()).with(TestJwt.user()))
+        mockMvc.perform(post("/api/v1/shows/{id}/cancel", UUID.randomUUID()).with(TestJwt.admin()))
                 .andExpect(status().isNotFound());
     }
 
@@ -132,7 +132,7 @@ class ShowApiIntegrationTest extends ApiTestBase {
     void put_updates_the_show_and_ignores_its_own_slot_in_the_overlap_check() throws Exception {
         UUID id = createShow("2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z");
 
-        mockMvc.perform(put("/api/v1/shows/{id}", id).with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/shows/{id}", id).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(showJson(movieId, screenId, "2030-02-01T18:00:00Z", "2030-02-01T21:00:00Z")))
                 .andExpect(status().isOk())
@@ -144,7 +144,7 @@ class ShowApiIntegrationTest extends ApiTestBase {
         createShow("2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z");
         UUID second = createShow("2030-02-01T20:00:00Z", "2030-02-01T22:00:00Z");
 
-        mockMvc.perform(put("/api/v1/shows/{id}", second).with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/shows/{id}", second).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(showJson(movieId, screenId, "2030-02-01T19:00:00Z", "2030-02-01T22:00:00Z")))
                 .andExpect(status().isConflict());
@@ -153,9 +153,9 @@ class ShowApiIntegrationTest extends ApiTestBase {
     @Test
     void put_of_a_cancelled_show_returns_409() throws Exception {
         UUID id = createShow("2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z");
-        mockMvc.perform(post("/api/v1/shows/{id}/cancel", id).with(TestJwt.user())).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/shows/{id}/cancel", id).with(TestJwt.admin())).andExpect(status().isOk());
 
-        mockMvc.perform(put("/api/v1/shows/{id}", id).with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/shows/{id}", id).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(showJson(movieId, screenId, "2030-03-01T18:00:00Z", "2030-03-01T20:00:00Z")))
                 .andExpect(status().isConflict());

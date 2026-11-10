@@ -29,7 +29,6 @@ public class ShowController {
 
     @Operation(summary = "Schedule a show")
     @ApiResponse(responseCode = "400", description = "Validation failed, malformed body, or endsAt not after startsAt", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Movie or screen not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Movie is archived or the screen already has an overlapping show", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PostMapping
@@ -39,7 +38,6 @@ public class ShowController {
     }
 
     @Operation(summary = "Get a show by id")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Show not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @GetMapping("/{id}")
     public ShowResponse get(@PathVariable UUID id) {
@@ -50,7 +48,6 @@ public class ShowController {
     @Operation(summary = "List shows",
             description = "Optionally filtered by movie, theater and a start-time window; paged and sortable.")
     @ApiResponse(responseCode = "400", description = "Invalid filter value or unknown sort property", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @GetMapping
     public PageResponse<ShowResponse> list(@RequestParam(required = false) UUID movieId,
                                            @RequestParam(required = false) UUID theaterId,
@@ -62,7 +59,6 @@ public class ShowController {
 
     @Operation(summary = "Update a show")
     @ApiResponse(responseCode = "400", description = "Validation failed, malformed body, or endsAt not after startsAt", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Show, movie or screen not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Show is cancelled, movie is archived, or the screen already has an overlapping show", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PutMapping("/{id}")
@@ -72,7 +68,6 @@ public class ShowController {
 
     @Operation(summary = "Cancel a show",
             description = "Cancelling an already cancelled show returns its current state.")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Show not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PostMapping("/{id}/cancel")
     public ShowResponse cancel(@PathVariable UUID id) {

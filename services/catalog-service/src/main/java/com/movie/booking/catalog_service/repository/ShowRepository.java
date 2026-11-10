@@ -7,11 +7,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public interface ShowRepository extends JpaRepository<Show, UUID>, JpaSpecificationExecutor<Show> {
 
     boolean existsByMovieId(UUID movieId);
+
+    // Cancelled shows are included, like the REST list; ordered so GraphQL output is stable.
+    List<Show> findByMovieIdInOrderByStartsAtAscIdAsc(Collection<UUID> movieIds);
 
     boolean existsByScreenId(UUID screenId);
 

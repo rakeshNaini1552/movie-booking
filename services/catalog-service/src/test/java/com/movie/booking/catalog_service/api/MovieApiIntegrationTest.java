@@ -43,7 +43,7 @@ class MovieApiIntegrationTest extends ApiTestBase {
         createMovie("Dune");
         createMovie("Dune: Part Two");
         UUID alien = createMovie("Alien");
-        mockMvc.perform(delete("/api/v1/movies/{id}", alien).with(TestJwt.user())).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/movies/{id}", alien).with(TestJwt.admin())).andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/v1/movies").param("title", "DUNE").with(TestJwt.user()))
                 .andExpect(status().isOk())
@@ -82,7 +82,7 @@ class MovieApiIntegrationTest extends ApiTestBase {
     void put_updates_the_movie_and_keeps_status_when_omitted() throws Exception {
         UUID id = createMovie("Dune");
 
-        mockMvc.perform(put("/api/v1/movies/{id}", id).with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/movies/{id}", id).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON).content(movieJson("Dune: Part Two")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Dune: Part Two"))
@@ -93,7 +93,7 @@ class MovieApiIntegrationTest extends ApiTestBase {
 
     @Test
     void put_unknown_movie_returns_404() throws Exception {
-        mockMvc.perform(put("/api/v1/movies/{id}", UUID.randomUUID()).with(TestJwt.user())
+        mockMvc.perform(put("/api/v1/movies/{id}", UUID.randomUUID()).with(TestJwt.admin())
                         .contentType(MediaType.APPLICATION_JSON).content(movieJson("X")))
                 .andExpect(status().isNotFound());
     }
@@ -102,8 +102,8 @@ class MovieApiIntegrationTest extends ApiTestBase {
     void delete_is_soft_and_repeatable() throws Exception {
         UUID id = createMovie("Dune");
 
-        mockMvc.perform(delete("/api/v1/movies/{id}", id).with(TestJwt.user())).andExpect(status().isNoContent());
-        mockMvc.perform(delete("/api/v1/movies/{id}", id).with(TestJwt.user())).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/movies/{id}", id).with(TestJwt.admin())).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/movies/{id}", id).with(TestJwt.admin())).andExpect(status().isNoContent());
 
         assertThat(jdbcTemplate.queryForObject("SELECT status FROM movie WHERE id = ?", String.class, id))
                 .isEqualTo("ARCHIVED");
@@ -115,7 +115,7 @@ class MovieApiIntegrationTest extends ApiTestBase {
         UUID screenId = createScreen(createTheater("PVR", "Pune"), "Screen 1");
         createAndGetId("/api/v1/shows", showJson(movieId, screenId, "2030-02-01T18:00:00Z", "2030-02-01T20:00:00Z"));
 
-        mockMvc.perform(delete("/api/v1/movies/{id}", movieId).with(TestJwt.user()))
+        mockMvc.perform(delete("/api/v1/movies/{id}", movieId).with(TestJwt.admin()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
         assertThat(jdbcTemplate.queryForObject("SELECT status FROM movie WHERE id = ?", String.class, movieId))

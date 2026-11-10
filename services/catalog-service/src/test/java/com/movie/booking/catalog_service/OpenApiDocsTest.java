@@ -32,4 +32,16 @@ class OpenApiDocsTest {
     void api_routes_still_require_a_token() throws Exception {
         mockMvc.perform(get("/api/v1/movies")).andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void a_read_documents_401_and_a_write_documents_401_and_403() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath("$.paths['/api/v1/movies/{id}'].get.responses['401']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/movies/{id}'].get.responses['403']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/v1/movies'].post.responses['401']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/movies'].post.responses['403']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/movies/{id}'].delete.responses['403']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/shows/{id}/cancel'].post.responses['403']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/theaters/{theaterId}/screens'].get.responses['401']").exists());
+    }
 }

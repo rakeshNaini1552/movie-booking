@@ -29,7 +29,6 @@ public class MovieController {
 
     @Operation(summary = "Create a movie")
     @ApiResponse(responseCode = "400", description = "Validation failed or malformed body", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public MovieResponse create(@RequestBody @Valid MovieRequest request) {
@@ -37,7 +36,6 @@ public class MovieController {
     }
 
     @Operation(summary = "Get a movie by id")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Movie not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @GetMapping("/{id}")
     public MovieResponse get(@PathVariable UUID id) {
@@ -47,7 +45,6 @@ public class MovieController {
     @Operation(summary = "List movies",
             description = "Optionally filtered by status and title; paged and sortable.")
     @ApiResponse(responseCode = "400", description = "Invalid filter value or unknown sort property", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @GetMapping
     public PageResponse<MovieResponse> list(@RequestParam(required = false) MovieStatus status,
                                             @RequestParam(required = false) String title,
@@ -57,7 +54,6 @@ public class MovieController {
 
     @Operation(summary = "Update a movie")
     @ApiResponse(responseCode = "400", description = "Validation failed or malformed body", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Movie not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PutMapping("/{id}")
     public MovieResponse update(@PathVariable UUID id, @RequestBody @Valid MovieRequest request) {
@@ -66,7 +62,6 @@ public class MovieController {
 
     @Operation(summary = "Archive a movie",
             description = "Soft delete: the movie stays in the database with status ARCHIVED.")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Movie not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Movie has shows and cannot be deleted", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @DeleteMapping("/{id}")

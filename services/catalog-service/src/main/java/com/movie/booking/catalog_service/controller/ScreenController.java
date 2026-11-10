@@ -28,7 +28,6 @@ public class ScreenController {
 
     @Operation(summary = "Create a screen in a theater")
     @ApiResponse(responseCode = "400", description = "Validation failed or malformed body", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Theater not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "A screen with this name already exists in the theater", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PostMapping
@@ -39,7 +38,6 @@ public class ScreenController {
 
     @Operation(summary = "List the screens of a theater")
     @ApiResponse(responseCode = "400", description = "Unknown sort property", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Theater not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @GetMapping
     public PageResponse<ScreenResponse> list(@PathVariable UUID theaterId, Pageable pageable) {
@@ -47,7 +45,6 @@ public class ScreenController {
     }
 
     @Operation(summary = "Get a screen by id")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Screen not found under this theater", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @GetMapping("/{screenId}")
     public ScreenResponse get(@PathVariable UUID theaterId, @PathVariable UUID screenId) {
@@ -56,7 +53,6 @@ public class ScreenController {
 
     @Operation(summary = "Update a screen")
     @ApiResponse(responseCode = "400", description = "Validation failed or malformed body", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Screen not found under this theater", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "A screen with this name already exists in the theater", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PutMapping("/{screenId}")
@@ -66,7 +62,6 @@ public class ScreenController {
     }
 
     @Operation(summary = "Delete a screen")
-    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
     @ApiResponse(responseCode = "404", description = "Screen not found under this theater", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Screen has shows and cannot be deleted", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @DeleteMapping("/{screenId}")

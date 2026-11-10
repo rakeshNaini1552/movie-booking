@@ -3,6 +3,7 @@ package com.movie.booking.catalog_service.service;
 import com.movie.booking.catalog_service.MovieStatus;
 import com.movie.booking.catalog_service.dto.MovieRequest;
 import com.movie.booking.catalog_service.dto.MovieResponse;
+import com.movie.booking.catalog_service.config.CacheNames;
 import com.movie.booking.catalog_service.dto.PageResponse;
 import com.movie.booking.catalog_service.entity.Movie;
 import com.movie.booking.catalog_service.exception.ConflictException;
@@ -12,12 +13,15 @@ import com.movie.booking.catalog_service.repository.CatalogSpecs;
 import com.movie.booking.catalog_service.repository.MovieRepository;
 import com.movie.booking.catalog_service.repository.ShowRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -35,6 +39,7 @@ public class MovieService {
         return mapper.toResponse(movie);
     }
 
+    @Cacheable(cacheNames = CacheNames.MOVIES, key = "#id")
     @Transactional(readOnly = true)
     public MovieResponse get(UUID id) {
         return mapper.toResponse(find(id));
@@ -46,6 +51,14 @@ public class MovieService {
                 mapper::toResponse);
     }
 
+    // Same filters as list, but a slice (no count query) because the GraphQL query only returns the movies.
+    @Transactional(readOnly = true)
+    public List<MovieResponse> search(MovieStatus status, String titleContains, Pageable pageable) {
+        return movieRepository.findBy(CatalogSpecs.movies(status, titleContains), q -> q.slice(pageable))
+                .map(mapper::toResponse).getContent();
+    }
+
+    @CacheEvict(cacheNames = CacheNames.MOVIES, key = "#id")
     @Transactional
     public MovieResponse update(UUID id, MovieRequest request) {
         Movie movie = find(id);
@@ -54,6 +67,7 @@ public class MovieService {
     }
 
     // Soft delete: the row stays so old shows and bookings can still point at it.
+    @CacheEvict(cacheNames = CacheNames.MOVIES, key = "#id")
     @Transactional
     public void archive(UUID id) {
         Movie movie = find(id);
