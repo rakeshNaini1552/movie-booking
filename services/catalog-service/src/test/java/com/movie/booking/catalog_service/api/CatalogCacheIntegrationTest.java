@@ -4,8 +4,10 @@ import com.movie.booking.catalog_service.TestJwt;
 import com.movie.booking.catalog_service.ShowStatus;
 import com.movie.booking.catalog_service.MovieStatus;
 import com.movie.booking.catalog_service.config.CacheNames;
+import com.movie.booking.catalog_service.dto.MovieRequest;
 import com.movie.booking.catalog_service.dto.MovieResponse;
 import com.movie.booking.catalog_service.dto.ShowResponse;
+import com.movie.booking.catalog_service.service.MovieService;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
@@ -36,6 +38,7 @@ class CatalogCacheIntegrationTest extends ApiTestBase {
     @Autowired private EntityManagerFactory entityManagerFactory;
     @Autowired private CacheManager cacheManager;
     @Autowired private MeterRegistry meterRegistry;
+    @Autowired private MovieService movieService;
 
     private Statistics statistics;
 
@@ -76,6 +79,65 @@ class CatalogCacheIntegrationTest extends ApiTestBase {
                         .contentType(MediaType.APPLICATION_JSON).content(movieJson("Dune 2")))
                 .andExpect(status().isOk());
         getMovie(id, "Dune 2");
+    }
+
+    // Cache writes are applied immediately, so an update or archive is visible to the very next read.
+    // With the asynchronous default of Spring Data Redis the eviction can still be pending and the read serves the stale entry.
+    private static final int ITERATIONS = 60;
+
+    @Test
+    void an_update_is_visible_to_the_very_next_read() throws Exception {
+        UUID id = createMovie("Dune 0");
+        getMovie(id, "Dune 0");
+
+        for (int i = 1; i <= ITERATIONS; i++) {
+            mockMvc.perform(put("/api/v1/movies/{id}", id).with(TestJwt.admin())
+                            .contentType(MediaType.APPLICATION_JSON).content(movieJson("Dune " + i)))
+                    .andExpect(status().isOk());
+            getMovie(id, "Dune " + i);
+        }
+    }
+
+    @Test
+    void an_archive_is_visible_to_the_very_next_read() throws Exception {
+        for (int i = 0; i < ITERATIONS; i++) {
+            UUID id = createMovie("Dune " + i);
+            getMovie(id, "Dune " + i);
+
+            mockMvc.perform(delete("/api/v1/movies/{id}", id).with(TestJwt.admin())).andExpect(status().isNoContent());
+
+            mockMvc.perform(get("/api/v1/movies/{id}", id).with(TestJwt.user()))
+                    .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        }
+    }
+
+    // The same check without the HTTP layer: the read follows the write within microseconds, so a pending
+    // asynchronous eviction is caught reliably. Through MockMvc the gap is usually long enough to hide it.
+    @Test
+    void a_service_update_is_visible_to_the_read_straight_after() {
+        UUID id = movieService.create(movieRequest("Dune 0")).id();
+        assertThat(movieService.get(id).title()).isEqualTo("Dune 0");
+
+        for (int i = 1; i <= ITERATIONS; i++) {
+            movieService.update(id, movieRequest("Dune " + i));
+            assertThat(movieService.get(id).title()).as("read after update %d", i).isEqualTo("Dune " + i);
+        }
+    }
+
+    @Test
+    void a_service_archive_is_visible_to_the_read_straight_after() {
+        for (int i = 0; i < ITERATIONS; i++) {
+            UUID id = movieService.create(movieRequest("Dune " + i)).id();
+            assertThat(movieService.get(id).status()).isEqualTo(MovieStatus.ACTIVE);
+
+            movieService.archive(id);
+
+            assertThat(movieService.get(id).status()).as("read after archive %d", i).isEqualTo(MovieStatus.ARCHIVED);
+        }
+    }
+
+    private static MovieRequest movieRequest(String title) {
+        return new MovieRequest(title, "d", 120, "en", "PG-13", LocalDate.parse("2030-01-15"), null);
     }
 
     @Test

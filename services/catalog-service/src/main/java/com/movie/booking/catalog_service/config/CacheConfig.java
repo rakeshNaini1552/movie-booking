@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
@@ -33,6 +34,9 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "catalog.cache", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class CacheConfig implements CachingConfigurer {
 
+    // Immediate writes: Spring Data Redis 4.x writes (put, evict, clear) asynchronously by default, so an eviction
+    // could still be pending when the next read arrives and serve the stale entry. An eviction must be visible to
+    // the very next read, so each write waits for Redis to apply it.
     @Bean
     CacheManager cacheManager(RedisConnectionFactory connectionFactory, JsonMapper jsonMapper,
                               @Value("${catalog.cache.ttl}") Duration ttl,
@@ -48,7 +52,7 @@ public class CacheConfig implements CachingConfigurer {
                 CacheNames.THEATERS, valuesAs(base, jsonMapper, TheaterResponse.class),
                 CacheNames.SCREENS, valuesAs(base, jsonMapper, ScreenResponse.class),
                 CacheNames.SHOWS, valuesAs(base, jsonMapper, ShowResponse.class));
-        return RedisCacheManager.builder(connectionFactory)
+        return RedisCacheManager.builder(RedisCacheWriter.create(connectionFactory, c -> c.immediateWrites()))
                 .cacheDefaults(base)
                 .withInitialCacheConfigurations(caches)
                 .enableStatistics()          // exposes cache.gets{result=hit|miss} through Micrometer
