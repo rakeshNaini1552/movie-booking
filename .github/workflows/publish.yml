@@ -56,14 +56,14 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BUMP_PR_TOKEN }}
 
-      - name: Open PR bumping local overlay tags
+      - name: Open PR bumping overlay tags
         env:
           SHA: ${{ github.sha }}
           BEFORE: ${{ github.event.before }}
           GH_TOKEN: ${{ secrets.BUMP_PR_TOKEN }}
         run: |
           set -euo pipefail
-          OVERLAY=deploy/k8s/overlays/local/kustomization.yaml
+          OVERLAYS="deploy/k8s/overlays/local/kustomization.yaml deploy/k8s/overlays/stage/kustomization.yaml"
           SERVICES="booking-service seat-service payment-service ticket-service gateway-service catalog-service"
 
           if [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]]; then
@@ -83,32 +83,53 @@ jobs:
             exit 0
           fi
 
-          for service in "${changed[@]}"; do
-            sed -i "/- name: ghcr.io\/rakeshnaini1552\/${service}\$/{n;s/newTag: .*/newTag: ${SHA}/;}" "$OVERLAY"
+          bumped=()
+          for overlay in $OVERLAYS; do
+            expected=0
+            for service in "${changed[@]}"; do
+              current="$(awk -v name="ghcr.io/rakeshnaini1552/${service}" '$0 == "  - name: " name { getline; print $2; exit }' "$overlay")"
+              if [[ "$current" != "$SHA" ]]; then
+                expected=$((expected + 1))
+              fi
+              sed -i "/- name: ghcr.io\/rakeshnaini1552\/${service}\$/{n;s/newTag: .*/newTag: ${SHA}/;}" "$overlay"
+            done
+
+            added=0 removed=0
+            read -r added removed _ < <(git diff --numstat -- "$overlay") || true
+            if [[ "${added:-0}" -ne "$expected" || "${removed:-0}" -ne "$expected" ]]; then
+              echo "Expected $expected changed line(s) in $overlay, got +${added:-0} -${removed:-0}" >&2
+              git diff -- "$overlay" >&2
+              exit 1
+            fi
+            if [[ "$expected" -gt 0 ]]; then
+              bumped+=("$overlay")
+            fi
           done
 
-          read -r added removed _ < <(git diff --numstat -- "$OVERLAY")
-          if [[ "${added:-0}" -ne ${#changed[@]} || "${removed:-0}" -ne ${#changed[@]} ]]; then
-            echo "Expected ${#changed[@]} changed line(s) in $OVERLAY, got +${added:-0} -${removed:-0}" >&2
-            git diff -- "$OVERLAY" >&2
-            exit 1
+          if [[ ${#bumped[@]} -eq 0 ]]; then
+            echo "Every changed service already uses $SHA in both overlays; no PR needed."
+            exit 0
           fi
 
           short="${SHA:0:7}"
           list="$(IFS=,; echo "${changed[*]}")"
-          branch="bump-local-tags-$short"
-          title="Bump local overlay image tags to $short ($list)"
+          branch="bump-tags-$short"
+          title="Bump local and stage overlay image tags to $short ($list)"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add "$OVERLAY"
+          git add "${bumped[@]}"
           git commit -m "$title"
           git push origin "$branch"
 
-          body="Bumps the local overlay image tag for the services whose code changed in this push:"$'\n\n'
+          body="Bumps the image tag in both the local and the stage overlay for the services whose code changed in this push:"$'\n\n'
           for service in "${changed[@]}"; do
             body+="- $service"$'\n'
           done
-          body+=$'\n'"Tag: \`$SHA\`"$'\n\n'"The stage overlay is not changed. Merging this PR deploys the new tags to the local environment through Argo CD."
+          body+=$'\n'"Tag: \`$SHA\`"$'\n\n'"Overlays: "
+          for overlay in "${bumped[@]}"; do
+            body+="\`$overlay\` "
+          done
+          body+=$'\n\n'"Merging this PR deploys the local overlay through Argo CD. The stage overlay is updated in git but is applied by hand (kubectl apply -k deploy/k8s/overlays/stage) until a stage Application exists."
           gh pr create --base main --head "$branch" --title "$title" --body "$body"

@@ -14,9 +14,9 @@ images:
   - name: ghcr.io/rakeshnaini1552/ticket-service
     newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/gateway-service
-    newTag: 09f9a26d77dc72a7cad28a0bfed1abf62ce2dae2
+    newTag: 7883b59861784fe3a0524b4eaa0d17b7808d2c5f
   - name: ghcr.io/rakeshnaini1552/catalog-service
-    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
+    newTag: 7883b59861784fe3a0524b4eaa0d17b7808d2c5f
 patches:
   - target:
       kind: ConfigMap
