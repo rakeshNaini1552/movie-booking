@@ -1,6 +1,6 @@
 package com.movie.booking.catalog_service.config;
 
-// Cache names; CacheConfig prefixes them with "catalog:" in Redis (key "catalog:movies::<id>").
+// Cache names; CacheConfig prefixes them with catalog.cache.prefix in Redis (default key "catalog:movies::<id>").
 public final class CacheNames {
 
     public static final String MOVIES = "movies";

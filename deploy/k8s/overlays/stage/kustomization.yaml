@@ -92,6 +92,7 @@ patches:
         name: catalog-service-config
       data:
         CATALOG_DB_NAME: catalog_db_stage
+        CATALOG_CACHE_PREFIX: "catalog-stage:"
         KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
   - target:
       kind: HorizontalPodAutoscaler

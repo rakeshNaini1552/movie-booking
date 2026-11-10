@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.Map;
 
 // Caches single-item reads by id in Redis. Switched off completely with catalog.cache.enabled=false.
+// Keys are "<catalog.cache.prefix><cacheName>::<id>"; the prefix keeps environments that share one Redis apart.
 @Slf4j
 @Configuration
 @EnableCaching
@@ -34,11 +35,12 @@ public class CacheConfig implements CachingConfigurer {
 
     @Bean
     CacheManager cacheManager(RedisConnectionFactory connectionFactory, JsonMapper jsonMapper,
-                              @Value("${catalog.cache.ttl}") Duration ttl) {
+                              @Value("${catalog.cache.ttl}") Duration ttl,
+                              @Value("${catalog.cache.prefix}") String prefix) {
         RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttl)
                 .disableCachingNullValues()
-                .prefixCacheNameWith("catalog:")
+                .prefixCacheNameWith(prefix)
                 .serializeKeysWith(SerializationPair.fromSerializer(StringRedisSerializer.UTF_8));
         // One typed JSON serializer per cache, so no class names are stored in Redis and values stay readable.
         Map<String, RedisCacheConfiguration> caches = Map.of(
