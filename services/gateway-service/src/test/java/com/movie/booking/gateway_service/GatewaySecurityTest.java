@@ -65,6 +65,20 @@ class GatewaySecurityTest {
 	}
 
 	@Test
+	void graphqlWithoutTokenIsUnauthorized() {
+		client.post().uri("/graphql").exchange()
+				.expectStatus().isUnauthorized();
+	}
+
+	@Test
+	void graphqlWithValidJwtIsRoutedToCatalogService() {
+		// Catalog URL is unreachable in tests: a routed request fails with 5xx, an unrouted one would be 404
+		client.mutateWith(SecurityMockServerConfigurers.mockJwt())
+				.post().uri("/graphql").exchange()
+				.expectStatus().value(status -> assertThat(status).isNotIn(401, 404));
+	}
+
+	@Test
 	void healthIsOpenWithoutToken() {
 		client.get().uri("/actuator/health/liveness").exchange()
 				.expectStatus().isOk();

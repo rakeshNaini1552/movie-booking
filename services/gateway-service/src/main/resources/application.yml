@@ -30,7 +30,7 @@ spring:
             - id: catalog-service
               uri: ${CATALOG_SERVICE_URL:http://localhost:8085}
               predicates:
-                - Path=/api/v1/movies/**,/api/v1/theaters/**,/api/v1/shows/**
+                - Path=/api/v1/movies/**,/api/v1/theaters/**,/api/v1/shows/**,/graphql
               filters:
                 - AddRequestHeader=X-Gateway, spring
                 - name: RequestRateLimiter
