@@ -79,14 +79,17 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      BOOKING_SERVICE_CLIENT_SECRET: ${BOOKING_SERVICE_CLIENT_SECRET}
+      BOOKING_SERVICE_CLIENT_SECRET_STAGE: ${BOOKING_SERVICE_CLIENT_SECRET_STAGE}
     ports:
       - "8180:8080"
     volumes:
       - keycloak-data:/opt/keycloak/data
+      - ./keycloak:/opt/keycloak/data/import:ro
 
   prometheus:
     image: prom/prometheus:v3.5.0
