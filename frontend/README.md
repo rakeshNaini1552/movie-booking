@@ -14,11 +14,17 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Configuration
+
+Server-only settings are validated with Zod in `src/lib/env-schema.ts` (see `.env.example`). `next.config.ts` runs the validation, so `next dev`, `next build` and `next start` all fail at startup, listing the invalid variable names (never values). App code reads the typed object from `@/lib/env` (`server-only`).
+
+**Port:** the dev server defaults to 3001 (the `config.port` field in `package.json`) and `PORT=4000 npm run dev` overrides it. The scripts pass `-p ${PORT:-<default>}` because Next reads `PORT` from the process environment only; the port is chosen before `.env` files are loaded, so a `PORT` in `.env.local` has no effect on the server. The scripts use POSIX shell expansion (macOS/Linux/WSL).
 
 ## Learn More
 
