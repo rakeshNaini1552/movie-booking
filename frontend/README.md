@@ -1,42 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Movie Booking frontend
 
-## Getting Started
+Next.js 16 (App Router, TypeScript strict) UI for the movie booking platform. Server-side code talks to the backend through the gateway service.
 
-First, run the development server:
+## Run it
+
+Requires Node 26 (see `.nvmrc`).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+npm run dev    # http://localhost:3001
 ```
 
-Open [http://localhost:3001](http://localhost:3000) with your browser to see the result.
+Override the port with `PORT=4000 npm run dev`. The scripts pass `-p ${PORT:-<default>}` because Next reads `PORT` from the shell only, before `.env` files are loaded, so a `PORT` in `.env.local` does not move the server. The default (3001, since Grafana uses 3000) lives in the `config.port` field of `package.json`. The scripts use POSIX shell expansion (macOS, Linux, WSL).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Server-only, validated with Zod at startup (`src/lib/env-schema.ts`, run from `next.config.ts`), so `next dev`, `next build` and `next start` fail fast and name every invalid variable (never its value). Copy `.env.example` to `.env.local` to override; `.env.local` is git-ignored.
 
-## Configuration
+| Variable              | Default                                      | Purpose                            |
+| --------------------- | -------------------------------------------- | ---------------------------------- |
+| `GATEWAY_URL`         | `http://localhost:8090`                      | Gateway service base URL           |
+| `KEYCLOAK_ISSUER_URI` | `http://localhost:8180/realms/movie-booking` | Keycloak realm issuer              |
+| `PORT`                | `3001`                                       | Port, set in the shell (see above) |
 
-Server-only settings are validated with Zod in `src/lib/env-schema.ts` (see `.env.example`). `next.config.ts` runs the validation, so `next dev`, `next build` and `next start` all fail at startup, listing the invalid variable names (never values). App code reads the typed object from `@/lib/env` (`server-only`).
+None are secrets. Future secrets (client secret, auth secret) get no default. Never use `NEXT_PUBLIC_` for these. App code reads them from `@/lib/env`, which is `server-only`.
 
-**Port:** the dev server defaults to 3001 (the `config.port` field in `package.json`) and `PORT=4000 npm run dev` overrides it. The scripts pass `-p ${PORT:-<default>}` because Next reads `PORT` from the process environment only; the port is chosen before `.env` files are loaded, so a `PORT` in `.env.local` has no effect on the server. The scripts use POSIX shell expansion (macOS/Linux/WSL).
+## Reaching the gateway
 
-## Learn More
+The default `GATEWAY_URL` assumes the gateway is on `localhost:8090`. When the backend runs in Kubernetes, forward it:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+kubectl port-forward -n movie-booking svc/gateway-service 8090:8090
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The pages do not call the gateway yet; this is needed once they fetch real data.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+| Script                 | What it does                                         |
+| ---------------------- | ---------------------------------------------------- |
+| `npm run dev`          | Dev server                                           |
+| `npm run build`        | Production build                                     |
+| `npm start`            | Serve the production build                           |
+| `npm run lint`         | ESLint (Next + Prettier-compatible rules)            |
+| `npm run format`       | Prettier, write                                      |
+| `npm run format:check` | Prettier, check only (CI)                            |
+| `npm run typecheck`    | `next typegen` then `tsc --noEmit`                   |
+| `npm test`             | Vitest (env tests in Node, component tests in jsdom) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+CI (`test (frontend)`) runs lint, format check, typecheck, tests and build.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Layout
+
+- `src/app`: routes (`/`, `/movies`, `not-found`) and `loading`/`error` pages for `/movies`
+- `src/components`: shared components
+- `src/lib`: env validation
+- Tests sit next to the code as `*.test.ts` (Node) and `*.test.tsx` (jsdom)
+
+Before changing Next.js code, read `AGENTS.md`: this Next.js version differs from older ones, and its docs are in `node_modules/next/dist/docs/`.
