@@ -8,7 +8,7 @@ export default function Home() {
       <main className={styles.main}>
         <div className={styles.intro}>
           <Header title="Movie Booking" />
-          <MovieList/>
+          <MovieList />
         </div>
       </main>
     </div>
