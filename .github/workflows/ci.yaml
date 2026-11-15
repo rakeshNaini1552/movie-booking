@@ -15,6 +15,7 @@ jobs:
       ticket_service: ${{ steps.detect.outputs.ticket_service }}
       gateway_service: ${{ steps.detect.outputs.gateway_service }}
       catalog_service: ${{ steps.detect.outputs.catalog_service }}
+      frontend: ${{ steps.detect.outputs.frontend }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -45,6 +46,13 @@ jobs:
             fi
             echo "${service//-/_}=$result" >> "$GITHUB_OUTPUT"
           done
+
+          # The frontend follows the same rule: its own folder or the workflows changed.
+          frontend=false
+          if [[ "$shared" == true ]] || grep -q '^frontend/' <<<"$files"; then
+            frontend=true
+          fi
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
 
   test-booking-service:
     name: test (booking-service)
@@ -141,6 +149,35 @@ jobs:
       - name: Run tests
         working-directory: services/catalog-service
         run: ./mvnw test
+
+  test-frontend:
+    name: test (frontend)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Check formatting
+        run: npm run format:check
+      - name: Type check
+        run: npm run typecheck
+      - name: Run tests
+        run: npm test
+      # No env settings or secrets here on purpose: the build must work with the defaults.
+      - name: Build
+        run: npm run build
 
   dependency-review:
     runs-on: ubuntu-latest

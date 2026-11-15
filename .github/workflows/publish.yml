@@ -3,7 +3,7 @@ name: publish
 on:
   push:
     branches: [main]
-    paths-ignore: ['deploy/**']
+    paths-ignore: ['deploy/**', 'frontend/**']
 
 jobs:
   publish:
