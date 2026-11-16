@@ -1,6 +1,6 @@
 import "server-only";
 import { gatewayQuery } from "./client";
-import { CatalogError } from "./errors";
+import { GatewayError } from "@/lib/gateway/errors";
 import {
   idSchema,
   movieDataSchema,
@@ -81,7 +81,7 @@ export async function getMovie(id: string): Promise<MovieDetail | null> {
     const data = await gatewayQuery(MOVIE_QUERY, { id }, movieDataSchema);
     return data.movie;
   } catch (error) {
-    if (error instanceof CatalogError && error.isNotFound) return null;
+    if (error instanceof GatewayError && error.isNotFound) return null;
     throw error;
   }
 }
