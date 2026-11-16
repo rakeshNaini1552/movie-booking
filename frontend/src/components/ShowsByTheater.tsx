@@ -1,12 +1,14 @@
+import Link from "next/link";
 import { groupShowsByTheater } from "@/lib/catalog/group-shows";
 import type { Show } from "@/lib/catalog/schemas";
 import { formatPrice, formatShowTime } from "@/lib/format";
 
 type ShowsByTheaterProps = {
+  movieId: string;
   shows: readonly Show[];
 };
 
-export default function ShowsByTheater({ shows }: ShowsByTheaterProps) {
+export default function ShowsByTheater({ movieId, shows }: ShowsByTheaterProps) {
   const groups = groupShowsByTheater(shows);
   if (groups.length === 0) {
     return <p>No shows are scheduled for this movie yet.</p>;
@@ -27,6 +29,13 @@ export default function ShowsByTheater({ shows }: ShowsByTheaterProps) {
                 <time dateTime={show.startsAt}>{formatShowTime(show.startsAt)}</time>
                 <span className="text-zinc-700 dark:text-zinc-300">{show.screen.name}</span>
                 <span>{formatPrice(show.basePrice)}</span>
+                <Link
+                  href={`/movies/${movieId}/shows/${show.id}/seats`}
+                  aria-label={`Select seats for ${formatShowTime(show.startsAt)} at ${group.theaterName}`}
+                  className="rounded-md font-medium text-indigo-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-indigo-300 dark:focus-visible:outline-indigo-400"
+                >
+                  Select seats
+                </Link>
               </li>
             ))}
           </ul>

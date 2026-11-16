@@ -11,7 +11,7 @@ vi.mock("@/lib/catalog/movies", () => ({ listMovies }));
 // useRouter is used by the search form inside the page.
 vi.mock("next/navigation", () => ({ redirect, useRouter: () => ({ replace: vi.fn() }) }));
 
-import { CatalogError, NotSignedInError } from "@/lib/catalog/errors";
+import { GatewayError, NotSignedInError } from "@/lib/gateway/errors";
 import MoviesContent from "./movies-content";
 
 const movie = (n: number) => ({
@@ -83,9 +83,9 @@ describe("MoviesContent", () => {
   });
 
   it("lets a gateway failure reach the error boundary", async () => {
-    listMovies.mockRejectedValue(new CatalogError("unreachable"));
+    listMovies.mockRejectedValue(new GatewayError("unreachable"));
     await expect(MoviesContent({ searchParams: Promise.resolve({}) })).rejects.toBeInstanceOf(
-      CatalogError,
+      GatewayError,
     );
     expect(redirect).not.toHaveBeenCalled();
   });

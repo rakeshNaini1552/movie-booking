@@ -13,7 +13,7 @@ const { getMovie, notFound, redirect } = vi.hoisted(() => ({
 vi.mock("@/lib/catalog/movies", () => ({ getMovie }));
 vi.mock("next/navigation", () => ({ notFound, redirect }));
 
-import { NotSignedInError } from "@/lib/catalog/errors";
+import { NotSignedInError } from "@/lib/gateway/errors";
 import MovieDetails from "./movie-details";
 
 const ID = "3f1c2b0e-8a45-4d6e-9b7a-1c2d3e4f5a6b";

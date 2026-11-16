@@ -9,7 +9,7 @@ vi.mock("@/lib/env", () => ({
 }));
 
 import { gatewayQuery } from "./client";
-import { CatalogError, NotSignedInError } from "./errors";
+import { GatewayError, NotSignedInError } from "@/lib/gateway/errors";
 
 const schema = z.object({ hello: z.string() });
 const fetchMock = vi.fn();
@@ -17,11 +17,11 @@ const fetchMock = vi.fn();
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
-// Resolves to the CatalogError a call rejects with, so tests can assert on its fields.
-async function failure(): Promise<CatalogError> {
+// Resolves to the GatewayError a call rejects with, so tests can assert on its fields.
+async function failure(): Promise<GatewayError> {
   const error = await gatewayQuery("query { hello }", {}, schema).catch((e: unknown) => e);
-  expect(error).toBeInstanceOf(CatalogError);
-  return error as CatalogError;
+  expect(error).toBeInstanceOf(GatewayError);
+  return error as GatewayError;
 }
 
 describe("gatewayQuery", () => {
@@ -67,7 +67,7 @@ describe("gatewayQuery", () => {
     await expect(gatewayQuery("q", {}, schema)).rejects.toBeInstanceOf(NotSignedInError);
   });
 
-  it("maps other HTTP failures to a CatalogError carrying the status", async () => {
+  it("maps other HTTP failures to a GatewayError carrying the status", async () => {
     fetchMock.mockResolvedValue(new Response("upstream details", { status: 503 }));
     const error = await failure();
     expect(error.kind).toBe("http");

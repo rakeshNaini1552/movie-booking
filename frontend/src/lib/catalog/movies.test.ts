@@ -4,7 +4,7 @@ const { gatewayQuery } = vi.hoisted(() => ({ gatewayQuery: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("./client", () => ({ gatewayQuery }));
 
-import { CatalogError } from "./errors";
+import { GatewayError } from "@/lib/gateway/errors";
 import { getMovie, listMovies } from "./movies";
 
 const ID = "3f1c2b0e-8a45-4d6e-9b7a-1c2d3e4f5a6b";
@@ -63,7 +63,7 @@ describe("getMovie", () => {
   });
 
   it("returns null when the catalog answers NOT_FOUND", async () => {
-    gatewayQuery.mockRejectedValue(new CatalogError("graphql", { classifications: ["NOT_FOUND"] }));
+    gatewayQuery.mockRejectedValue(new GatewayError("graphql", { classifications: ["NOT_FOUND"] }));
     await expect(getMovie(ID)).resolves.toBeNull();
   });
 
@@ -78,7 +78,7 @@ describe("getMovie", () => {
   });
 
   it("rethrows other failures", async () => {
-    gatewayQuery.mockRejectedValue(new CatalogError("timeout"));
+    gatewayQuery.mockRejectedValue(new GatewayError("timeout"));
     await expect(getMovie(ID)).rejects.toMatchObject({ kind: "timeout" });
   });
 });

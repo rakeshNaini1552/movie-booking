@@ -7,7 +7,7 @@ const { redirect } = vi.hoisted(() => ({
 }));
 vi.mock("next/navigation", () => ({ redirect }));
 
-import { CatalogError, NotSignedInError } from "@/lib/catalog/errors";
+import { GatewayError, NotSignedInError } from "@/lib/gateway/errors";
 import { requireSignIn } from "./require-sign-in";
 
 describe("requireSignIn", () => {
@@ -25,7 +25,7 @@ describe("requireSignIn", () => {
   });
 
   it("lets other errors through to the error boundary", async () => {
-    const failure = new CatalogError("timeout");
+    const failure = new GatewayError("timeout");
     await expect(requireSignIn("/movies", () => Promise.reject(failure))).rejects.toBe(failure);
     expect(redirect).not.toHaveBeenCalled();
   });

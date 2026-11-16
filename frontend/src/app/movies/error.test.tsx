@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogError } from "@/lib/catalog/errors";
+import { GatewayError } from "@/lib/gateway/errors";
 import MoviesError from "./error";
 
 describe("movies error page", () => {
@@ -33,9 +33,9 @@ describe("movies error page", () => {
   ] as const)(
     "shows a short message for a %s failure, without a reference or internals",
     (kind, text) => {
-      // Same shape Next hands the client: a generic message plus the digest set by CatalogError.
+      // Same shape Next hands the client: a generic message plus the digest set by GatewayError.
       const error = Object.assign(new Error("An error occurred in the Server Components render."), {
-        digest: new CatalogError(kind).digest,
+        digest: new GatewayError(kind).digest,
       });
       render(<MoviesError error={error} reset={() => {}} />);
       expect(screen.getByRole("alert")).toHaveTextContent(text);

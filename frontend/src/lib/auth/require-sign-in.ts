@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { NotSignedInError } from "@/lib/catalog/errors";
+import { NotSignedInError } from "@/lib/gateway/errors";
 
 // Runs a catalog call and sends a signed-out user (no session, or a token the gateway rejected)
 // to /signin, returning to `returnTo` afterwards. Other errors go to the nearest error.tsx.
