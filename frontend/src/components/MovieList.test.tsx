@@ -19,9 +19,9 @@ describe("MovieList", () => {
     render(<MovieList />);
     const items = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(items).toHaveLength(3);
-    expect(items[0]).toHaveTextContent("Inception (148 min)");
-    expect(items[1]).toHaveTextContent("Interstellar (169 min)");
-    expect(items[2]).toHaveTextContent("The Dark Knight (152 min)");
+    expect(items[0]).toHaveTextContent("Inception148 min");
+    expect(items[1]).toHaveTextContent("Interstellar169 min");
+    expect(items[2]).toHaveTextContent("The Dark Knight152 min");
   });
 
   it("logs no React key warning when rendering", () => {

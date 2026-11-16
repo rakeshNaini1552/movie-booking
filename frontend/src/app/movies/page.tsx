@@ -1,14 +1,12 @@
-import Counter from "@/components/Counter";
 import Header from "@/components/Header";
 import MovieList from "@/components/MovieList";
+import PageContainer from "@/components/PageContainer";
 
 export default function MoviesPage() {
   return (
-    <main>
+    <PageContainer>
       <Header title="All Movies" />
       <MovieList />
-      {/* Learning exercise (client state), to be removed in F2. */}
-      <Counter />
-    </main>
+    </PageContainer>
   );
 }

@@ -1,16 +1,18 @@
 import { Suspense } from "react";
+import Button from "@/components/Button";
 import Header from "@/components/Header";
+import PageContainer from "@/components/PageContainer";
 import { signInAction } from "@/lib/auth/actions";
 import { safeCallbackPath } from "@/lib/auth/urls";
 
 export default function SignInPage({ searchParams }: PageProps<"/signin">) {
   return (
-    <main>
+    <PageContainer>
       <Header title="Sign in" />
       <Suspense fallback={null}>
         <SignInForm searchParams={searchParams} />
       </Suspense>
-    </main>
+    </PageContainer>
   );
 }
 
@@ -22,7 +24,7 @@ async function SignInForm({ searchParams }: Pick<PageProps<"/signin">, "searchPa
   return (
     <form action={signInAction}>
       <input type="hidden" name="callbackUrl" value={target} />
-      <button type="submit">Sign in with Keycloak</button>
+      <Button type="submit">Sign in with Keycloak</Button>
     </form>
   );
 }
