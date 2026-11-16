@@ -1,11 +1,11 @@
+import LoadingMessage from "@/components/LoadingMessage";
 import PageContainer from "@/components/PageContainer";
 
+// Covers the /movies list and /movies/[id] while a segment loads.
 export default function Loading() {
   return (
     <PageContainer>
-      <p role="status" className="text-zinc-700 dark:text-zinc-300">
-        Loading movies...
-      </p>
+      <LoadingMessage>Loading movies...</LoadingMessage>
     </PageContainer>
   );
 }
