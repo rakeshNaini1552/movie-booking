@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 // Paths that need a signed-in user. Pages under them also re-check the session themselves.
-const PROTECTED_PREFIXES = ["/account"];
+const PROTECTED_PREFIXES = ["/account", "/movies"];
 
 // Runs on every page request, not only the protected ones: the proxy can set cookies, so this
 // is where a refreshed token gets written back to the session cookie. Server components cannot.

@@ -8,7 +8,8 @@ const { listMovies, redirect } = vi.hoisted(() => ({
   }),
 }));
 vi.mock("@/lib/catalog/movies", () => ({ listMovies }));
-vi.mock("next/navigation", () => ({ redirect }));
+// useRouter is used by the search form inside the page.
+vi.mock("next/navigation", () => ({ redirect, useRouter: () => ({ replace: vi.fn() }) }));
 
 import { CatalogError, NotSignedInError } from "@/lib/catalog/errors";
 import MoviesContent from "./movies-content";
