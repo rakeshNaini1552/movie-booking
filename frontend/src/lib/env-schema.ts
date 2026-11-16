@@ -6,6 +6,8 @@ import { z } from "zod";
 // Never prefix these with NEXT_PUBLIC_, that would inline them into the browser bundle.
 const schema = z.object({
   GATEWAY_URL: z.url().default("http://localhost:8090"),
+  // Upper bound for one gateway call, so a hung gateway shows the error page instead of hanging the page.
+  GATEWAY_TIMEOUT_MS: z.coerce.number().int().min(100).max(60000).default(5000),
   KEYCLOAK_ISSUER_URI: z.url().default("http://localhost:8180/realms/movie-booking"),
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   // Auth.js: encrypts the session cookie, so it needs real entropy (openssl rand -base64 32).

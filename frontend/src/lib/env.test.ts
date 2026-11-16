@@ -11,6 +11,7 @@ describe("parseEnv", () => {
   it("applies defaults when only the required secrets are set", () => {
     expect(parseEnv(secrets)).toEqual({
       GATEWAY_URL: "http://localhost:8090",
+      GATEWAY_TIMEOUT_MS: 5000,
       KEYCLOAK_ISSUER_URI: "http://localhost:8180/realms/movie-booking",
       PORT: 3001,
       AUTH_KEYCLOAK_ID: "movie-booking-web",
