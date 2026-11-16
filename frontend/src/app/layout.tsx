@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { Suspense } from "react";
+import AuthStatus from "@/components/AuthStatus";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +27,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <nav>
           <Link href="/">Home</Link> | <Link href="/movies">Movies</Link>
         </nav>
+        <Suspense fallback={null}>
+          <AuthStatus />
+        </Suspense>
         {children}
       </body>
     </html>
