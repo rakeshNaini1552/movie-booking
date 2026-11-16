@@ -17,13 +17,30 @@ Override the port with `PORT=4000 npm run dev`. The scripts pass `-p ${PORT:-<de
 
 Server-only, validated with Zod at startup (`src/lib/env-schema.ts`, run from `next.config.ts`), so `next dev`, `next build` and `next start` fail fast and name every invalid variable (never its value). Copy `.env.example` to `.env.local` to override; `.env.local` is git-ignored.
 
-| Variable              | Default                                      | Purpose                            |
-| --------------------- | -------------------------------------------- | ---------------------------------- |
-| `GATEWAY_URL`         | `http://localhost:8090`                      | Gateway service base URL           |
-| `KEYCLOAK_ISSUER_URI` | `http://localhost:8180/realms/movie-booking` | Keycloak realm issuer              |
-| `PORT`                | `3001`                                       | Port, set in the shell (see above) |
+| Variable               | Default                                      | Purpose                                                 |
+| ---------------------- | -------------------------------------------- | ------------------------------------------------------- |
+| `GATEWAY_URL`          | `http://localhost:8090`                      | Gateway service base URL                                |
+| `KEYCLOAK_ISSUER_URI`  | `http://localhost:8180/realms/movie-booking` | Keycloak realm issuer                                   |
+| `PORT`                 | `3001`                                       | Port, set in the shell (see above)                      |
+| `AUTH_URL`             | `http://localhost:3001`                      | Public origin of this app (callback, post-logout)       |
+| `AUTH_KEYCLOAK_ID`     | `movie-booking-web`                          | Keycloak client id                                      |
+| `AUTH_SECRET`          | **none, required**, min 32 chars             | Encrypts the session cookie (`openssl rand -base64 32`) |
+| `AUTH_KEYCLOAK_SECRET` | **none, required**                           | Client secret of the confidential client                |
 
-None are secrets. Future secrets (client secret, auth secret) get no default. Never use `NEXT_PUBLIC_` for these. App code reads them from `@/lib/env`, which is `server-only`.
+Secrets have no default: a missing one stops startup. Never use `NEXT_PUBLIC_` for any of these. App code reads them from `@/lib/env`, which is `server-only`.
+
+## Login (Keycloak)
+
+Auth.js v5 (`next-auth`, pinned beta) with the Keycloak provider: Authorization Code flow with PKCE (S256), code exchange on the server with the client secret. The session is an encrypted, httpOnly JWT cookie. Access and refresh tokens live only in that cookie and in server code; the session that client code can read has just `name`, `email` and `roles`. Server code gets the access token from `getAccessToken()` (`src/lib/auth/access-token.ts`, `server-only`).
+
+Keycloak client `movie-booking-web` must exist in the realm (not in the realm export yet):
+
+- Client authentication: on (confidential), Standard flow on, Direct access grants off
+- Valid redirect URIs: `<AUTH_URL>/api/auth/callback/keycloak`
+- Valid post logout redirect URIs: `<AUTH_URL>/`
+- Copy its secret from the Credentials tab into `AUTH_KEYCLOAK_SECRET`
+
+`src/proxy.ts` guards `/account` and keeps the session cookie refreshed; pages also check the session themselves. Sign out clears the cookie and ends the Keycloak session (Keycloak asks to confirm, because no `id_token_hint` is sent, so no token goes through the browser URL).
 
 ## Reaching the gateway
 
@@ -37,24 +54,27 @@ The pages do not call the gateway yet; this is needed once they fetch real data.
 
 ## Scripts
 
-| Script                 | What it does                                         |
-| ---------------------- | ---------------------------------------------------- |
-| `npm run dev`          | Dev server                                           |
-| `npm run build`        | Production build                                     |
-| `npm start`            | Serve the production build                           |
-| `npm run lint`         | ESLint (Next + Prettier-compatible rules)            |
-| `npm run format`       | Prettier, write                                      |
-| `npm run format:check` | Prettier, check only (CI)                            |
-| `npm run typecheck`    | `next typegen` then `tsc --noEmit`                   |
-| `npm test`             | Vitest (env tests in Node, component tests in jsdom) |
+| Script                 | What it does                                            |
+| ---------------------- | ------------------------------------------------------- |
+| `npm run dev`          | Dev server                                              |
+| `npm run build`        | Production build                                        |
+| `npm start`            | Serve the production build                              |
+| `npm run lint`         | ESLint (Next + Prettier-compatible rules)               |
+| `npm run format`       | Prettier, write                                         |
+| `npm run format:check` | Prettier, check only (CI)                               |
+| `npm run typecheck`    | `next typegen` then `tsc --noEmit` (needs `.env.local`) |
+| `npm test`             | Vitest (env tests in Node, component tests in jsdom)    |
 
-CI (`test (frontend)`) runs lint, format check, typecheck, tests and build.
+`npm run typecheck` loads `next.config.ts`, which validates the env, so it needs `.env.local` like `npm run dev` does: copy `.env.example` to `.env.local` and fill in `AUTH_SECRET` and `AUTH_KEYCLOAK_SECRET`.
+
+CI (`test (frontend)`) runs lint, format check, typecheck, tests and build. The typecheck and build steps get fake placeholder secrets in their own `env`.
 
 ## Layout
 
-- `src/app`: routes (`/`, `/movies`, `not-found`) and `loading`/`error` pages for `/movies`
+- `src/app`: routes (`/`, `/movies`, `/account`, `/signin`, `/api/auth/*`, `not-found`) and `loading`/`error` pages for `/movies`
 - `src/components`: shared components
-- `src/lib`: env validation
+- `src/lib`: env validation; `src/lib/auth`: token refresh, callbacks, server actions
+- `src/auth.ts`, `src/proxy.ts`: Auth.js setup and the route guard
 - Tests sit next to the code as `*.test.ts` (Node) and `*.test.tsx` (jsdom)
 
 Before changing Next.js code, read `AGENTS.md`: this Next.js version differs from older ones, and its docs are in `node_modules/next/dist/docs/`.

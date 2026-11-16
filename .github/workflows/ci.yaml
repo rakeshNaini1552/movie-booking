@@ -171,13 +171,22 @@ jobs:
         run: npm run lint
       - name: Check formatting
         run: npm run format:check
+      # `next typegen` loads next.config.ts, which validates the env, so this step needs the same
+      # fake placeholders as the build below.
       - name: Type check
         run: npm run typecheck
+        env:
+          AUTH_SECRET: ci-placeholder-not-a-real-secret-0123456789
+          AUTH_KEYCLOAK_SECRET: ci-placeholder-not-a-real-client-secret
       - name: Run tests
         run: npm test
-      # No env settings or secrets here on purpose: the build must work with the defaults.
+      # The build validates the env, and the two secrets have no defaults. These are fake
+      # placeholders, not real credentials; nothing is deployed or signed in with them.
       - name: Build
         run: npm run build
+        env:
+          AUTH_SECRET: ci-placeholder-not-a-real-secret-0123456789
+          AUTH_KEYCLOAK_SECRET: ci-placeholder-not-a-real-client-secret
 
   dependency-review:
     runs-on: ubuntu-latest

@@ -1,17 +1,51 @@
 import { describe, expect, it } from "vitest";
 import { parseEnv } from "./env-schema";
 
+// Fake values: the secrets have no defaults, so every test that expects success supplies them.
+const secrets = {
+  AUTH_SECRET: "test-only-secret-with-32-or-more-chars",
+  AUTH_KEYCLOAK_SECRET: "test-only-keycloak-client-secret",
+};
+
 describe("parseEnv", () => {
-  it("applies defaults when nothing is set", () => {
-    expect(parseEnv({})).toEqual({
+  it("applies defaults when only the required secrets are set", () => {
+    expect(parseEnv(secrets)).toEqual({
       GATEWAY_URL: "http://localhost:8090",
       KEYCLOAK_ISSUER_URI: "http://localhost:8180/realms/movie-booking",
       PORT: 3001,
+      AUTH_KEYCLOAK_ID: "movie-booking-web",
+      AUTH_URL: "http://localhost:3001",
+      ...secrets,
     });
+  });
+
+  it("fails when the secrets are missing, naming them", () => {
+    expect(() => parseEnv({})).toThrow(/AUTH_SECRET, AUTH_KEYCLOAK_SECRET/);
+  });
+
+  it("rejects an AUTH_SECRET shorter than 32 characters", () => {
+    expect(() => parseEnv({ ...secrets, AUTH_SECRET: "too-short" })).toThrow(/AUTH_SECRET/);
+  });
+
+  it("rejects an empty AUTH_KEYCLOAK_SECRET", () => {
+    expect(() => parseEnv({ ...secrets, AUTH_KEYCLOAK_SECRET: "" })).toThrow(
+      /AUTH_KEYCLOAK_SECRET/,
+    );
+  });
+
+  it("accepts AUTH_URL and AUTH_KEYCLOAK_ID overrides", () => {
+    const env = parseEnv({
+      ...secrets,
+      AUTH_URL: "https://movies.example.com",
+      AUTH_KEYCLOAK_ID: "other-client",
+    });
+    expect(env.AUTH_URL).toBe("https://movies.example.com");
+    expect(env.AUTH_KEYCLOAK_ID).toBe("other-client");
   });
 
   it("accepts valid values and coerces PORT to a number", () => {
     const env = parseEnv({
+      ...secrets,
       GATEWAY_URL: "https://api.example.com",
       KEYCLOAK_ISSUER_URI: "https://sso.example.com/realms/x",
       PORT: "4000",
@@ -21,29 +55,29 @@ describe("parseEnv", () => {
   });
 
   it("returns a frozen object", () => {
-    expect(Object.isFrozen(parseEnv({}))).toBe(true);
+    expect(Object.isFrozen(parseEnv(secrets))).toBe(true);
   });
 
   it("rejects an invalid URL and names the variable", () => {
-    expect(() => parseEnv({ GATEWAY_URL: "not-a-url" })).toThrow(/GATEWAY_URL/);
+    expect(() => parseEnv({ ...secrets, GATEWAY_URL: "not-a-url" })).toThrow(/GATEWAY_URL/);
   });
 
   it("rejects a non-numeric PORT", () => {
-    expect(() => parseEnv({ PORT: "abc" })).toThrow(/PORT/);
+    expect(() => parseEnv({ ...secrets, PORT: "abc" })).toThrow(/PORT/);
   });
 
   it("lists every invalid variable in one error", () => {
-    expect(() => parseEnv({ GATEWAY_URL: "x", KEYCLOAK_ISSUER_URI: "y", PORT: "z" })).toThrow(
-      /GATEWAY_URL, KEYCLOAK_ISSUER_URI, PORT/,
-    );
+    expect(() =>
+      parseEnv({ ...secrets, GATEWAY_URL: "x", KEYCLOAK_ISSUER_URI: "y", PORT: "z" }),
+    ).toThrow(/GATEWAY_URL, KEYCLOAK_ISSUER_URI, PORT/);
   });
 
   it("never includes the invalid value in the message", () => {
     const bad = "super-secret-bad-value";
-    for (const name of ["GATEWAY_URL", "KEYCLOAK_ISSUER_URI", "PORT"]) {
+    for (const name of ["GATEWAY_URL", "KEYCLOAK_ISSUER_URI", "PORT", "AUTH_URL", "AUTH_SECRET"]) {
       let message = "";
       try {
-        parseEnv({ [name]: bad });
+        parseEnv({ ...secrets, [name]: bad });
       } catch (e) {
         message = (e as Error).message;
       }
