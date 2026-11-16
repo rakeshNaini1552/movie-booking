@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { listHref, parseListParams } from "./list-params";
+import { listHref } from "./list-href";
+import { parseListParams } from "./list-params";
 
 describe("parseListParams", () => {
   it("defaults to no search and the first page", () => {

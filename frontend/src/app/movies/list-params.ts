@@ -26,12 +26,3 @@ export type ListParams = { q: string; page: number };
 export function parseListParams(raw: Record<string, unknown>): ListParams {
   return listParamsSchema.parse({ q: raw.q ?? "", page: raw.page ?? 0 });
 }
-
-// Link target for a list page, keeping the search text; page 0 is the default so it is left out.
-export function listHref({ q, page }: ListParams): string {
-  const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (page > 0) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/movies?${query}` : "/movies";
-}

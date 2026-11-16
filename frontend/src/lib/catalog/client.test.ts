@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import { z } from "zod";
 
 const { getAccessToken } = vi.hoisted(() => ({ getAccessToken: vi.fn() }));
@@ -25,14 +25,18 @@ async function failure(): Promise<CatalogError> {
 }
 
 describe("gatewayQuery", () => {
+  let consoleError: MockInstance<typeof console.error>;
   beforeEach(() => {
     getAccessToken.mockResolvedValue("test-token");
     vi.stubGlobal("fetch", fetchMock);
+    consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
   });
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
+  const logged = () => consoleError.mock.calls.map((c) => c.join(" "));
 
   it("posts the query to the gateway with the bearer token and returns the parsed data", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ data: { hello: "world" } }));
@@ -124,5 +128,66 @@ describe("gatewayQuery", () => {
   it("rejects a body that is not JSON", async () => {
     fetchMock.mockResolvedValue(new Response("<html>oops</html>", { status: 200 }));
     expect((await failure()).kind).toBe("invalid-response");
+  });
+
+  describe("failure logging", () => {
+    it("logs one line with kind, status and duration for an HTTP failure", async () => {
+      fetchMock.mockResolvedValue(new Response("secret upstream body", { status: 503 }));
+      await failure();
+      expect(logged()).toHaveLength(1);
+      expect(logged()[0]).toMatch(
+        /^\[catalog\] request failed kind=http status=503 durationMs=\d+$/,
+      );
+    });
+
+    it.each([
+      ["timeout", new DOMException("t", "TimeoutError"), "kind=timeout status=none"],
+      ["unreachable", new TypeError("fetch failed"), "kind=unreachable status=none"],
+    ])("logs a %s", async (_name, rejection, expected) => {
+      fetchMock.mockRejectedValue(rejection);
+      await failure();
+      expect(logged()).toHaveLength(1);
+      expect(logged()[0]).toContain(expected);
+    });
+
+    it("logs graphql and invalid-response failures with the response status", async () => {
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse({
+          errors: [{ message: "x", extensions: { classification: "INTERNAL_ERROR" } }],
+        }),
+      );
+      await failure();
+      fetchMock.mockResolvedValueOnce(jsonResponse({ data: { hello: 42 } }));
+      await failure();
+      expect(logged()[0]).toContain("kind=graphql status=200");
+      expect(logged()[1]).toContain("kind=invalid-response status=200");
+    });
+
+    it("logs a gateway 401 as an http failure", async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+      await gatewayQuery("q", {}, schema).catch(() => {});
+      expect(logged()[0]).toContain("kind=http status=401");
+    });
+
+    it("does not log an expected NOT_FOUND, a missing token, or a success", async () => {
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse({ errors: [{ message: "x", extensions: { classification: "NOT_FOUND" } }] }),
+      );
+      await failure();
+      fetchMock.mockResolvedValueOnce(jsonResponse({ data: { hello: "w" } }));
+      await gatewayQuery("q", {}, schema);
+      getAccessToken.mockResolvedValueOnce(null);
+      await gatewayQuery("q", {}, schema).catch(() => {});
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("never logs the token, the URL or the response body", async () => {
+      fetchMock.mockResolvedValue(new Response("secret upstream body", { status: 500 }));
+      await failure();
+      fetchMock.mockRejectedValue(new TypeError("connect ECONNREFUSED gateway.test:8090"));
+      await failure();
+      const output = logged().join("\n");
+      expect(output).not.toMatch(/test-token|secret upstream|gateway\.test|ECONNREFUSED|Bearer/);
+    });
   });
 });

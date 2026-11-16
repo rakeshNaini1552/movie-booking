@@ -3,7 +3,8 @@ import MovieSearchForm from "@/components/MovieSearchForm";
 import Pagination from "@/components/Pagination";
 import { requireSignIn } from "@/lib/auth/require-sign-in";
 import { listMovies } from "@/lib/catalog/movies";
-import { listHref, PAGE_SIZE, parseListParams } from "./list-params";
+import { listHref } from "./list-href";
+import { PAGE_SIZE, parseListParams } from "./list-params";
 
 export default async function MoviesContent({
   searchParams,

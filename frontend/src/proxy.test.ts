@@ -27,7 +27,27 @@ describe("proxy", () => {
     expect(run("/account", true)).toBeUndefined();
   });
 
+  it.each(["/movies", "/movies/3f1c2b0e-8a45-4d6e-9b7a-1c2d3e4f5a6b"])(
+    "redirects an anonymous user on %s to sign-in with a 307",
+    (path) => {
+      const response = run(`${path}?q=dark`, false)!;
+      expect(response.status).toBe(307);
+      const location = new URL(response.headers.get("location")!);
+      expect(location.pathname).toBe("/signin");
+      expect(location.searchParams.get("callbackUrl")).toBe(`${path}?q=dark`);
+    },
+  );
+
+  it("lets a signed-in user through to the movies", () => {
+    expect(run("/movies", true)).toBeUndefined();
+  });
+
+  it("does not match look-alike paths such as /moviesfoo", () => {
+    expect(run("/moviesfoo", false)).toBeUndefined();
+  });
+
   it("does not guard public pages", () => {
-    expect(run("/movies", false)).toBeUndefined();
+    expect(run("/", false)).toBeUndefined();
+    expect(run("/signin", false)).toBeUndefined();
   });
 });
