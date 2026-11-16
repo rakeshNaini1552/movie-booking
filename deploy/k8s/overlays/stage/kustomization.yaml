@@ -14,7 +14,7 @@ images:
   - name: ghcr.io/rakeshnaini1552/ticket-service
     newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/gateway-service
-    newTag: 7883b59861784fe3a0524b4eaa0d17b7808d2c5f
+    newTag: e2fa28409eaa75d62d787822839748ae1a06043d
   - name: ghcr.io/rakeshnaini1552/catalog-service
     newTag: 07e2ea86b91a3453e5aec3ef7a830afa22a90d41
 patches:
