@@ -28,7 +28,7 @@ export default async function MovieDetails({ params }: Pick<PageProps<"/movies/[
       <p className="text-sm text-zinc-700 dark:text-zinc-300">{details}</p>
       {movie.description && <p className="mt-4 max-w-prose">{movie.description}</p>}
       <h2 className="mt-8 mb-4 text-2xl font-semibold">Shows</h2>
-      <ShowsByTheater shows={movie.shows} />
+      <ShowsByTheater movieId={movie.id} shows={movie.shows} />
     </>
   );
 }

@@ -59,6 +59,8 @@ What you see when something is off:
 - Gateway down, slow (over `GATEWAY_TIMEOUT_MS`), or a GraphQL error: the error page ("Something went wrong...") with a digest you can find in the server log. The cause is never shown in the browser.
 - Unknown or malformed movie id: the 404 page.
 
+Seat map: `/movies/[id]/shows/[showId]/seats` reads `GET /api/v1/shows/{showId}/seats` through the gateway (the gateway must have the `seat-service` route, and `SEAT_SERVICE_URL` set). It only lets the user pick up to 6 seats (`MAX_SEATS`); nothing is held or booked yet, and "Continue to booking" is disabled. "Refresh availability" re-reads the seat map (no polling), and a selected seat that was taken meanwhile is dropped from the selection. A show with no seats shows a "not available yet" message. Both gateway clients (GraphQL and REST) share `src/lib/gateway/request.ts`: token, timeout, 401/404 mapping and the one-line failure log.
+
 Notes: the catalog returns no total count, so the list asks for one extra row to know whether "Next" applies. Show times are shown in UTC because the catalog has no theater time zone, and prices have no currency symbol because the catalog does not state one. Cancelled shows are hidden.
 
 ## Scripts
@@ -80,9 +82,9 @@ CI (`test (frontend)`) runs lint, format check, typecheck, tests and build. The 
 
 ## Layout
 
-- `src/app`: routes (`/`, `/movies`, `/movies/[id]`, `/account`, `/signin`, `/api/auth/*`, `not-found`) and `loading`/`error` pages for `/movies`
+- `src/app`: routes (`/`, `/movies`, `/movies/[id]`, `/movies/[id]/shows/[showId]/seats`, `/account`, `/signin`, `/api/auth/*`, `not-found`) and `loading`/`error` pages for `/movies`
 - `src/components`: shared components
-- `src/lib`: env validation and formatting; `src/lib/auth`: token refresh, callbacks, server actions; `src/lib/catalog`: typed GraphQL client for the gateway (Zod schemas, errors, queries)
+- `src/lib`: env validation and formatting; `src/lib/auth`: token refresh, callbacks, server actions; `src/lib/gateway`: shared gateway request, REST helper and errors; `src/lib/catalog`: GraphQL client and queries; `src/lib/seats`: seat map
 - `src/auth.ts`, `src/proxy.ts`: Auth.js setup and the route guard
 - Tests sit next to the code as `*.test.ts` (Node) and `*.test.tsx` (jsdom)
 

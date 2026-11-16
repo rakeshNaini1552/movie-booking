@@ -27,16 +27,17 @@ describe("proxy", () => {
     expect(run("/account", true)).toBeUndefined();
   });
 
-  it.each(["/movies", "/movies/3f1c2b0e-8a45-4d6e-9b7a-1c2d3e4f5a6b"])(
-    "redirects an anonymous user on %s to sign-in with a 307",
-    (path) => {
-      const response = run(`${path}?q=dark`, false)!;
-      expect(response.status).toBe(307);
-      const location = new URL(response.headers.get("location")!);
-      expect(location.pathname).toBe("/signin");
-      expect(location.searchParams.get("callbackUrl")).toBe(`${path}?q=dark`);
-    },
-  );
+  it.each([
+    "/movies",
+    "/movies/3f1c2b0e-8a45-4d6e-9b7a-1c2d3e4f5a6b",
+    "/movies/3f1c2b0e-8a45-4d6e-9b7a-1c2d3e4f5a6b/shows/00000000-0000-0000-0000-000000000001/seats",
+  ])("redirects an anonymous user on %s to sign-in with a 307", (path) => {
+    const response = run(`${path}?q=dark`, false)!;
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/signin");
+    expect(location.searchParams.get("callbackUrl")).toBe(`${path}?q=dark`);
+  });
 
   it("lets a signed-in user through to the movies", () => {
     expect(run("/movies", true)).toBeUndefined();
