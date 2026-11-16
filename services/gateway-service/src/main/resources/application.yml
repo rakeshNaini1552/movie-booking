@@ -27,6 +27,22 @@ spring:
                     redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_BURST:10}
                     redis-rate-limiter.requestedTokens: 1
                     key-resolver: "#{@userKeyResolver}"
+            - id: seat-service
+              uri: ${SEAT_SERVICE_URL:http://localhost:8081}
+              # Read-only seat map only. Holds, releases and every other seat-service endpoint stay
+              # internal (booking-service calls them directly). This route must come before
+              # catalog-service, whose /api/v1/shows/** would otherwise take this path.
+              predicates:
+                - Path=/api/v1/shows/*/seats
+                - Method=GET
+              filters:
+                - AddRequestHeader=X-Gateway, spring
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: ${GATEWAY_RATE_REPLENISH:5}
+                    redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_BURST:10}
+                    redis-rate-limiter.requestedTokens: 1
+                    key-resolver: "#{@userKeyResolver}"
             - id: catalog-service
               uri: ${CATALOG_SERVICE_URL:http://localhost:8085}
               predicates:
