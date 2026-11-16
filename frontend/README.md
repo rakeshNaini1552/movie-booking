@@ -20,6 +20,7 @@ Server-only, validated with Zod at startup (`src/lib/env-schema.ts`, run from `n
 | Variable               | Default                                      | Purpose                                                 |
 | ---------------------- | -------------------------------------------- | ------------------------------------------------------- |
 | `GATEWAY_URL`          | `http://localhost:8090`                      | Gateway service base URL                                |
+| `GATEWAY_TIMEOUT_MS`   | `5000`                                       | Timeout for one gateway call (100 to 60000)             |
 | `KEYCLOAK_ISSUER_URI`  | `http://localhost:8180/realms/movie-booking` | Keycloak realm issuer                                   |
 | `PORT`                 | `3001`                                       | Port, set in the shell (see above)                      |
 | `AUTH_URL`             | `http://localhost:3001`                      | Public origin of this app (callback, post-logout)       |
@@ -44,13 +45,21 @@ Keycloak client `movie-booking-web` must exist in the realm (not in the realm ex
 
 ## Reaching the gateway
 
-The default `GATEWAY_URL` assumes the gateway is on `localhost:8090`. When the backend runs in Kubernetes, forward it:
+The catalog pages (`/movies`, `/movies/[id]`) call the gateway at `POST {GATEWAY_URL}/graphql` with the signed-in user's access token (`src/lib/catalog`, `server-only`; the token never reaches the browser). The default `GATEWAY_URL` assumes the gateway is on `localhost:8090`. To run against the backend in Kubernetes:
 
 ```bash
 kubectl port-forward -n movie-booking svc/gateway-service 8090:8090
 ```
 
-The pages do not call the gateway yet; this is needed once they fetch real data.
+Keycloak must be reachable too (`KEYCLOAK_ISSUER_URI`, default `localhost:8180`), because the gateway validates the token against it; forward it the same way if it runs in the cluster. Then `npm run dev`, sign in, and open `/movies`.
+
+What you see when something is off:
+
+- Not signed in, or the gateway answers 401: redirect to `/signin`, then back to the page you asked for.
+- Gateway down, slow (over `GATEWAY_TIMEOUT_MS`), or a GraphQL error: the error page ("Something went wrong...") with a digest you can find in the server log. The cause is never shown in the browser.
+- Unknown or malformed movie id: the 404 page.
+
+Notes: the catalog returns no total count, so the list asks for one extra row to know whether "Next" applies. Show times are shown in UTC because the catalog has no theater time zone, and prices have no currency symbol because the catalog does not state one. Cancelled shows are hidden.
 
 ## Scripts
 
@@ -71,9 +80,9 @@ CI (`test (frontend)`) runs lint, format check, typecheck, tests and build. The 
 
 ## Layout
 
-- `src/app`: routes (`/`, `/movies`, `/account`, `/signin`, `/api/auth/*`, `not-found`) and `loading`/`error` pages for `/movies`
+- `src/app`: routes (`/`, `/movies`, `/movies/[id]`, `/account`, `/signin`, `/api/auth/*`, `not-found`) and `loading`/`error` pages for `/movies`
 - `src/components`: shared components
-- `src/lib`: env validation; `src/lib/auth`: token refresh, callbacks, server actions
+- `src/lib`: env validation and formatting; `src/lib/auth`: token refresh, callbacks, server actions; `src/lib/catalog`: typed GraphQL client for the gateway (Zod schemas, errors, queries)
 - `src/auth.ts`, `src/proxy.ts`: Auth.js setup and the route guard
 - Tests sit next to the code as `*.test.ts` (Node) and `*.test.tsx` (jsdom)
 
