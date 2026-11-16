@@ -1,3 +1,5 @@
+import MovieCard from "@/components/MovieCard";
+
 type Movie = {
   id: number;
   title: string;
@@ -12,10 +14,10 @@ const movies: Movie[] = [
 
 export default function MovieList() {
   return (
-    <ul>
+    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {movies.map((movie) => (
         <li key={movie.id}>
-          {movie.title} ({movie.durationMinutes} min)
+          <MovieCard title={movie.title} durationMinutes={movie.durationMinutes} />
         </li>
       ))}
     </ul>

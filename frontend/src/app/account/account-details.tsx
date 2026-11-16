@@ -9,12 +9,12 @@ export default async function AccountDetails() {
 
   const { name, email, roles } = session.user;
   return (
-    <dl>
-      <dt>Name</dt>
+    <dl className="grid max-w-md grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+      <dt className="font-medium text-zinc-700 dark:text-zinc-300">Name</dt>
       <dd>{name ?? "-"}</dd>
-      <dt>Email</dt>
+      <dt className="font-medium text-zinc-700 dark:text-zinc-300">Email</dt>
       <dd>{email ?? "-"}</dd>
-      <dt>Roles</dt>
+      <dt className="font-medium text-zinc-700 dark:text-zinc-300">Roles</dt>
       <dd>{roles.length > 0 ? roles.join(", ") : "none"}</dd>
     </dl>
   );

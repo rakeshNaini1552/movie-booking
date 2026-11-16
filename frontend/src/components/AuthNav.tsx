@@ -1,3 +1,5 @@
+import Button from "@/components/Button";
+
 type AuthNavProps = {
   user: { name?: string | null } | null;
   signInAction: (formData: FormData) => void | Promise<void>;
@@ -10,19 +12,21 @@ export default function AuthNav({ user, signInAction, signOutAction }: AuthNavPr
     return (
       <section aria-label="Account">
         <form action={signInAction}>
-          <button type="submit">Sign in</button>
+          <Button type="submit">Sign in</Button>
         </form>
       </section>
     );
   }
 
   return (
-    <section aria-label="Account">
-      <p>
+    <section aria-label="Account" className="flex items-center gap-3">
+      <p className="text-sm">
         Signed in as <strong>{user.name ?? "unknown user"}</strong>
       </p>
       <form action={signOutAction}>
-        <button type="submit">Sign out</button>
+        <Button type="submit" variant="secondary">
+          Sign out
+        </Button>
       </form>
     </section>
   );
