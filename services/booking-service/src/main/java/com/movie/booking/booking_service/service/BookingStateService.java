@@ -12,6 +12,7 @@ import com.movie.booking.booking_service.event.RefundRequestedEvent;
 import com.movie.booking.booking_service.repository.BookingRepository;
 import com.movie.booking.booking_service.repository.BookingSeatRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingStateService {
@@ -138,6 +140,35 @@ public class BookingStateService {
                 bookingId, BookingStatus.PENDING, BookingStatus.FAILED, clock.instant());
 
         publishEventByBookingIdHelper(bookingId);
+    }
+
+    // The customer paid (CONFIRMED) but ticket-service gave up issuing a ticket. Moves the booking to
+    // FAILED and, in the same transaction, enqueues BookingCancelled (seats and ticket records) and
+    // RefundRequested (payment). The conditional update makes a redelivery a no-op: once the booking
+    // is FAILED, nothing matches and nothing is enqueued. A booking whose ticket was already scanned is
+    // left alone: the customer got in, so there is nothing to refund.
+    @Transactional
+    public boolean compensateTicketIssueFailed(UUID bookingId) {
+        int updated = bookingRepository.transitionIfTicketUnused(
+                bookingId, BookingStatus.CONFIRMED, BookingStatus.FAILED, clock.instant());
+        if (updated == 1) {
+            publishEventByBookingIdHelper(bookingId);
+            return true;
+        }
+
+        Optional<Booking> booking = bookingRepository.findById(bookingId);
+        if (booking.isEmpty()) {
+            log.warn("TicketIssueFailed for unknown booking {}, ignoring", bookingId);
+        } else if (booking.get().getStatus() == BookingStatus.CONFIRMED) {
+            log.warn("TicketIssueFailed for booking {} whose ticket was already used, not compensating", bookingId);
+        } else if (booking.get().getStatus() == BookingStatus.FAILED
+                || booking.get().getStatus() == BookingStatus.CANCELLED) {
+            log.info("TicketIssueFailed for booking {} already {}, nothing to do", bookingId, booking.get().getStatus());
+        } else {
+            log.warn("TicketIssueFailed for booking {} in status {}, expected CONFIRMED, ignoring",
+                    bookingId, booking.get().getStatus());
+        }
+        return false;
     }
 
     private void publishEventByBookingIdHelper(UUID bookingId) {
