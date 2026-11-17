@@ -8,7 +8,7 @@ images:
   - name: ghcr.io/rakeshnaini1552/seat-service
     newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/booking-service
-    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
+    newTag: bce72c2d8735dfb3ec2866328ab481f39f2f565b
   - name: ghcr.io/rakeshnaini1552/payment-service
     newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
   - name: ghcr.io/rakeshnaini1552/ticket-service
