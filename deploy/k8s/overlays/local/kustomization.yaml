@@ -15,8 +15,9 @@ images:
     newTag: e2fa28409eaa75d62d787822839748ae1a06043d
   - name: ghcr.io/rakeshnaini1552/catalog-service
     newTag: 07e2ea86b91a3453e5aec3ef7a830afa22a90d41
+  # The bump workflow edits the line right after the name, so this comment stays above it.
+  # newTag is replaced by the first bump PR after the frontend image is published.
   - name: ghcr.io/rakeshnaini1552/frontend
-    # Replaced by the first bump PR after the frontend image is published.
     newTag: pending-first-publish
 patches:
   - target:
