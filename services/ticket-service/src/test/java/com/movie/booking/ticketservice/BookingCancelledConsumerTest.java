@@ -181,7 +181,7 @@ class BookingCancelledConsumerTest {
 
     private Ticket saveTicket(UUID bookingId) {
         UUID ticketId = UUID.randomUUID();
-        return ticketRepository.saveAndFlush(new Ticket(ticketId, bookingId, UUID.randomUUID(),
+        return ticketRepository.saveAndFlush(new Ticket(ticketId, bookingId, UUID.randomUUID(), UUID.randomUUID(),
                 qrSigner.sign(ticketId), Instant.now()));
     }
 

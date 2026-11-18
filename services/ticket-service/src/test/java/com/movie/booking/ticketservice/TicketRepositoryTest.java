@@ -57,7 +57,7 @@ public class TicketRepositoryTest {
     }
 
     private Ticket newTicket(UUID bookingId) {
-        return new Ticket(UUID.randomUUID(), bookingId, UUID.randomUUID(),
+        return new Ticket(UUID.randomUUID(), bookingId, UUID.randomUUID(), UUID.randomUUID(),
                 "qr-" + bookingId, Instant.now());
     }
 }

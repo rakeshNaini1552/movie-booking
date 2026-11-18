@@ -2,6 +2,8 @@ package com.movie.booking.booking_service.repository;
 
 import com.movie.booking.booking_service.BookingStatus;
 import com.movie.booking.booking_service.entity.Booking;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +18,8 @@ import java.util.UUID;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
     Optional<Booking> findByIdempotencyKey(UUID idempotencyKey);
+
+    Page<Booking> findByUserId(UUID userId, Pageable pageable);
 
     List<Booking> findTop100ByStatusAndCreatedAtBefore(BookingStatus status, Instant cutoff);
 

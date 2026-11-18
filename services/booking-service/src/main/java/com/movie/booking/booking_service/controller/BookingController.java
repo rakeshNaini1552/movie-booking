@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import com.movie.booking.booking_service.exception.InvalidPageRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -23,6 +24,9 @@ import java.util.UUID;
 @RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
 public class BookingController {
+
+    static final int DEFAULT_PAGE_SIZE = 20;
+    static final int MAX_PAGE_SIZE = 50;
 
     private final BookingService bookingService;
 
@@ -78,6 +82,23 @@ public class BookingController {
     @PostMapping("/{bookingId}/cancel")
     public CancelBookingResponse cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID bookingId) {
         return new CancelBookingResponse(bookingId, bookingService.cancel(bookingId, currentUserId(jwt)));
+    }
+
+    @Operation(summary = "List the signed-in user's bookings",
+            description = "The user id comes from the JWT subject. Newest first. page is zero-based; size defaults to 20 and is capped at 50.")
+    @ApiResponse(responseCode = "400", description = "page is negative or size is below 1, or either is not a number", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
+    @GetMapping
+    public BookingPage listBookings(@AuthenticationPrincipal Jwt jwt,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size) {
+        if (page < 0) {
+            throw new InvalidPageRequestException("page must be 0 or greater");
+        }
+        if (size < 1) {
+            throw new InvalidPageRequestException("size must be 1 or greater");
+        }
+        return bookingService.listBookings(currentUserId(jwt), page, Math.min(size, MAX_PAGE_SIZE));
     }
 
     @Operation(summary = "Get a booking",

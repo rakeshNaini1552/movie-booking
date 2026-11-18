@@ -25,6 +25,9 @@ public class Ticket {
     @Column(name = "event_id")
     private UUID eventId;
 
+    @Column(name = "user_id")
+    private UUID userId;
+
     @Column(name = "qr_payload")
     private String qrPayload;
 
@@ -38,10 +41,11 @@ public class Ticket {
     private Instant usedAt;
 
     @Builder
-    public Ticket(UUID ticketId, UUID bookingId, UUID eventId, String qrPayload, Instant issuedAt) {
+    public Ticket(UUID ticketId, UUID bookingId, UUID eventId, UUID userId, String qrPayload, Instant issuedAt) {
         this.ticketId = ticketId;
         this.bookingId = bookingId;
         this.eventId = eventId;
+        this.userId = userId;
         this.qrPayload = qrPayload;
         this.issuedAt = issuedAt;
         this.status = TicketStatus.ISSUED;

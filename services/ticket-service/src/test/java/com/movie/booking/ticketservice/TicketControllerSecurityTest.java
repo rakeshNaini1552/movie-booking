@@ -41,7 +41,8 @@ class TicketControllerSecurityTest {
     private JwtDecoder jwtDecoder;
 
     private final UUID ticketId = UUID.randomUUID();
-    private final Ticket ticket = new Ticket(ticketId, UUID.randomUUID(), UUID.randomUUID(),
+    private final UUID userId = UUID.randomUUID();
+    private final Ticket ticket = new Ticket(ticketId, UUID.randomUUID(), UUID.randomUUID(), userId,
             ticketId + ".signature", Instant.now());
 
     @Test
@@ -54,11 +55,19 @@ class TicketControllerSecurityTest {
 
     @Test
     void get_with_token_that_has_no_roles_returns_200() throws Exception {
-        when(ticketService.getTicket(ticketId)).thenReturn(ticket);
+        when(ticketService.getOwnedTicket(ticketId, userId.toString())).thenReturn(ticket);
 
-        mockMvc.perform(get("/tickets/{id}", ticketId).with(jwt()))
+        mockMvc.perform(get("/tickets/{id}", ticketId).with(jwt().jwt(j -> j.subject(userId.toString()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticketId").value(ticketId.toString()));
+    }
+
+    @Test
+    void get_by_booking_without_token_returns_401() throws Exception {
+        mockMvc.perform(get("/tickets/by-booking/{id}", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(ticketService);
     }
 
     @Test

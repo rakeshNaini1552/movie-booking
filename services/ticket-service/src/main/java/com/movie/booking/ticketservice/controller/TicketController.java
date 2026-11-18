@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -26,20 +28,21 @@ public class TicketController {
     private final TicketService ticketService;
 
     @Operation(summary = "Get the ticket of a booking",
-            description = "Returns 404 until the BookingConfirmed event has been consumed and the ticket issued.")
+            description = "The user id comes from the JWT subject. Returns 404 until the BookingConfirmed event has been consumed and the ticket issued, and also when the ticket belongs to another user.")
     @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
-    @ApiResponse(responseCode = "404", description = "No ticket issued for this booking yet", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "404", description = "No ticket issued for this booking yet, or it is not owned by the user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))
     @GetMapping("/by-booking/{bookingId}")
-    public TicketResponse getByBooking(@PathVariable UUID bookingId) {
-        return TicketResponse.from(ticketService.getByBookingId(bookingId));
+    public TicketResponse getByBooking(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID bookingId) {
+        return TicketResponse.from(ticketService.getOwnedByBookingId(bookingId, jwt.getSubject()));
     }
 
-    @Operation(summary = "Get a ticket by id")
+    @Operation(summary = "Get a ticket by id",
+            description = "The user id comes from the JWT subject. A ticket owned by another user is reported as not found.")
     @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token")
-    @ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "404", description = "Ticket not found or not owned by the user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))
     @GetMapping("/{ticketId}")
-    public TicketResponse getTicket(@PathVariable UUID ticketId) {
-        return TicketResponse.from(ticketService.getTicket(ticketId));
+    public TicketResponse getTicket(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID ticketId) {
+        return TicketResponse.from(ticketService.getOwnedTicket(ticketId, jwt.getSubject()));
     }
 
     @Operation(summary = "Scan a ticket QR code",

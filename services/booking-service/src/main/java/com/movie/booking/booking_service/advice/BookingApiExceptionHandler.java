@@ -3,6 +3,7 @@ package com.movie.booking.booking_service.advice;
 import com.movie.booking.booking_service.dto.ApiError;
 import com.movie.booking.booking_service.exception.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,6 +39,18 @@ public class BookingApiExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleBookingNotCancellable(BookingNotCancellableException e) {
         return new ApiError("Booking not cancellable");
+    }
+
+    @ExceptionHandler(InvalidPageRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleInvalidPageRequest(InvalidPageRequestException e) {
+        return new ApiError(e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return new ApiError("Invalid value for parameter " + e.getName());
     }
 
     @ExceptionHandler(InvalidPaymentTokenException.class)
