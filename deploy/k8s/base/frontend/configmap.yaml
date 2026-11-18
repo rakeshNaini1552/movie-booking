@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: movie-booking
+data:
+  # The frontend calls the gateway from its server, inside the cluster.
+  GATEWAY_URL: http://gateway-service:8090
+  # Must be the same issuer the gateway validates tokens against. The browser also opens this
+  # address for the Keycloak login page, which is why the Mac needs host.docker.internal in /etc/hosts.
+  KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking
+  # The address the browser uses to reach this app (kubectl port-forward svc/frontend 3001:3001).
+  # It must match the redirect URI registered on the Keycloak client.
+  AUTH_URL: http://localhost:3001
+  # Auth.js only accepts requests for a host it trusts; behind a Service the Host header is not
+  # the pod's own name, so this tells it to accept the forwarded one.
+  AUTH_TRUST_HOST: "true"
+  AUTH_KEYCLOAK_ID: movie-booking-web
+  # Traces go to Tempo in docker compose (OTLP over HTTP).
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
+  OTEL_SERVICE_NAME: frontend

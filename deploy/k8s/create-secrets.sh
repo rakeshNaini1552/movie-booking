@@ -42,3 +42,5 @@ create_secret seat-service-db    SEAT_DB_USER SEAT_DB_PASSWORD
 create_secret booking-service-db BOOKING_DB_USER BOOKING_DB_PASSWORD BOOKING_SERVICE_CLIENT_SECRET
 create_secret ticket-service-db  TICKET_DB_USER TICKET_DB_PASSWORD TICKET_QR_SECRET
 create_secret catalog-service-db CATALOG_DB_USER CATALOG_DB_PASSWORD
+# The frontend's session-cookie key and its Keycloak client secret (client movie-booking-web).
+create_secret frontend-auth      AUTH_SECRET AUTH_KEYCLOAK_SECRET

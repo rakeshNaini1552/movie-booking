@@ -27,3 +27,6 @@ resources:
   - gateway-service/configmap.yaml
   - gateway-service/deployment.yaml
   - gateway-service/service.yaml
+  - frontend/configmap.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml

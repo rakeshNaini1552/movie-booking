@@ -15,3 +15,66 @@ images:
     newTag: e2fa28409eaa75d62d787822839748ae1a06043d
   - name: ghcr.io/rakeshnaini1552/catalog-service
     newTag: 07e2ea86b91a3453e5aec3ef7a830afa22a90d41
+  - name: ghcr.io/rakeshnaini1552/frontend
+    # Replaced by the first bump PR after the frontend image is published.
+    newTag: pending-first-publish
+patches:
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 1
+  - target:
+      kind: ConfigMap
+      name: seat-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: seat-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+  - target:
+      kind: ConfigMap
+      name: booking-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: booking-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+  - target:
+      kind: ConfigMap
+      name: payment-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: payment-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+  - target:
+      kind: ConfigMap
+      name: ticket-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ticket-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+  - target:
+      kind: ConfigMap
+      name: catalog-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: catalog-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
