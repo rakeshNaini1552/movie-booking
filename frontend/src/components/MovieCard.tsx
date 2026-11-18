@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MoviePoster from "@/components/MoviePoster";
 
 type MovieCardProps = {
   title: string;
@@ -8,7 +9,6 @@ type MovieCardProps = {
   href?: string;
 };
 
-// Poster is added later.
 export default function MovieCard({
   title,
   durationMinutes,
@@ -16,22 +16,27 @@ export default function MovieCard({
   rating,
   href,
 }: MovieCardProps) {
+  // The rating is also a tag on the poster, but the poster is decorative, so it is repeated here as text.
   const details = [`${durationMinutes} min`, language, rating].filter(Boolean).join(" · ");
   return (
-    <article className="rounded-lg border border-zinc-300 p-4 dark:border-zinc-700">
-      <h2 className="text-lg font-semibold">
+    // "group" lets the poster react when any part of the card is hovered or focused.
+    <article className="group relative">
+      <MoviePoster
+        title={title}
+        tag={rating}
+        className="group-focus-within:ring-brand-soft transition duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl group-hover:shadow-black/60 group-hover:ring-white/30"
+      />
+      <h2 className="mt-3 leading-snug font-semibold">
         {href ? (
-          <Link
-            href={href}
-            className="rounded-md hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:focus-visible:outline-indigo-400"
-          >
+          // The link covers the whole card (after:absolute after:inset-0), so the poster is clickable too.
+          <Link href={href} className="rounded-md after:absolute after:inset-0">
             {title}
           </Link>
         ) : (
           title
         )}
       </h2>
-      <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{details}</p>
+      <p className="mt-0.5 text-sm text-zinc-400">{details}</p>
     </article>
   );
 }

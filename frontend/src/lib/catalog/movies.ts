@@ -5,6 +5,7 @@ import {
   idSchema,
   movieDataSchema,
   moviesDataSchema,
+  nowShowingDataSchema,
   type MovieDetail,
   type MovieSummary,
 } from "./schemas";
@@ -48,6 +49,50 @@ const MOVIE_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+const NOW_SHOWING_QUERY = /* GraphQL */ `
+  query NowShowing($size: Int!) {
+    movies(page: 0, size: $size) {
+      id
+      title
+      durationMinutes
+      language
+      rating
+      shows {
+        startsAt
+        status
+      }
+    }
+  }
+`;
+
+// How many movies are looked at to find the ones with a show. One gateway call: the catalog
+// loads the shows of all these movies in a single batch.
+const NOW_SHOWING_SCAN = 60;
+
+// Movies that can actually be booked: at least one show that is not cancelled and has not
+// started yet. Returns at most `limit` of them, soonest show first.
+export async function listNowShowing(limit: number, now: Date): Promise<MovieSummary[]> {
+  const data = await gatewayQuery(
+    NOW_SHOWING_QUERY,
+    { size: NOW_SHOWING_SCAN },
+    nowShowingDataSchema,
+  );
+  const cutoff = now.toISOString();
+  return data.movies
+    .map(({ shows, ...movie }) => ({
+      movie,
+      // ISO-8601 UTC strings sort in time order, so plain string comparison is enough.
+      next: shows
+        .filter((show) => show.status !== "CANCELLED" && show.startsAt > cutoff)
+        .map((show) => show.startsAt)
+        .sort()[0],
+    }))
+    .filter((entry): entry is { movie: MovieSummary; next: string } => entry.next !== undefined)
+    .sort((a, b) => a.next.localeCompare(b.next))
+    .slice(0, limit)
+    .map((entry) => entry.movie);
+}
 
 export type MoviePage = { movies: MovieSummary[]; hasNext: boolean };
 

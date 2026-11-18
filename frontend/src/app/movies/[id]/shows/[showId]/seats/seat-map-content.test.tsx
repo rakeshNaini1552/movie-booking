@@ -13,6 +13,7 @@ const { getMovie, getSeatMap, notFound, redirect } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/catalog/movies", () => ({ getMovie }));
 vi.mock("@/lib/seats/seat-map", () => ({ getSeatMap }));
+vi.mock("@/lib/bookings/actions", () => ({ createBookingAction: vi.fn() }));
 vi.mock("next/navigation", () => ({ notFound, redirect, useRouter: () => ({ refresh: vi.fn() }) }));
 
 import { GatewayError, NotSignedInError } from "@/lib/gateway/errors";
@@ -52,15 +53,11 @@ describe("SeatMapContent", () => {
     getSeatMap.mockResolvedValue(seats);
   });
 
-  it("shows the movie, theater, screen, start time (UTC) and price above the seat grid", async () => {
+  it("shows the movie, theater, screen and start time (UTC) above the seat grid", async () => {
     render(await run());
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Select seats: Inception" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Alpha Cinema, Austin")).toBeInTheDocument();
-    expect(screen.getByText("Screen 1")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Inception" })).toBeInTheDocument();
+    expect(screen.getByText(/Alpha Cinema, Austin/)).toHaveTextContent("Screen 1");
     expect(screen.getByText("Tue, Dec 1, 18:30 UTC")).toBeInTheDocument();
-    expect(screen.getByText("12.50")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Seat A1, Gold, available" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to Inception" })).toHaveAttribute(
       "href",

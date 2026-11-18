@@ -46,7 +46,9 @@ describe("MovieDetails", () => {
     await render$(ID);
 
     expect(screen.getByRole("heading", { level: 1, name: "Inception" })).toBeInTheDocument();
-    expect(screen.getByText("148 min · en · PG-13 · Released 2010-07-16")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Movie facts" })).toHaveTextContent(
+      "148 minenPG-13Released 2010-07-16",
+    );
     expect(screen.getByText("A thief steals secrets through dreams.")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /Alpha Cinema/ })).toHaveTextContent(
       "Tue, Dec 1, 18:30 UTC",
@@ -62,7 +64,7 @@ describe("MovieDetails", () => {
   it("copes with a movie that has no description, rating or release date", async () => {
     getMovie.mockResolvedValue({ ...movie, description: null, rating: null, releaseDate: null });
     await render$(ID);
-    expect(screen.getByText("148 min · en")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Movie facts" })).toHaveTextContent(/^148 minen$/);
   });
 
   it("returns 404 when the movie does not exist", async () => {

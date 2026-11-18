@@ -18,7 +18,7 @@ export default async function MoviesContent({
     <>
       <MovieSearchForm defaultValue={params.q} />
       {movies.length === 0 ? (
-        <p>
+        <p className="border-line bg-panel rounded-2xl border p-6 text-zinc-300">
           {params.q
             ? `No movies match "${params.q}".`
             : params.page > 0

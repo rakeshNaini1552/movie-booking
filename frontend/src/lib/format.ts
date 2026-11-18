@@ -25,3 +25,20 @@ const price = new Intl.NumberFormat("en-US", {
 export function formatPrice(amount: number): string {
   return price.format(amount);
 }
+
+const dateTime = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "UTC",
+});
+
+// For moments that are not show times (when a booking was made, when a ticket was scanned).
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Time unavailable";
+  return `${dateTime.format(date)} UTC`;
+}

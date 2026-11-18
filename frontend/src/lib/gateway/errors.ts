@@ -44,6 +44,12 @@ export class GatewayError extends Error {
   }
 }
 
+// The HTTP status of a failed gateway call, or undefined when the failure was not an HTTP answer
+// (timeout, unreachable, bad body). Callers use it to tell "seats taken" (409) from an outage.
+export function httpStatusOf(error: unknown): number | undefined {
+  return error instanceof GatewayError && error.kind === "http" ? error.detail?.status : undefined;
+}
+
 // What an error page tells the user. `subject` names what failed to load ("movies", "the seat map");
 // anything that is not a gateway digest gets the generic text.
 export function gatewayErrorMessage(digest: string | undefined, subject = "movies"): string {

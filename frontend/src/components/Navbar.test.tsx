@@ -7,12 +7,11 @@ vi.mock("@/components/AuthStatus", () => ({ default: () => <div>auth area</div> 
 import Navbar from "./Navbar";
 
 describe("Navbar", () => {
-  it("shows the site name and links to Home and Movies", () => {
+  it("shows the site name linking home, and a Movies link", () => {
     render(<Navbar />);
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(nav).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Movie Booking" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Movie Booking home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Movies" })).toHaveAttribute("href", "/movies");
   });
 

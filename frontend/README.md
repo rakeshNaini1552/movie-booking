@@ -17,16 +17,19 @@ Override the port with `PORT=4000 npm run dev`. The scripts pass `-p ${PORT:-<de
 
 Server-only, validated with Zod at startup (`src/lib/env-schema.ts`, run from `next.config.ts`), so `next dev`, `next build` and `next start` fail fast and name every invalid variable (never its value). Copy `.env.example` to `.env.local` to override; `.env.local` is git-ignored.
 
-| Variable               | Default                                      | Purpose                                                 |
-| ---------------------- | -------------------------------------------- | ------------------------------------------------------- |
-| `GATEWAY_URL`          | `http://localhost:8090`                      | Gateway service base URL                                |
-| `GATEWAY_TIMEOUT_MS`   | `5000`                                       | Timeout for one gateway call (100 to 60000)             |
-| `KEYCLOAK_ISSUER_URI`  | `http://localhost:8180/realms/movie-booking` | Keycloak realm issuer                                   |
-| `PORT`                 | `3001`                                       | Port, set in the shell (see above)                      |
-| `AUTH_URL`             | `http://localhost:3001`                      | Public origin of this app (callback, post-logout)       |
-| `AUTH_KEYCLOAK_ID`     | `movie-booking-web`                          | Keycloak client id                                      |
-| `AUTH_SECRET`          | **none, required**, min 32 chars             | Encrypts the session cookie (`openssl rand -base64 32`) |
-| `AUTH_KEYCLOAK_SECRET` | **none, required**                           | Client secret of the confidential client                |
+| Variable                      | Default                                      | Purpose                                                  |
+| ----------------------------- | -------------------------------------------- | -------------------------------------------------------- |
+| `GATEWAY_URL`                 | `http://localhost:8090`                      | Gateway service base URL                                 |
+| `GATEWAY_TIMEOUT_MS`          | `5000`                                       | Timeout for one gateway call (100 to 60000)              |
+| `GATEWAY_WRITE_TIMEOUT_MS`    | `15000`                                      | Timeout for creating and paying a booking (100 to 60000) |
+| `KEYCLOAK_ISSUER_URI`         | `http://localhost:8180/realms/movie-booking` | Keycloak realm issuer                                    |
+| `PORT`                        | `3001`                                       | Port, set in the shell (see above)                       |
+| `AUTH_URL`                    | `http://localhost:3001`                      | Public origin of this app (callback, post-logout)        |
+| `AUTH_KEYCLOAK_ID`            | `movie-booking-web`                          | Keycloak client id                                       |
+| `AUTH_SECRET`                 | **none, required**, min 32 chars             | Encrypts the session cookie (`openssl rand -base64 32`)  |
+| `AUTH_KEYCLOAK_SECRET`        | **none, required**                           | Client secret of the confidential client                 |
+| `CATALOG_ADMIN_ROLE`          | `catalog-admin`                              | Realm role that may open `/admin`                        |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset (tracing off)                          | Where traces go, for example `http://localhost:4318`     |
 
 Secrets have no default: a missing one stops startup. Never use `NEXT_PUBLIC_` for any of these. App code reads them from `@/lib/env`, which is `server-only`.
 
@@ -89,3 +92,38 @@ CI (`test (frontend)`) runs lint, format check, typecheck, tests and build. The 
 - Tests sit next to the code as `*.test.ts` (Node) and `*.test.tsx` (jsdom)
 
 Before changing Next.js code, read `AGENTS.md`: this Next.js version differs from older ones, and its docs are in `node_modules/next/dist/docs/`.
+
+## Pages
+
+| Path                                | What it does                                                            |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| `/`                                 | Public home page; shows a row of movies when signed in                  |
+| `/movies`, `/movies/[id]`           | Movie list with search, movie details with show times                   |
+| `/movies/[id]/shows/[showId]/seats` | Seat map; "Continue to booking" holds the seats and creates the booking |
+| `/bookings`                         | The signed-in user's bookings, newest first                             |
+| `/bookings/[bookingId]`             | One booking: pay it (test payment), see the QR ticket, cancel it        |
+| `/admin/...`                        | Catalog admin (role `catalog-admin`): movies, theaters, screens, shows  |
+| `/api/health`                       | Health check for Kubernetes probes                                      |
+
+Writes (book, pay, cancel, admin forms) are server actions in `src/lib/bookings/actions.ts` and `src/lib/admin/actions.ts`. They validate their input with Zod and call the gateway with the user's token; the browser never talks to the gateway.
+
+## Tests
+
+```bash
+npm test        # unit and component tests (Vitest)
+npm run e2e     # end-to-end tests (Playwright), first time: npx playwright install chromium
+```
+
+The end-to-end tests start a production build against `e2e/mock-gateway.mjs` (an in-memory stand-in for the gateway) and sign in by creating the session cookie with a test-only secret (`e2e/session.ts`). They need no backend, Keycloak or Docker. They also run axe accessibility checks on the customer pages.
+
+## Security headers
+
+`next.config.ts` sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy`. `src/proxy.ts` sets the `Content-Security-Policy` (built in `src/lib/security/csp.ts`) at request time, because it contains the Keycloak origin.
+
+## Docker and Kubernetes
+
+```bash
+docker build -t frontend .      # multi-stage build, runs .next/standalone as a non-root user
+```
+
+Manifests are in `deploy/k8s/base/frontend`. The pod reads `frontend-config` (ConfigMap) and `frontend-auth` (Secret with `AUTH_SECRET` and `AUTH_KEYCLOAK_SECRET`, created by `deploy/k8s/create-secrets.sh` from `deploy/.env`). Open it with `kubectl port-forward -n movie-booking svc/frontend 3001:3001`.
