@@ -61,4 +61,5 @@ spec:
             failureThreshold: 6
           securityContext:
             runAsNonRoot: true
+            runAsUser: 1000
             allowPrivilegeEscalation: false
