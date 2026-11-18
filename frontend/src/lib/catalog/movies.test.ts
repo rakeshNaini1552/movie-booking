@@ -82,3 +82,30 @@ describe("getMovie", () => {
     await expect(getMovie(ID)).rejects.toMatchObject({ kind: "timeout" });
   });
 });
+
+describe("listNowShowing", () => {
+  it("keeps only movies with an upcoming, not cancelled show, soonest first", async () => {
+    const { gatewayQuery } = await import("./client");
+    const { listNowShowing } = await import("./movies");
+    const movie = (n: number, shows: { startsAt: string; status: string }[]) => ({
+      id: `00000000-0000-0000-0000-00000000000${n}`,
+      title: `Movie ${n}`,
+      durationMinutes: 100,
+      language: "en",
+      rating: null,
+      shows,
+    });
+    vi.mocked(gatewayQuery).mockResolvedValue({
+      movies: [
+        movie(1, []),
+        movie(2, [{ startsAt: "2026-12-05T10:00:00Z", status: "SCHEDULED" }]),
+        movie(3, [{ startsAt: "2026-12-02T10:00:00Z", status: "CANCELLED" }]),
+        movie(4, [{ startsAt: "2026-11-01T10:00:00Z", status: "SCHEDULED" }]),
+        movie(5, [{ startsAt: "2026-12-03T10:00:00Z", status: "SCHEDULED" }]),
+      ],
+    });
+    const result = await listNowShowing(4, new Date("2026-12-01T00:00:00Z"));
+    expect(result.map((m) => m.title)).toEqual(["Movie 5", "Movie 2"]);
+    expect(result[0]).not.toHaveProperty("shows");
+  });
+});

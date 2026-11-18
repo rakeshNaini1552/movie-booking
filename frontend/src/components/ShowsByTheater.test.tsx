@@ -25,8 +25,8 @@ describe("ShowsByTheater", () => {
 
     const alpha = screen.getByRole("region", { name: /Alpha Cinema/ });
     expect(within(alpha).getByText("Tue, Dec 1, 18:30 UTC")).toBeInTheDocument();
-    expect(within(alpha).getByText("Screen 1")).toBeInTheDocument();
-    expect(within(alpha).getByText("12.50")).toBeInTheDocument();
+    expect(within(alpha).getByText(/Screen 1/)).toBeInTheDocument();
+    expect(within(alpha).getByText(/12\.50/)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /Beta Cinema/ })).toBeInTheDocument();
     expect(
       within(alpha).getByRole("link", { name: /Select seats for .* at Alpha Cinema/ }),

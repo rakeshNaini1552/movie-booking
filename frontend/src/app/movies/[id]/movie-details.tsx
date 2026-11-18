@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Header from "@/components/Header";
+import MoviePoster from "@/components/MoviePoster";
 import ShowsByTheater from "@/components/ShowsByTheater";
 import { requireSignIn } from "@/lib/auth/require-sign-in";
 import { getMovie } from "@/lib/catalog/movies";
@@ -13,21 +13,37 @@ export default async function MovieDetails({ params }: Pick<PageProps<"/movies/[
   const movie = await requireSignIn(`/movies/${id}`, () => getMovie(id));
   if (!movie) notFound();
 
-  const details = [
+  const facts = [
     `${movie.durationMinutes} min`,
     movie.language,
     movie.rating,
     movie.releaseDate && `Released ${movie.releaseDate}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter((fact): fact is string => Boolean(fact));
 
   return (
     <>
-      <Header title={movie.title} />
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">{details}</p>
-      {movie.description && <p className="mt-4 max-w-prose">{movie.description}</p>}
-      <h2 className="mt-8 mb-4 text-2xl font-semibold">Shows</h2>
+      <div className="animate-rise grid gap-8 sm:grid-cols-[minmax(0,16rem)_1fr] sm:items-end">
+        <MoviePoster title={movie.title} className="mx-auto w-48 sm:mx-0 sm:w-full" />
+        <div>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-balance sm:text-6xl">
+            {movie.title}
+          </h1>
+          <ul aria-label="Movie facts" className="mt-5 flex flex-wrap gap-2">
+            {facts.map((fact) => (
+              <li
+                key={fact}
+                className="border-line bg-panel rounded-full border px-3 py-1 text-sm text-zinc-200"
+              >
+                {fact}
+              </li>
+            ))}
+          </ul>
+          {movie.description && (
+            <p className="mt-6 max-w-prose leading-relaxed text-zinc-300">{movie.description}</p>
+          )}
+        </div>
+      </div>
+      <h2 className="font-display mt-14 mb-5 text-2xl font-bold">Shows</h2>
       <ShowsByTheater movieId={movie.id} shows={movie.shows} />
     </>
   );

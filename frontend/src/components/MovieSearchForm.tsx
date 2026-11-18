@@ -30,7 +30,7 @@ export default function MovieSearchForm({ defaultValue }: MovieSearchFormProps) 
   }, [text, defaultValue, router]);
 
   return (
-    <form action="/movies" method="get" role="search" className="mb-6 flex flex-wrap gap-2">
+    <form action="/movies" method="get" role="search" className="mb-10 flex max-w-xl gap-2">
       <label htmlFor="movie-search" className="sr-only">
         Search movies by title
       </label>
@@ -42,7 +42,7 @@ export default function MovieSearchForm({ defaultValue }: MovieSearchFormProps) 
         onChange={(event) => setText(event.target.value)}
         maxLength={100}
         placeholder="Search by title"
-        className="min-w-0 flex-1 rounded-md border border-zinc-400 bg-transparent px-3 py-2 text-sm dark:border-zinc-600"
+        className="border-line bg-panel focus:border-brand-soft min-w-0 flex-1 rounded-full border px-5 py-2.5 text-sm placeholder:text-zinc-500"
       />
       <Button type="submit">Search</Button>
     </form>

@@ -17,6 +17,9 @@ images:
     newTag: 5c4736c636096ab8f15a9a96219f4ae8c6154dd2
   - name: ghcr.io/rakeshnaini1552/catalog-service
     newTag: 07e2ea86b91a3453e5aec3ef7a830afa22a90d41
+  - name: ghcr.io/rakeshnaini1552/frontend
+    # Replaced by the first bump PR after the frontend image is published.
+    newTag: pending-first-publish
 patches:
   - target:
       kind: ConfigMap
@@ -27,6 +30,7 @@ patches:
       metadata:
         name: seat-service-config
       data:
+        TRACING_SAMPLING: "0.1"
         SEAT_DB_NAME: seat_db_stage
         SPRING_DATA_REDIS_DATABASE: "1"
         BOOKING_EVENTS_TOPIC: booking-events-stage
@@ -41,6 +45,7 @@ patches:
       metadata:
         name: booking-service-config
       data:
+        TRACING_SAMPLING: "0.1"
         DB_NAME: booking_db_stage
         BOOKING_EVENTS_TOPIC: booking-events-stage
         TICKET_EVENTS_TOPIC: ticket-events-stage
@@ -54,6 +59,7 @@ patches:
       metadata:
         name: payment-service-config
       data:
+        TRACING_SAMPLING: "0.1"
         DB_NAME: payment_db_stage
         BOOKING_EVENTS_TOPIC: booking-events-stage
         BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-stage
@@ -67,6 +73,7 @@ patches:
       metadata:
         name: ticket-service-config
       data:
+        TRACING_SAMPLING: "0.1"
         TICKET_DB_NAME: ticket_db_stage
         BOOKING_EVENTS_TOPIC: booking-events-stage
         BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-stage
@@ -91,6 +98,7 @@ patches:
       metadata:
         name: catalog-service-config
       data:
+        TRACING_SAMPLING: "0.1"
         CATALOG_DB_NAME: catalog_db_stage
         CATALOG_CACHE_PREFIX: "catalog-stage:"
         KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
@@ -98,5 +106,21 @@ patches:
       kind: HorizontalPodAutoscaler
     patch: |-
       - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
         path: /spec/maxReplicas
         value: 1
+  - target:
+      kind: ConfigMap
+      name: frontend-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: frontend-config
+      data:
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-stage
+        # Stage is port-forwarded on its own port so both environments can be open at once.
+        AUTH_URL: http://localhost:3002
+        OTEL_SERVICE_NAME: frontend-stage

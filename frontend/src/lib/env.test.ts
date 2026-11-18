@@ -12,12 +12,28 @@ describe("parseEnv", () => {
     expect(parseEnv(secrets)).toEqual({
       GATEWAY_URL: "http://localhost:8090",
       GATEWAY_TIMEOUT_MS: 5000,
+      GATEWAY_WRITE_TIMEOUT_MS: 15000,
       KEYCLOAK_ISSUER_URI: "http://localhost:8180/realms/movie-booking",
       PORT: 3001,
       AUTH_KEYCLOAK_ID: "movie-booking-web",
       AUTH_URL: "http://localhost:3001",
+      CATALOG_ADMIN_ROLE: "catalog-admin",
       ...secrets,
     });
+  });
+
+  it("accepts a GATEWAY_WRITE_TIMEOUT_MS override and coerces it to a number", () => {
+    expect(
+      parseEnv({ ...secrets, GATEWAY_WRITE_TIMEOUT_MS: "20000" }).GATEWAY_WRITE_TIMEOUT_MS,
+    ).toBe(20000);
+  });
+
+  it("rejects a GATEWAY_WRITE_TIMEOUT_MS outside 100 to 60000, or not a whole number", () => {
+    for (const bad of ["99", "60001", "abc", "1500.5"]) {
+      expect(() => parseEnv({ ...secrets, GATEWAY_WRITE_TIMEOUT_MS: bad })).toThrow(
+        /GATEWAY_WRITE_TIMEOUT_MS/,
+      );
+    }
   });
 
   it("fails when the secrets are missing, naming them", () => {

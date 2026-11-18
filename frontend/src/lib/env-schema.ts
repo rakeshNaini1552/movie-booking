@@ -8,6 +8,9 @@ const schema = z.object({
   GATEWAY_URL: z.url().default("http://localhost:8090"),
   // Upper bound for one gateway call, so a hung gateway shows the error page instead of hanging the page.
   GATEWAY_TIMEOUT_MS: z.coerce.number().int().min(100).max(60000).default(5000),
+  // Upper bound for a booking write (create, pay). Longer than reads: booking-service may retry the payment call.
+  // Keep it above the gateway's GATEWAY_RESPONSE_TIMEOUT_MS so the gateway answers before this gives up.
+  GATEWAY_WRITE_TIMEOUT_MS: z.coerce.number().int().min(100).max(60000).default(15000),
   KEYCLOAK_ISSUER_URI: z.url().default("http://localhost:8180/realms/movie-booking"),
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   // Auth.js: encrypts the session cookie, so it needs real entropy (openssl rand -base64 32).
@@ -16,6 +19,10 @@ const schema = z.object({
   AUTH_KEYCLOAK_SECRET: z.string().min(1),
   // Public origin of this app: callback and post-logout URLs are built from it.
   AUTH_URL: z.url().default("http://localhost:3001"),
+  // Realm role that may open the admin pages. Must match catalog-service's CATALOG_ADMIN_ROLE.
+  CATALOG_ADMIN_ROLE: z.string().min(1).default("catalog-admin"),
+  // Where traces are sent (OTLP over HTTP, for example Tempo). Tracing stays off when unset.
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
 });
 
 export type Env = Readonly<z.infer<typeof schema>>;

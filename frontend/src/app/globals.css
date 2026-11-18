@@ -1,11 +1,79 @@
 @import "tailwindcss";
 
-/* Light and dark follow the system setting (Tailwind's dark: variant uses prefers-color-scheme). */
+/*
+ * Design tokens. Tailwind 4 turns every --color-* and --font-* here into utility classes
+ * (bg-night, text-gold, font-display, ...), so pages never write raw hex values.
+ * The app is dark only: a cinema-style theme does not have a light variant.
+ */
+@theme {
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-bricolage), var(--font-geist-sans), system-ui, sans-serif;
+
+  --color-night: #08080d;
+  --color-panel: #111119;
+  --color-raised: #1a1a26;
+  --color-line: #2b2b3d;
+  --color-brand: #e11d48;
+  --color-brand-strong: #be123c;
+  --color-brand-soft: #fb7185;
+  --color-gold: #fbbf24;
+
+  --animate-rise: rise 0.5s ease-out both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 }
 
 body {
-  @apply bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  @apply bg-night font-sans text-zinc-100 antialiased;
+  /* A soft glow behind the top of every page, like light spilling from a screen. */
+  background-image:
+    radial-gradient(60rem 28rem at 15% -10%, rgb(225 29 72 / 0.16), transparent 70%),
+    radial-gradient(50rem 26rem at 95% -5%, rgb(251 191 36 / 0.08), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+/* One focus ring for every interactive element, so no component has to restate it. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-soft);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgb(225 29 72 / 0.45);
+}
+
+/* People who ask for less motion get none: animations and transitions become instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

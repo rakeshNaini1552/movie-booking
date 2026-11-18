@@ -31,6 +31,14 @@ export const movieDetailSchema = movieSummarySchema.extend({
 });
 
 export const moviesDataSchema = z.object({ movies: z.array(movieSummarySchema) });
+// The home page row: each movie with just enough of its shows to tell whether it is bookable.
+export const nowShowingDataSchema = z.object({
+  movies: z.array(
+    movieSummarySchema.extend({
+      shows: z.array(z.object({ startsAt: z.iso.datetime(), status: z.string() })),
+    }),
+  ),
+});
 export const movieDataSchema = z.object({ movie: movieDetailSchema.nullable() });
 
 export type MovieSummary = z.infer<typeof movieSummarySchema>;

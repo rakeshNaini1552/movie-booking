@@ -13,6 +13,7 @@ vi.mock("@/auth", () => ({
     return null;
   }),
 }));
+vi.mock("@/lib/env", () => ({ env: { CATALOG_ADMIN_ROLE: "catalog-admin" } }));
 vi.mock("@/lib/auth/actions", () => ({ signInAction: vi.fn(), signOutAction: vi.fn() }));
 
 import AuthStatus from "./AuthStatus";

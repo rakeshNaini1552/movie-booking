@@ -12,10 +12,14 @@ export type GatewayRequest = {
   // Short name for the log line, for example "catalog" or "seats".
   scope: string;
   path: string;
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "PUT" | "DELETE";
   body?: string;
+  // Extra request headers, for example an idempotency key. Never put the token here.
+  headers?: Record<string, string>;
   // REST endpoints answer 404 for "no such thing": throw GatewayNotFoundError instead of an outage error.
   notFoundIs404?: boolean;
+  // Overrides GATEWAY_TIMEOUT_MS for calls that legitimately take longer (booking writes).
+  timeoutMs?: number;
 };
 
 export type GatewayResponse = {
@@ -51,19 +55,23 @@ export async function gatewayFetch(request: GatewayRequest): Promise<GatewayResp
     response = await fetch(new URL(request.path, env.GATEWAY_URL), {
       method: request.method,
       headers: {
+        ...request.headers,
         authorization: `Bearer ${token}`,
         accept: "application/json",
         ...(request.body === undefined ? {} : { "content-type": "application/json" }),
       },
       body: request.body,
-      signal: AbortSignal.timeout(env.GATEWAY_TIMEOUT_MS),
+      signal: AbortSignal.timeout(request.timeoutMs ?? env.GATEWAY_TIMEOUT_MS),
       // Per-user data: never share it through the fetch cache.
       cache: "no-store",
     });
   } catch (error) {
-    throw fail(
-      error instanceof DOMException && error.name === "TimeoutError" ? "timeout" : "unreachable",
-    );
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+    // fetch reports a network failure as a TypeError. Anything else is not a gateway problem:
+    // Next.js rejects fetch() on purpose when it stops a prerender (link prefetching does this),
+    // and that must pass through untouched, without an error line in the log.
+    if (!timedOut && !(error instanceof TypeError)) throw error;
+    throw fail(timedOut ? "timeout" : "unreachable");
   }
 
   if (response.status === 401) {

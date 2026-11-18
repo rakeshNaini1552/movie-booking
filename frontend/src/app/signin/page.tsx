@@ -1,17 +1,24 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Button from "@/components/Button";
-import Header from "@/components/Header";
 import PageContainer from "@/components/PageContainer";
 import { signInAction } from "@/lib/auth/actions";
 import { safeCallbackPath } from "@/lib/auth/urls";
 
+export const metadata: Metadata = { title: "Sign in" };
+
 export default function SignInPage({ searchParams }: PageProps<"/signin">) {
   return (
-    <PageContainer>
-      <Header title="Sign in" />
-      <Suspense fallback={null}>
-        <SignInForm searchParams={searchParams} />
-      </Suspense>
+    <PageContainer width="narrow">
+      <div className="border-line bg-panel animate-rise mx-auto mt-10 max-w-md rounded-3xl border p-10 text-center">
+        <h1 className="font-display text-3xl font-bold">Sign in</h1>
+        <p className="mt-3 mb-8 text-zinc-400">
+          Sign in to browse movies, pick seats and see your tickets.
+        </p>
+        <Suspense fallback={null}>
+          <SignInForm searchParams={searchParams} />
+        </Suspense>
+      </div>
     </PageContainer>
   );
 }
@@ -24,7 +31,9 @@ async function SignInForm({ searchParams }: Pick<PageProps<"/signin">, "searchPa
   return (
     <form action={signInAction}>
       <input type="hidden" name="callbackUrl" value={target} />
-      <Button type="submit">Sign in with Keycloak</Button>
+      <Button type="submit" size="lg" className="w-full">
+        Sign in with Keycloak
+      </Button>
     </form>
   );
 }

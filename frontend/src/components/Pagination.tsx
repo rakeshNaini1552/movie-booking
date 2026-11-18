@@ -1,26 +1,23 @@
-import Link from "next/link";
+import ButtonLink from "@/components/ButtonLink";
 
 type PaginationProps = {
   previousHref: string | null;
   nextHref: string | null;
 };
 
-const linkClass =
-  "rounded-md border border-zinc-400 px-4 py-2 text-sm font-medium hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:border-zinc-600 dark:hover:bg-zinc-800 dark:focus-visible:outline-indigo-400";
-
 export default function Pagination({ previousHref, nextHref }: PaginationProps) {
   if (!previousHref && !nextHref) return null;
   return (
-    <nav aria-label="Pagination" className="mt-6 flex gap-4">
+    <nav aria-label="Pagination" className="mt-10 flex justify-center gap-3">
       {previousHref && (
-        <Link href={previousHref} rel="prev" className={linkClass}>
+        <ButtonLink href={previousHref} rel="prev" variant="secondary">
           Previous
-        </Link>
+        </ButtonLink>
       )}
       {nextHref && (
-        <Link href={nextHref} rel="next" className={linkClass}>
+        <ButtonLink href={nextHref} rel="next" variant="secondary">
           Next
-        </Link>
+        </ButtonLink>
       )}
     </nav>
   );
