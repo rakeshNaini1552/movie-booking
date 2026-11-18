@@ -3,7 +3,7 @@ name: publish
 on:
   push:
     branches: [main]
-    paths-ignore: ['deploy/**', 'frontend/**']
+    paths-ignore: ['deploy/**']
 
 jobs:
   publish:
@@ -44,8 +44,37 @@ jobs:
       - name: Push image
         run: docker push $IMAGE
 
+  # The frontend is a Node app, so it is built from its Dockerfile instead of the Maven plugin.
+  publish-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/frontend:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build image
+        working-directory: frontend
+        run: docker build -t "$IMAGE" .
+
+      - name: Scan image
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          image: ${{ env.IMAGE }}
+          fail-build: false
+          output-format: table
+
+      - name: Push image
+        run: docker push "$IMAGE"
+
   bump-tags:
-    needs: publish
+    needs: [publish, publish-frontend]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -77,6 +106,11 @@ jobs:
               changed+=("$service")
             fi
           done
+
+          # The frontend lives outside services/ but its image follows the same naming.
+          if ! git diff --quiet "$BEFORE" "$SHA" -- frontend; then
+            changed+=("frontend")
+          fi
 
           if [[ ${#changed[@]} -eq 0 ]]; then
             echo "No service code changed; no PR needed."

@@ -187,6 +187,12 @@ jobs:
         env:
           AUTH_SECRET: ci-placeholder-not-a-real-secret-0123456789
           AUTH_KEYCLOAK_SECRET: ci-placeholder-not-a-real-client-secret
+      # End-to-end tests: a real browser against a production build, with a mock gateway and a
+      # test-only session cookie (frontend/e2e). They build the app again with their own test env.
+      - name: Install the browser for end-to-end tests
+        run: npx playwright install --with-deps chromium
+      - name: Run end-to-end tests
+        run: npm run e2e
 
   dependency-review:
     runs-on: ubuntu-latest
