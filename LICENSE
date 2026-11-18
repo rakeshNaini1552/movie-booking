@@ -1,0 +1,15 @@
+Copyright (c) 2026 Rakesh Naini. All rights reserved.
+
+This repository is published so that it can be read. You may view the source code
+and run it locally to learn from it.
+
+No other rights are granted. Without written permission from the copyright holder you
+may not copy, modify, merge, publish, distribute, sublicense, sell or use any part of
+this code, in source or binary form, in your own projects, products or services.
+
+The code is provided "as is", without warranty of any kind. The author is not liable
+for any claim or damage arising from its use.
+
+Movie poster images in frontend/public/posters and the data used to fetch them come from
+TMDB. They remain the property of their owners. This product uses the TMDB API but is not
+endorsed or certified by TMDB.
