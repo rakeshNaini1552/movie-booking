@@ -59,19 +59,30 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build image
-        working-directory: frontend
-        run: docker build -t "$IMAGE" .
+      # The runner is amd64 but the local kind nodes are arm64 (Apple Silicon), so the
+      # image must carry both variants or the kubelet fails with "no match for platform".
+      - name: Set up QEMU and Buildx
+        run: |
+          docker run --privileged --rm tonistiigi/binfmt --install arm64
+          docker buildx create --name multiarch --driver docker-container --use
 
+      - name: Build and push image (amd64 + arm64)
+        working-directory: frontend
+        run: |
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --provenance=false \
+            -t "$IMAGE" \
+            --push .
+
+      # A multi-platform image cannot be loaded into the local Docker, so it is scanned
+      # from the registry after the push (the scanner picks the runner's amd64 variant).
       - name: Scan image
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: ${{ env.IMAGE }}
           fail-build: false
           output-format: table
-
-      - name: Push image
-        run: docker push "$IMAGE"
 
   bump-tags:
     needs: [publish, publish-frontend]
