@@ -2,7 +2,8 @@ node_modules
 .next
 .env*
 !.env.example
-e2e
+# e2e/ is not ignored on purpose: playwright.config.ts imports ./e2e/settings and `next build`
+# type-checks that file, so the build fails without the folder. It does not reach the final image.
 test-results
 playwright-report
 coverage
