@@ -18,7 +18,7 @@ images:
   # The bump workflow edits the line right after the name, so this comment stays above it.
   # newTag is replaced by the first bump PR after the frontend image is published.
   - name: ghcr.io/rakeshnaini1552/frontend
-    newTag: 6f0aeb7318367f7a6112dc78ac9df4e7bd300d67
+    newTag: 725d352c3435d93ae4dec65d9329306b4b784a7d
 patches:
   - target:
       kind: HorizontalPodAutoscaler
