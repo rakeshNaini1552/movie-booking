@@ -40,6 +40,7 @@ public class TicketService {
                 .ticketId(ticketId)
                 .bookingId(event.bookingId())
                 .eventId(event.eventId())
+                .userId(event.userId())
                 .qrPayload(qrSigner.sign(ticketId))
                 .issuedAt(clock.instant())
                 .build();
@@ -57,9 +58,22 @@ public class TicketService {
         return saved;
     }
 
-    public Ticket getByBookingId(UUID bookingId) {
+    // A ticket owned by someone else is reported exactly like a missing one, so its existence is not leaked.
+    // Compared as strings so a non-UUID token subject is just "not the owner" rather than a parse error.
+    public Ticket getOwnedByBookingId(UUID bookingId, String subject) {
         return ticketRepository.findByBookingId(bookingId)
+                .filter(ticket -> isOwnedBy(ticket, subject))
                 .orElseThrow(() -> TicketNotFoundException.forBooking(bookingId));
+    }
+
+    public Ticket getOwnedTicket(UUID ticketId, String subject) {
+        return ticketRepository.findById(ticketId)
+                .filter(ticket -> isOwnedBy(ticket, subject))
+                .orElseThrow(() -> TicketNotFoundException.forTicket(ticketId));
+    }
+
+    private static boolean isOwnedBy(Ticket ticket, String subject) {
+        return ticket.getUserId() != null && ticket.getUserId().toString().equals(subject);
     }
 
     public Ticket getTicket(UUID ticketId) {

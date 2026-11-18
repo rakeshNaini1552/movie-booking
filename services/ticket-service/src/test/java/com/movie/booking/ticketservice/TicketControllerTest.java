@@ -47,6 +47,9 @@ class TicketControllerTest {
     @Autowired
     private QrSigner qrSigner;
 
+    private final UUID owner = UUID.randomUUID();
+    private final UUID otherUser = UUID.randomUUID();
+
     @BeforeEach
     void clean() {
         ticketRepository.deleteAll();
@@ -57,7 +60,7 @@ class TicketControllerTest {
     void getByBookingReturnsTicket() throws Exception {
         Ticket ticket = saveTicket();
 
-        mockMvc.perform(get("/tickets/by-booking/{id}", ticket.getBookingId()).with(jwt()))
+        mockMvc.perform(get("/tickets/by-booking/{id}", ticket.getBookingId()).with(asUser(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticketId").value(ticket.getTicketId().toString()))
                 .andExpect(jsonPath("$.bookingId").value(ticket.getBookingId().toString()))
@@ -69,7 +72,7 @@ class TicketControllerTest {
 
     @Test
     void getByBookingIs404WhenNotIssuedYet() throws Exception {
-        mockMvc.perform(get("/tickets/by-booking/{id}", UUID.randomUUID()).with(jwt()))
+        mockMvc.perform(get("/tickets/by-booking/{id}", UUID.randomUUID()).with(asUser(owner)))
                 .andExpect(status().isNotFound());
     }
 
@@ -77,11 +80,58 @@ class TicketControllerTest {
     void getByTicketIdReturnsTicketOr404() throws Exception {
         Ticket ticket = saveTicket();
 
-        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId()).with(jwt()))
+        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId()).with(asUser(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticketId").value(ticket.getTicketId().toString()));
-        mockMvc.perform(get("/tickets/{id}", UUID.randomUUID()).with(jwt()))
+        mockMvc.perform(get("/tickets/{id}", UUID.randomUUID()).with(asUser(owner)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void anotherUserGets404ExactlyLikeAMissingTicket() throws Exception {
+        Ticket ticket = saveTicket();
+
+        String byBooking = mockMvc.perform(get("/tickets/by-booking/{id}", ticket.getBookingId()).with(asUser(otherUser)))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+        String byBookingMissing = mockMvc.perform(get("/tickets/by-booking/{id}", UUID.randomUUID()).with(asUser(otherUser)))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId()).with(asUser(otherUser)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.qrPayload").doesNotExist());
+
+        // same shape as "not found" (the message only echoes the id the caller sent)
+        assertThat(byBooking).startsWith("{\"message\":\"No ticket for booking: ");
+        assertThat(byBookingMissing).startsWith("{\"message\":\"No ticket for booking: ");
+    }
+
+    @Test
+    void ticketWithoutRecordedOwnerIsNotReturnedToAnyone() throws Exception {
+        Ticket ticket = saveTicket();
+        jdbcTemplate.update("update ticket set user_id = null where ticket_id = ?", ticket.getTicketId());
+
+        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId()).with(asUser(owner)))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/tickets/by-booking/{id}", ticket.getBookingId()).with(asUser(owner)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void readsWithoutTokenAre401() throws Exception {
+        Ticket ticket = saveTicket();
+
+        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId())).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/tickets/by-booking/{id}", ticket.getBookingId())).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void ownerWithStaffRoleScansButAnotherUsersStaffTokenCannotReadTheTicket() throws Exception {
+        Ticket ticket = saveTicket();
+
+        mockMvc.perform(get("/tickets/{id}", ticket.getTicketId()).with(staff()))
+                .andExpect(status().isNotFound());
+        scan(ticket.getTicketId(), ticket.getQrPayload()).andExpect(status().isOk());
     }
 
     @Test
@@ -196,13 +246,17 @@ class TicketControllerTest {
                 .content("{\"payload\":\"" + payload + "\"}"));
     }
 
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor asUser(UUID userId) {
+        return jwt().jwt(token -> token.subject(userId.toString()));
+    }
+
     private static org.springframework.test.web.servlet.request.RequestPostProcessor staff() {
         return jwt().authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_staff"));
     }
 
     private Ticket saveTicket() {
         UUID ticketId = UUID.randomUUID();
-        return ticketRepository.saveAndFlush(new Ticket(ticketId, UUID.randomUUID(), UUID.randomUUID(),
+        return ticketRepository.saveAndFlush(new Ticket(ticketId, UUID.randomUUID(), UUID.randomUUID(), owner,
                 qrSigner.sign(ticketId), Instant.now()));
     }
 

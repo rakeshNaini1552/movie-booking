@@ -59,6 +59,7 @@ class TicketServiceTest {
         assertThat(ticket.getStatus()).isEqualTo(TicketStatus.ISSUED);
         assertThat(ticket.getBookingId()).isEqualTo(event.bookingId());
         assertThat(ticket.getEventId()).isEqualTo(event.eventId());
+        assertThat(ticket.getUserId()).isEqualTo(event.userId());
         assertThat(qrSigner.verify(ticket.getQrPayload())).contains(ticket.getTicketId());
     }
 
