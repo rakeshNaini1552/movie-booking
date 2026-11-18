@@ -23,7 +23,11 @@ export default async function MovieDetails({ params }: Pick<PageProps<"/movies/[
   return (
     <>
       <div className="animate-rise grid gap-8 sm:grid-cols-[minmax(0,16rem)_1fr] sm:items-end">
-        <MoviePoster title={movie.title} className="mx-auto w-48 sm:mx-0 sm:w-full" />
+        <MoviePoster
+          title={movie.title}
+          posterUrl={movie.posterUrl}
+          className="mx-auto w-48 sm:mx-0 sm:w-full"
+        />
         <div>
           <h1 className="font-display text-4xl font-extrabold tracking-tight text-balance sm:text-6xl">
             {movie.title}

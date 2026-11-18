@@ -6,6 +6,7 @@ public final class FieldLimits {
     public static final int TITLE = 255;
     public static final int LANGUAGE = 50;
     public static final int RATING = 10;
+    public static final int POSTER_URL = 500;
     public static final int THEATER_NAME = 255;
     public static final int CITY = 100;
     public static final int ADDRESS = 500;

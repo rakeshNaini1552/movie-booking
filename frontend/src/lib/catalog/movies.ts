@@ -18,6 +18,7 @@ const MOVIES_QUERY = /* GraphQL */ `
       durationMinutes
       language
       rating
+      posterUrl
     }
   }
 `;
@@ -31,6 +32,7 @@ const MOVIE_QUERY = /* GraphQL */ `
       durationMinutes
       language
       rating
+      posterUrl
       releaseDate
       shows {
         id
@@ -58,6 +60,7 @@ const NOW_SHOWING_QUERY = /* GraphQL */ `
       durationMinutes
       language
       rating
+      posterUrl
       shows {
         startsAt
         status

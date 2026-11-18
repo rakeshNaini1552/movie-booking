@@ -22,6 +22,8 @@ export const movieSummarySchema = z.object({
   durationMinutes: z.number().int().nonnegative(),
   language: z.string(),
   rating: z.string().nullable(),
+  // A path on this site (/posters/dune.jpg) or an https URL; null when the movie has no poster.
+  posterUrl: z.string().nullish(),
 });
 
 export const movieDetailSchema = movieSummarySchema.extend({

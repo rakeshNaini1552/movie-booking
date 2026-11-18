@@ -15,6 +15,7 @@ export default function MovieList({ movies }: MovieListProps) {
             durationMinutes={movie.durationMinutes}
             language={movie.language}
             rating={movie.rating}
+            posterUrl={movie.posterUrl}
             href={`/movies/${movie.id}`}
           />
         </li>

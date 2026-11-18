@@ -1,9 +1,13 @@
+import Image from "next/image";
 import { posterBackground } from "@/lib/poster";
 
 type MoviePosterProps = {
   title: string;
   // Shown as a small tag in the corner, for example the rating.
   tag?: string | null;
+  // A picture served by this site, for example /posters/dune.jpg. Without one (or with an
+  // external https URL, which the CSP and image settings do not allow yet) the generated poster is used.
+  posterUrl?: string | null;
   // A small poster (booking list): only the colour and the first letter, no title text.
   compact?: boolean;
   className?: string;
@@ -11,8 +15,15 @@ type MoviePosterProps = {
 
 // A generated poster (see lib/poster.ts). Decorative: the movie title is always next to it as
 // real text, so the poster is hidden from screen readers.
-export default function MoviePoster({ title, tag, compact, className = "" }: MoviePosterProps) {
+export default function MoviePoster({
+  title,
+  tag,
+  posterUrl,
+  compact,
+  className = "",
+}: MoviePosterProps) {
   const initial = title.charAt(0).toUpperCase();
+  const picture = posterUrl?.startsWith("/") && !posterUrl.startsWith("//") ? posterUrl : null;
   if (compact) {
     return (
       <div
@@ -23,6 +34,29 @@ export default function MoviePoster({ title, tag, compact, className = "" }: Mov
         <span className="font-display text-5xl font-extrabold text-white/30 select-none">
           {initial}
         </span>
+      </div>
+    );
+  }
+  if (picture) {
+    // The generated gradient stays behind the picture as its placeholder while it loads.
+    return (
+      <div
+        aria-hidden
+        style={{ backgroundImage: posterBackground(title) }}
+        className={`relative isolate aspect-[2/3] overflow-hidden rounded-2xl ring-1 ring-white/10 ${className}`}
+      >
+        <Image
+          src={picture}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+          className="object-cover"
+        />
+        {tag && (
+          <span className="absolute top-3 left-3 rounded-full bg-black/55 px-2.5 py-1 text-[0.7rem] font-semibold tracking-wide text-white backdrop-blur">
+            {tag}
+          </span>
+        )}
       </div>
     );
   }

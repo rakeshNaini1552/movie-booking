@@ -66,6 +66,11 @@ const movieSchema = z.object({
     .trim()
     .refine((value) => value === "" || /^\d{4}-\d{2}-\d{2}$/.test(value), "Use YYYY-MM-DD")
     .transform((value) => value || null),
+  // Same rule as catalog-service: a path on the frontend or an https URL.
+  posterUrl: optionalText(LIMITS.posterUrl).refine(
+    (value) => value === null || /^(\/|https:\/\/)/.test(value),
+    "Start with / or https://",
+  ),
   status: movieStatusSchema.catch("ACTIVE"),
 });
 

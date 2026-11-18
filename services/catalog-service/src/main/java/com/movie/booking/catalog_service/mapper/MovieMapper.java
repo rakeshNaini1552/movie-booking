@@ -21,7 +21,7 @@ public interface MovieMapper {
     // Movie has no setters, so this calls its update(...) method. No status in the request keeps the current one.
     default void apply(MovieRequest request, Movie movie, Instant now) {
         movie.update(request.title(), request.description(), request.durationMinutes(), request.language(),
-                request.rating(), request.releaseDate(),
+                request.rating(), request.releaseDate(), request.posterUrl(),
                 request.status() != null ? request.status() : movie.getStatus(), now);
     }
 }

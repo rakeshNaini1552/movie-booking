@@ -34,7 +34,7 @@ class MapperTest {
     void movie_create_without_status_defaults_to_active_and_stamps_id_and_time() {
         UUID id = UUID.randomUUID();
 
-        Movie movie = movieMapper.toEntity(new MovieRequest("Dune", null, 155, "en", null, null, null), id, T0);
+        Movie movie = movieMapper.toEntity(new MovieRequest("Dune", null, 155, "en", null, null, null, null), id, T0);
 
         assertThat(movie.getId()).isEqualTo(id);
         assertThat(movie.getStatus()).isEqualTo(MovieStatus.ACTIVE);
@@ -47,7 +47,7 @@ class MapperTest {
     @Test
     void movie_create_keeps_a_given_status() {
         Movie movie = movieMapper.toEntity(
-                new MovieRequest("Dune", "d", 155, "en", "PG", LocalDate.of(2021, 10, 22), MovieStatus.ARCHIVED),
+                new MovieRequest("Dune", "d", 155, "en", "PG", LocalDate.of(2021, 10, 22), MovieStatus.ARCHIVED, null),
                 UUID.randomUUID(), T0);
 
         assertThat(movie.getStatus()).isEqualTo(MovieStatus.ARCHIVED);
@@ -57,9 +57,9 @@ class MapperTest {
     @Test
     void movie_update_without_status_keeps_the_current_status_and_only_moves_updatedAt() {
         Movie movie = movieMapper.toEntity(
-                new MovieRequest("Dune", null, 155, "en", null, null, MovieStatus.ARCHIVED), UUID.randomUUID(), T0);
+                new MovieRequest("Dune", null, 155, "en", null, null, MovieStatus.ARCHIVED, null), UUID.randomUUID(), T0);
 
-        movieMapper.apply(new MovieRequest("Dune 2", "new", 166, "fr", "R", null, null), movie, T1);
+        movieMapper.apply(new MovieRequest("Dune 2", "new", 166, "fr", "R", null, null, null), movie, T1);
 
         assertThat(movie.getStatus()).isEqualTo(MovieStatus.ARCHIVED);
         assertThat(movie.getTitle()).isEqualTo("Dune 2");
@@ -69,18 +69,32 @@ class MapperTest {
     }
 
     @Test
+    void movie_poster_url_flows_through_create_update_and_response() {
+        Movie movie = movieMapper.toEntity(
+                new MovieRequest("Dune", null, 155, "en", null, null, null, "/posters/dune.jpg"), UUID.randomUUID(), T0);
+        assertThat(movie.getPosterUrl()).isEqualTo("/posters/dune.jpg");
+        assertThat(movieMapper.toResponse(movie).posterUrl()).isEqualTo("/posters/dune.jpg");
+
+        movieMapper.apply(new MovieRequest("Dune", null, 155, "en", null, null, null, "/posters/dune-2.jpg"), movie, T1);
+        assertThat(movie.getPosterUrl()).isEqualTo("/posters/dune-2.jpg");
+
+        movieMapper.apply(new MovieRequest("Dune", null, 155, "en", null, null, null, null), movie, T1);
+        assertThat(movie.getPosterUrl()).isNull();
+    }
+
+    @Test
     void movie_update_with_status_replaces_it() {
-        Movie movie = movieMapper.toEntity(new MovieRequest("Dune", null, 155, "en", null, null, null),
+        Movie movie = movieMapper.toEntity(new MovieRequest("Dune", null, 155, "en", null, null, null, null),
                 UUID.randomUUID(), T0);
 
-        movieMapper.apply(new MovieRequest("Dune", null, 155, "en", null, null, MovieStatus.ARCHIVED), movie, T1);
+        movieMapper.apply(new MovieRequest("Dune", null, 155, "en", null, null, MovieStatus.ARCHIVED, null), movie, T1);
 
         assertThat(movie.getStatus()).isEqualTo(MovieStatus.ARCHIVED);
     }
 
     @Test
     void movie_response_copies_every_field_and_null_maps_to_null() {
-        Movie movie = movieMapper.toEntity(new MovieRequest("Dune", null, 155, "en", null, null, null),
+        Movie movie = movieMapper.toEntity(new MovieRequest("Dune", null, 155, "en", null, null, null, null),
                 UUID.randomUUID(), T0);
 
         MovieResponse response = movieMapper.toResponse(movie);

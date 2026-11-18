@@ -38,7 +38,7 @@ class CatalogCacheCustomPrefixIntegrationTest extends ApiTestBase {
         UUID id = createMovie("Dune");
         Instant now = Instant.parse("2030-01-15T10:15:30Z");
         String planted = jsonMapper.writeValueAsString(new MovieResponse(id, "Planted by another environment", null, 120,
-                "en", "PG-13", LocalDate.parse("2030-01-15"), MovieStatus.ACTIVE, now, now));
+                "en", "PG-13", LocalDate.parse("2030-01-15"), MovieStatus.ACTIVE, null, now, now));
         redis.opsForValue().set("catalog:movies::" + id, planted);
 
         mockMvc.perform(get("/api/v1/movies/{id}", id).with(TestJwt.user()))

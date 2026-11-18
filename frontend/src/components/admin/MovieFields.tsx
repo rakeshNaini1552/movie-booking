@@ -34,6 +34,12 @@ export default function MovieFields({ movie }: { movie?: AdminMovie }) {
           hint={`For example PG-13. At most ${LIMITS.rating} characters.`}
         />
       </div>
+      <Field
+        name="posterUrl"
+        label="Poster"
+        defaultValue={movie?.posterUrl}
+        hint="A path such as /posters/dune.jpg (file in the frontend's public/posters folder). Leave empty for a generated poster."
+      />
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
           name="releaseDate"

@@ -6,6 +6,7 @@ type MovieCardProps = {
   durationMinutes: number;
   language?: string;
   rating?: string | null;
+  posterUrl?: string | null;
   href?: string;
 };
 
@@ -14,6 +15,7 @@ export default function MovieCard({
   durationMinutes,
   language,
   rating,
+  posterUrl,
   href,
 }: MovieCardProps) {
   // The rating is also a tag on the poster, but the poster is decorative, so it is repeated here as text.
@@ -24,6 +26,7 @@ export default function MovieCard({
       <MoviePoster
         title={title}
         tag={rating}
+        posterUrl={posterUrl}
         className="group-focus-within:ring-brand-soft transition duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl group-hover:shadow-black/60 group-hover:ring-white/30"
       />
       <h2 className="mt-3 leading-snug font-semibold">
