@@ -1,6 +1,8 @@
 spring:
   application:
     name: catalog-service
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:20s}
   security:
     oauth2:
       resourceserver:

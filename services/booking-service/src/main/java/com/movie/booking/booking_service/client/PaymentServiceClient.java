@@ -4,6 +4,7 @@ import com.movie.booking.booking_service.dto.PaymentRequest;
 import com.movie.booking.booking_service.dto.PaymentResult;
 import com.movie.booking.booking_service.exception.InvalidPaymentTokenException;
 import com.movie.booking.booking_service.exception.PaymentServiceUnavailableException;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ public class PaymentServiceClient implements PaymentClient{
 
     private final RestClient paymentServiceRestClient;
 
+    @Retry(name = "paymentService")
     @Override
     public PaymentResult pay(UUID bookingId, BigDecimal amount, String paymentToken, UUID idempotencyKey) {
         try {
