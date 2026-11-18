@@ -4,6 +4,9 @@ export default function Footer() {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-zinc-400 sm:px-6">
         <p>Movie Booking</p>
         <p>Show times are in UTC. Payments here are test payments, no real money moves.</p>
+        <p className="w-full text-xs">
+          Movie posters: this product uses the TMDB API but is not endorsed or certified by TMDB.
+        </p>
       </div>
     </footer>
   );
