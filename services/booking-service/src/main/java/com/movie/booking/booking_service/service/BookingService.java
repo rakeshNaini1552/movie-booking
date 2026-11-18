@@ -153,6 +153,10 @@ public class BookingService {
         return true;
     }
 
+    public BookingPage listBookings(UUID userId, int page, int size) {
+        return bookingStateService.findSummaries(userId, page, size);
+    }
+
     public PayableBooking getOwnedBooking(UUID bookingId, UUID userId) {
         PayableBooking booking = getBooking(bookingId);
         if (!booking.userId().equals(userId)) {

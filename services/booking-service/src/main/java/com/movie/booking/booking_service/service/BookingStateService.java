@@ -1,6 +1,8 @@
 package com.movie.booking.booking_service.service;
 
 import com.movie.booking.booking_service.BookingStatus;
+import com.movie.booking.booking_service.dto.BookingPage;
+import com.movie.booking.booking_service.dto.BookingSummary;
 import com.movie.booking.booking_service.dto.CreateBookingCommand;
 import com.movie.booking.booking_service.dto.PayableBooking;
 import com.movie.booking.booking_service.entity.Booking;
@@ -14,6 +16,9 @@ import com.movie.booking.booking_service.repository.BookingSeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +26,10 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -112,6 +119,25 @@ public class BookingStateService {
                     return new PayableBooking(booking.getBookingId(), booking.getUserId(), booking.getShowId(),
                             booking.getTotalAmount(), booking.getStatus(), seatIds);
                 });
+    }
+
+    // Newest first; booking id breaks ties so pages never overlap. Seat ids for the whole page
+    // come from one IN query instead of one query per booking.
+    @Transactional(readOnly = true)
+    public BookingPage findSummaries(UUID userId, int page, int size) {
+        Page<Booking> bookings = bookingRepository.findByUserId(userId,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "bookingId")));
+        List<UUID> bookingIds = bookings.getContent().stream().map(Booking::getBookingId).toList();
+        Map<UUID, List<String>> seatIdsByBooking = bookingSeatRepository.findByIdBookingIdIn(bookingIds).stream()
+                .map(BookingSeat::getId)
+                .collect(Collectors.groupingBy(BookingSeatId::getBookingId,
+                        Collectors.mapping(BookingSeatId::getSeatId, Collectors.toList())));
+        List<BookingSummary> items = bookings.getContent().stream()
+                .map(b -> new BookingSummary(b.getBookingId(), b.getShowId(), b.getStatus(), b.getTotalAmount(),
+                        b.getCreatedAt(), seatIdsByBooking.getOrDefault(b.getBookingId(), List.of()).stream().sorted().toList()))
+                .toList();
+        return new BookingPage(items, bookings.getNumber(), bookings.getSize(),
+                bookings.getTotalElements(), bookings.getTotalPages());
     }
 
     @Transactional(readOnly = true)
