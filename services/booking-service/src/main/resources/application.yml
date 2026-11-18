@@ -1,6 +1,8 @@
 spring:
   application:
     name: booking-service
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:20s}
   security:
     oauth2:
       client:
@@ -117,6 +119,13 @@ resilience4j:
         wait-duration: ${SEAT_RETRY_WAIT:200ms}
         retry-exceptions:
           - com.movie.booking.booking_service.exception.SeatServiceUnavailableException
+      # One extra attempt at most. Safe because every attempt carries the same Idempotency-Key and
+      # payment-service returns the original payment for a repeated key.
+      paymentService:
+        max-attempts: ${PAYMENT_RETRY_MAX_ATTEMPTS:2}
+        wait-duration: ${PAYMENT_RETRY_WAIT:200ms}
+        retry-exceptions:
+          - com.movie.booking.booking_service.exception.PaymentServiceUnavailableException
   circuitbreaker:
     instances:
       seatService:
@@ -144,4 +153,4 @@ seat-service:
 payment-service:
   base-url: ${PAYMENT_SERVICE_URL:http://localhost:8083}
   connect-timeout-ms: ${PAYMENT_SERVICE_CONNECT_TIMEOUT_MS:500}
-  read-timeout-ms: ${PAYMENT_SERVICE_READ_TIMEOUT_MS:2000}
+  read-timeout-ms: ${PAYMENT_SERVICE_READ_TIMEOUT_MS:3000}

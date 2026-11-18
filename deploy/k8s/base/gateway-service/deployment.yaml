@@ -18,6 +18,7 @@ spec:
       labels:
         app: gateway-service
     spec:
+      terminationGracePeriodSeconds: 30
       imagePullSecrets:
         - name: ghcr-pull
       containers:
@@ -29,6 +30,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: gateway-service-config
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
           resources:
             requests:
               memory: 512Mi
@@ -47,7 +52,8 @@ spec:
               path: /actuator/health/readiness
               port: 8090
             initialDelaySeconds: 20
-            timeoutSeconds: 3
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness

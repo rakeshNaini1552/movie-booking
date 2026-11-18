@@ -1,6 +1,8 @@
 spring:
   application:
     name: ticket-service
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:20s}
   datasource:
     url: jdbc:postgresql://${TICKET_DB_HOST:localhost}:${TICKET_DB_PORT:5432}/${TICKET_DB_NAME:ticket_db}
     username: ${TICKET_DB_USER}
