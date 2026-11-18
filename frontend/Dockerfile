@@ -32,6 +32,8 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
+# The standalone output does not include public/ (the movie posters); it must be copied by hand.
+COPY --from=build --chown=node:node /app/public ./public
 # Do not run as root inside the container.
 USER node
 EXPOSE 3001
