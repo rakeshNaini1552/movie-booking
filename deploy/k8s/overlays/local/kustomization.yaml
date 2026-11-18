@@ -4,17 +4,17 @@ resources:
   - ../../base
 images:
   - name: ghcr.io/rakeshnaini1552/seat-service
-    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
   - name: ghcr.io/rakeshnaini1552/booking-service
-    newTag: bce72c2d8735dfb3ec2866328ab481f39f2f565b
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
   - name: ghcr.io/rakeshnaini1552/payment-service
-    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
   - name: ghcr.io/rakeshnaini1552/ticket-service
-    newTag: 1b4a4fd381b2128656cd86e6045e03ff08cee140
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
   - name: ghcr.io/rakeshnaini1552/gateway-service
-    newTag: e2fa28409eaa75d62d787822839748ae1a06043d
+    newTag: 5c4736c636096ab8f15a9a96219f4ae8c6154dd2
   - name: ghcr.io/rakeshnaini1552/catalog-service
-    newTag: 07e2ea86b91a3453e5aec3ef7a830afa22a90d41
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
   # The bump workflow edits the line right after the name, so this comment stays above it.
   # newTag is replaced by the first bump PR after the frontend image is published.
   - name: ghcr.io/rakeshnaini1552/frontend
