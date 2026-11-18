@@ -131,6 +131,47 @@ class MovieApiIntegrationTest extends ApiTestBase {
     }
 
     @Test
+    void poster_url_is_stored_and_returned_and_is_null_when_not_given() throws Exception {
+        postJson("/api/v1/movies", moviePosterJson("Dune", "/posters/dune.jpg"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.posterUrl").value("/posters/dune.jpg"));
+        assertThat(jdbcTemplate.queryForObject("SELECT poster_url FROM movie", String.class))
+                .isEqualTo("/posters/dune.jpg");
+
+        UUID plain = createMovie("Alien");
+        mockMvc.perform(get("/api/v1/movies/{id}", plain).with(TestJwt.user()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posterUrl").doesNotExist());
+    }
+
+    @Test
+    void poster_url_must_be_a_path_or_an_https_url() throws Exception {
+        postJson("/api/v1/movies", moviePosterJson("Dune", "javascript:alert(1)")).andExpect(status().isBadRequest());
+        postJson("/api/v1/movies", moviePosterJson("Dune", "http://example.com/dune.jpg")).andExpect(status().isBadRequest());
+        postJson("/api/v1/movies", moviePosterJson("Dune", "/p/" + "x".repeat(500))).andExpect(status().isBadRequest());
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM movie", Integer.class)).isZero();
+
+        postJson("/api/v1/movies", moviePosterJson("Dune", "https://example.com/dune.jpg")).andExpect(status().isCreated());
+    }
+
+    @Test
+    void put_without_poster_url_clears_it() throws Exception {
+        UUID id = createAndGetId("/api/v1/movies", moviePosterJson("Dune", "/posters/dune.jpg"));
+
+        mockMvc.perform(put("/api/v1/movies/{id}", id).with(TestJwt.admin())
+                        .contentType(MediaType.APPLICATION_JSON).content(movieJson("Dune")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posterUrl").doesNotExist());
+        assertThat(jdbcTemplate.queryForObject("SELECT poster_url FROM movie WHERE id = ?", String.class, id)).isNull();
+    }
+
+    private static String moviePosterJson(String title, String posterUrl) {
+        return """
+                {"title": "%s", "durationMinutes": 120, "language": "en", "posterUrl": "%s"}
+                """.formatted(title, posterUrl);
+    }
+
+    @Test
     void requests_without_a_token_are_rejected() throws Exception {
         mockMvc.perform(get("/api/v1/movies")).andExpect(status().isUnauthorized());
     }

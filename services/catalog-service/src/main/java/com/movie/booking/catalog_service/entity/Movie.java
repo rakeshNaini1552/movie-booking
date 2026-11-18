@@ -34,6 +34,9 @@ public class Movie {
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
+    @Column(name = "poster_url")
+    private String posterUrl;
+
     @Enumerated(EnumType.STRING)
     private MovieStatus status;
 
@@ -45,7 +48,7 @@ public class Movie {
 
     @Builder
     public Movie(UUID id, String title, String description, int durationMinutes, String language,
-                 String rating, LocalDate releaseDate, MovieStatus status, Instant now) {
+                 String rating, LocalDate releaseDate, String posterUrl, MovieStatus status, Instant now) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -53,19 +56,21 @@ public class Movie {
         this.language = language;
         this.rating = rating;
         this.releaseDate = releaseDate;
+        this.posterUrl = posterUrl;
         this.status = status;
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     public void update(String title, String description, int durationMinutes, String language,
-                       String rating, LocalDate releaseDate, MovieStatus status, Instant now) {
+                       String rating, LocalDate releaseDate, String posterUrl, MovieStatus status, Instant now) {
         this.title = title;
         this.description = description;
         this.durationMinutes = durationMinutes;
         this.language = language;
         this.rating = rating;
         this.releaseDate = releaseDate;
+        this.posterUrl = posterUrl;
         this.status = status;
         this.updatedAt = now;
     }

@@ -52,7 +52,7 @@ class MovieServiceTest {
         when(movieRepository.save(any(Movie.class))).thenAnswer(inv -> inv.getArgument(0));
 
         MovieResponse response = service.create(
-                new MovieRequest("Dune", null, 155, "en", null, null, null));
+                new MovieRequest("Dune", null, 155, "en", null, null, null, null));
 
         assertThat(response.status()).isEqualTo(MovieStatus.ACTIVE);
         assertThat(response.createdAt()).isEqualTo(NOW);
@@ -85,7 +85,7 @@ class MovieServiceTest {
         when(movieRepository.findById(movie.getId())).thenReturn(Optional.of(movie));
 
         MovieResponse response = service.update(movie.getId(),
-                new MovieRequest("Dune: Part Two", null, 166, "en", null, null, null));
+                new MovieRequest("Dune: Part Two", null, 166, "en", null, null, null, null));
 
         assertThat(response.title()).isEqualTo("Dune: Part Two");
         assertThat(response.status()).isEqualTo(MovieStatus.ARCHIVED);

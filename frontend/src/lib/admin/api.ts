@@ -36,6 +36,7 @@ export type MovieInput = {
   language: string;
   rating: string | null;
   releaseDate: string | null;
+  posterUrl: string | null;
   status: "ACTIVE" | "ARCHIVED";
 };
 

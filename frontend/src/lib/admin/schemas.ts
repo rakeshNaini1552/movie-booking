@@ -14,6 +14,7 @@ export const adminMovieSchema = z.object({
   language: z.string(),
   rating: z.string().nullable(),
   releaseDate: z.string().nullable(),
+  posterUrl: z.string().nullable(),
   status: movieStatusSchema,
 });
 
@@ -63,6 +64,7 @@ export const LIMITS = {
   title: 255,
   language: 50,
   rating: 10,
+  posterUrl: 500,
   theaterName: 255,
   city: 100,
   address: 500,

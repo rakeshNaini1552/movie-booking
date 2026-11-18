@@ -137,7 +137,7 @@ class CatalogCacheIntegrationTest extends ApiTestBase {
     }
 
     private static MovieRequest movieRequest(String title) {
-        return new MovieRequest(title, "d", 120, "en", "PG-13", LocalDate.parse("2030-01-15"), null);
+        return new MovieRequest(title, "d", 120, "en", "PG-13", LocalDate.parse("2030-01-15"), null, null);
     }
 
     @Test
@@ -214,7 +214,7 @@ class CatalogCacheIntegrationTest extends ApiTestBase {
     void cached_json_round_trips_instants_dates_enums_and_decimals() {
         Instant now = Instant.parse("2030-01-15T10:15:30.123456Z");
         MovieResponse movie = new MovieResponse(UUID.randomUUID(), "Dune", null, 155, "en", "PG-13",
-                LocalDate.parse("2030-01-15"), MovieStatus.ARCHIVED, now, now);
+                LocalDate.parse("2030-01-15"), MovieStatus.ARCHIVED, null, now, now);
         ShowResponse show = new ShowResponse(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), now, now.plusSeconds(7200),
                 new BigDecimal("12.50"), ShowStatus.CANCELLED, now, now);
 

@@ -11,6 +11,7 @@ type Movie {
     language: String!
     rating: String
     releaseDate: String
+    posterUrl: String
     status: String!
     createdAt: String!
     updatedAt: String!

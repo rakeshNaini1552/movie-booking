@@ -7,5 +7,5 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record MovieResponse(UUID id, String title, String description, int durationMinutes, String language,
-                            String rating, LocalDate releaseDate, MovieStatus status,
+                            String rating, LocalDate releaseDate, MovieStatus status, String posterUrl,
                             Instant createdAt, Instant updatedAt) {}
