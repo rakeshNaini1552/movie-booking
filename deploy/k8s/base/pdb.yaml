@@ -1,0 +1,79 @@
+# A PodDisruptionBudget limits voluntary evictions (node drain, cluster upgrade): at least one pod of
+# the service must stay Ready. With one replica it blocks a drain until the pod is scaled up or the
+# budget is removed, so it only protects a service that runs two or more replicas.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: seat-service
+  namespace: movie-booking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: seat-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: booking-service
+  namespace: movie-booking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: booking-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: payment-service
+  namespace: movie-booking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: payment-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ticket-service
+  namespace: movie-booking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ticket-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: catalog-service
+  namespace: movie-booking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gateway-service
+  namespace: movie-booking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: gateway-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend
+  namespace: movie-booking
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: frontend
