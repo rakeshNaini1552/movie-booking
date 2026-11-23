@@ -14,7 +14,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: movie-booking
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
+      selfHeal: true
   ignoreDifferences:
     # The HPAs change the live replica count, so git's value of 1 must not count as a difference.
     - group: apps
