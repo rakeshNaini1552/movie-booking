@@ -1,0 +1,23 @@
+# Kong runs in the kong namespace and routes /api/v1/bookings and the catalog routes straight to the
+# services, so those two need an extra allow rule. Only the local overlay uses Kong.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-kong
+  namespace: movie-booking
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [booking-service, catalog-service]
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kong
+      ports:
+        - port: 8082
+        - port: 8085

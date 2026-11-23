@@ -30,3 +30,5 @@ resources:
   - frontend/configmap.yaml
   - frontend/deployment.yaml
   - frontend/service.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
