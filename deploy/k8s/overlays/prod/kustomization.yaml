@@ -1,0 +1,147 @@
+# Prod overlay: the shape of a production environment, written but NOT deployed. No Argo CD Application
+# points at it, and the cluster has no movie-booking-prod namespace, database, topics or Keycloak realm yet.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: movie-booking-prod
+resources:
+  - ../../base
+  - namespace.yaml
+images:
+  - name: ghcr.io/rakeshnaini1552/seat-service
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
+  - name: ghcr.io/rakeshnaini1552/booking-service
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
+  - name: ghcr.io/rakeshnaini1552/payment-service
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
+  - name: ghcr.io/rakeshnaini1552/ticket-service
+    newTag: 75c6b8211dbbda7656d6bead0f45e137375e3b7b
+  - name: ghcr.io/rakeshnaini1552/gateway-service
+    newTag: 5c4736c636096ab8f15a9a96219f4ae8c6154dd2
+  - name: ghcr.io/rakeshnaini1552/catalog-service
+    newTag: 6f0aeb7318367f7a6112dc78ac9df4e7bd300d67
+  # The bump workflow edits the line right after the name, so this comment stays above it.
+  # newTag is replaced by the first bump PR after the frontend image is published.
+  - name: ghcr.io/rakeshnaini1552/frontend
+    newTag: 725d352c3435d93ae4dec65d9329306b4b784a7d
+# Two replicas of every service, so a rolling update or a node drain always leaves one pod serving
+# (this is what makes the PodDisruptionBudgets in the base useful).
+replicas:
+  - name: seat-service
+    count: 2
+  - name: booking-service
+    count: 2
+  - name: payment-service
+    count: 2
+  - name: ticket-service
+    count: 2
+  - name: catalog-service
+    count: 2
+  - name: gateway-service
+    count: 2
+  - name: frontend
+    count: 2
+
+patches:
+  - target:
+      kind: ConfigMap
+      name: seat-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: seat-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+        SEAT_DB_NAME: seat_db_prod
+        SPRING_DATA_REDIS_DATABASE: "2"
+        BOOKING_EVENTS_TOPIC: booking-events-prod
+        BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-prod
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-prod
+  - target:
+      kind: ConfigMap
+      name: booking-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: booking-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+        DB_NAME: booking_db_prod
+        BOOKING_EVENTS_TOPIC: booking-events-prod
+        TICKET_EVENTS_TOPIC: ticket-events-prod
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-prod
+  - target:
+      kind: ConfigMap
+      name: payment-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: payment-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+        DB_NAME: payment_db_prod
+        BOOKING_EVENTS_TOPIC: booking-events-prod
+        BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-prod
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-prod
+  - target:
+      kind: ConfigMap
+      name: ticket-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ticket-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+        TICKET_DB_NAME: ticket_db_prod
+        BOOKING_EVENTS_TOPIC: booking-events-prod
+        BOOKING_EVENTS_DLT_TOPIC: booking-events-dlt-prod
+        TICKET_EVENTS_TOPIC: ticket-events-prod
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-prod
+  - target:
+      kind: ConfigMap
+      name: gateway-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: gateway-service-config
+      data:
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-prod
+  - target:
+      kind: ConfigMap
+      name: catalog-service-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: catalog-service-config
+      data:
+        TRACING_SAMPLING: "0.1"
+        CATALOG_DB_NAME: catalog_db_prod
+        CATALOG_CACHE_PREFIX: "catalog-prod:"
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-prod
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+      - op: replace
+        path: /spec/maxReplicas
+        value: 4
+  - target:
+      kind: ConfigMap
+      name: frontend-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: frontend-config
+      data:
+        KEYCLOAK_ISSUER_URI: http://host.docker.internal:8180/realms/movie-booking-prod
+        # Prod is port-forwarded on its own port so both environments can be open at once.
+        AUTH_URL: http://localhost:3003
+        OTEL_SERVICE_NAME: frontend-prod
